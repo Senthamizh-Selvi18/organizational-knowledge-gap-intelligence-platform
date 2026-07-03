@@ -5,7 +5,6 @@ import com.organizational.knowledge_gap_platform.repository.RoleRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class RoleService {
@@ -16,30 +15,39 @@ public class RoleService {
         this.roleRepository = roleRepository;
     }
 
-    // Get all roles
     public List<Role> getAllRoles() {
         return roleRepository.findAll();
     }
 
-    // Get role by id
-    public Optional<Role> getRoleById(Long id) {
-        return roleRepository.findById(id);
+    public Role getRoleById(Long id) {
+        return roleRepository.findById(id).orElse(null);
     }
 
-    // Create a new role
-    public Role saveRole(Role role) {
+    public Role createRole(Role role) {
         return roleRepository.save(role);
     }
 
-    // Update a role
-    public Role updateRole(Long id, Role role) {
-        Role existingRole = roleRepository.findById(id).orElseThrow();
-        existingRole.setRoleName(role.getRoleName());
-        return roleRepository.save(existingRole);
+    public Role updateRole(Long id, Role updatedRole) {
+
+        Role role = roleRepository.findById(id).orElse(null);
+
+        if (role == null) {
+            return null;
+        }
+
+        role.setRoleName(updatedRole.getRoleName());
+
+        return roleRepository.save(role);
     }
 
-    // Delete a role
-    public void deleteRole(Long id) {
+    public boolean deleteRole(Long id) {
+
+        if (!roleRepository.existsById(id)) {
+            return false;
+        }
+
         roleRepository.deleteById(id);
+
+        return true;
     }
 }

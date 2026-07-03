@@ -2,10 +2,12 @@ package com.organizational.knowledge_gap_platform.controller;
 
 import com.organizational.knowledge_gap_platform.entity.Role;
 import com.organizational.knowledge_gap_platform.service.RoleService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/roles")
@@ -17,33 +19,53 @@ public class RoleController {
         this.roleService = roleService;
     }
 
-    // Get all roles
     @GetMapping
-    public List<Role> getAllRoles() {
-        return roleService.getAllRoles();
+    public ResponseEntity<List<Role>> getAllRoles() {
+        return ResponseEntity.ok(roleService.getAllRoles());
     }
 
-    // Get role by ID
     @GetMapping("/{id}")
-    public Optional<Role> getRoleById(@PathVariable Long id) {
-        return roleService.getRoleById(id);
+    public ResponseEntity<Role> getRoleById(@PathVariable Long id) {
+
+        Role role = roleService.getRoleById(id);
+
+        if (role == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(role);
     }
 
-    // Create a new role
     @PostMapping
-    public Role createRole(@RequestBody Role role) {
-        return roleService.saveRole(role);
+    public ResponseEntity<Role> createRole(@Valid @RequestBody Role role) {
+
+        Role savedRole = roleService.createRole(role);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedRole);
     }
 
-    // Update a role
     @PutMapping("/{id}")
-    public Role updateRole(@PathVariable Long id, @RequestBody Role role) {
-        return roleService.updateRole(id, role);
+    public ResponseEntity<Role> updateRole(@PathVariable Long id,
+                                           @Valid @RequestBody Role role) {
+
+        Role updatedRole = roleService.updateRole(id, role);
+
+        if (updatedRole == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(updatedRole);
     }
 
-    // Delete a role
     @DeleteMapping("/{id}")
-    public void deleteRole(@PathVariable Long id) {
-        roleService.deleteRole(id);
+    public ResponseEntity<Void> deleteRole(@PathVariable Long id) {
+
+        boolean deleted = roleService.deleteRole(id);
+
+        if (!deleted) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.noContent().build();
     }
 }
