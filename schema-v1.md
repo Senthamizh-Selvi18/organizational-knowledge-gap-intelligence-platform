@@ -38,11 +38,16 @@
 | Column | Type |
 |---|---|
 | id | Long (PK) |
+| employee_code | String (Unique) |
 | user_id | Long (FK) |
 | department | String |
 | designation | String |
+| phone_number | String |
+| location | String |
+| joining_date | Date |
+| experience | Integer |
+| manager | String |
 | created_at | Timestamp |
-
 ---
 
 ## Skill
@@ -88,3 +93,5 @@ Employee (1) -------- (*) Competency
 Skill (1) -------- (*) Competency
 
 Users (1) -------- (*) Auth
+
+Employee (1) -------- (*) Employee (Manager → Employees)
