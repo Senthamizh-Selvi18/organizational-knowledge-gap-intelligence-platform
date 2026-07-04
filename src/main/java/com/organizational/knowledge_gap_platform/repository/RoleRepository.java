@@ -1,5 +1,8 @@
 package com.organizational.knowledge_gap_platform.repository;
 
-public class RoleRepository {
-    
+import com.organizational.knowledge_gap_platform.entity.Role;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface RoleRepository extends JpaRepository<Role, Long> {
+
 }
