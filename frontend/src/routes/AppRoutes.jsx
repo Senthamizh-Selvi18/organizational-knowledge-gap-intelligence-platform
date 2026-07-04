@@ -7,6 +7,8 @@ import DashboardPage from "../pages/Dashboard/DashboardPage";
 import EmployeeDashboard from "../pages/EmployeeDashboard/EmployeeDashboard";
 import Profile from "../pages/Profile/Profile";
 import RoleManagement from "../pages/RoleManagement/RoleManagement";
+import ProtectedRoute from "./ProtectedRoute";
+
 
 function AppRoutes() {
   return (
@@ -23,15 +25,38 @@ function AppRoutes() {
       />
 
       <Route
-        path="/dashboard"
-        element={<DashboardPage />}
-      />
+  path="/dashboard"
+  element={
+    <ProtectedRoute>
+      <DashboardPage />
+    </ProtectedRoute>
+  }
+/>
 
-      <Route path="/employee-dashboard" element={<EmployeeDashboard />} />
-
-      <Route path="/dashboard/profile" element={<Profile />} />
-
-      <Route path="/dashboard/roles" element={<RoleManagement />} />
+      <Route
+  path="/employee-dashboard"
+  element={
+    <ProtectedRoute>
+      <EmployeeDashboard />
+    </ProtectedRoute>
+  }
+/>
+      <Route
+  path="/dashboard/profile"
+  element={
+    <ProtectedRoute>
+      <Profile />
+    </ProtectedRoute>
+  }
+/>
+      <Route
+  path="/dashboard/roles"
+  element={
+    <ProtectedRoute>
+      <RoleManagement />
+    </ProtectedRoute>
+  }
+/>
     </Routes>
     
   );
