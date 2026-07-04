@@ -1,23 +1,40 @@
 import DashboardLayout from "../../components/layout/DashboardLayout.jsx";
+import { useNavigate } from "react-router-dom";
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
+
   return (
     <DashboardLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-          Dashboard
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Welcome back, Sneha. Here&apos;s your knowledge intelligence overview.
-        </p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            Dashboard
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Welcome back, Sneha. Here&apos;s your knowledge intelligence overview.
+          </p>
+        </div>
+
+        <button
+          onClick={handleLogout}
+          className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+        >
+          Logout
+        </button>
       </div>
 
-      {/* Reusable content container */}
       <section className="flex min-h-[60vh] items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white/60 p-8 shadow-xl shadow-blue-900/5 backdrop-blur-xl">
         <div className="text-center">
           <p className="text-lg font-semibold text-slate-700">
             Dashboard Content
           </p>
+
           <p className="mt-2 max-w-md text-sm text-slate-500">
             This reusable area will render the Employee, Manager, HR, and Admin
             dashboards, along with Profile and Role Management views.
@@ -25,5 +42,5 @@ export default function DashboardPage() {
         </div>
       </section>
     </DashboardLayout>
-  )
+  );
 }
