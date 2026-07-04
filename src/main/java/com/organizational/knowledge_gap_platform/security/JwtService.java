@@ -9,12 +9,14 @@ import org.springframework.stereotype.Service;
 import java.security.Key;
 import java.util.Date;
 import java.util.function.Function;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 public class JwtService {
 
     // Change this key before production
-    private static final String SECRET_KEY = "mysecretkeymysecretkeymysecretkey123456";
+    @Value("${jwt.secret}")
+private String SECRET_KEY;
 
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(SECRET_KEY.getBytes());

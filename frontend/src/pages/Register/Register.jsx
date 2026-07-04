@@ -15,12 +15,9 @@ import { FcGoogle } from "react-icons/fc"
 import { register } from "../../services/authService";
 
 const ROLES = [
-  "Employee",
-  "Team Lead / Manager",
-  "HR Specialist",
-  "Department Head",
-  "Learning & Development Admin",
-  "System Administrator",
+  { id: 2, name: "Employee" },
+  { id: 3, name: "HR" },
+  { id: 1, name: "Admin" },
 ]
 
 function getPasswordStrength(password) {
@@ -77,7 +74,7 @@ export default function RegisterPage() {
       name: fullName,
       email: email,
       password: password,
-      roleId: 24 // Make sure 24 exists in your roles table
+      roleId: Number(role)// Make sure 24 exists in your roles table
     });
 
     console.log(data);
@@ -346,10 +343,10 @@ export default function RegisterPage() {
                       Select your role
                     </option>
                     {ROLES.map((r) => (
-                      <option key={r} value={r} className="text-slate-900">
-                        {r}
-                      </option>
-                    ))}
+  <option key={r.id} value={r.id}>
+    {r.name}
+  </option>
+))}
                   </select>
                   <svg
                     className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
