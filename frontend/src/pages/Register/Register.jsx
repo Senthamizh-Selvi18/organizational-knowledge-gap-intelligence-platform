@@ -12,6 +12,7 @@ import {
   FiX,
 } from "react-icons/fi"
 import { FcGoogle } from "react-icons/fc"
+import { register } from "../../services/authService";
 
 const ROLES = [
   "Employee",
@@ -68,10 +69,24 @@ export default function RegisterPage() {
   const passwordsMismatch =
     confirmPassword.length > 0 && password !== confirmPassword
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    // UI only — no authentication logic
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  try {
+    const data = await register({
+      name: fullName,
+      email: email,
+      password: password,
+      roleId: 24 // Make sure 24 exists in your roles table
+    });
+
+    console.log(data);
+    alert("Registration successful!");
+  } catch (err) {
+    console.error(err);
+    alert("Registration failed");
   }
+};
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-100 px-4 py-10 font-sans">

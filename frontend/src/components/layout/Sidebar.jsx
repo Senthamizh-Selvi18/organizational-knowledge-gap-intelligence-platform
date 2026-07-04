@@ -11,20 +11,26 @@ import {
   FiLogOut,
   FiX,
 } from "react-icons/fi"
-
+const role = localStorage.getItem("role");
 const menuItems = [
   { label: "Dashboard", icon: FiHome, to: "/employee-dashboard" },
   { label: "Profile", icon: FiUser, to: "/dashboard/profile" },
   { label: "Skills", icon: FiCpu, to: "/dashboard/skills" },
   { label: "Competencies", icon: FiBarChart2, to: "/dashboard/competencies" },
   { label: "Employees", icon: FiUsers, to: "/dashboard/employees" },
-  { label: "Role Management", icon: FiShield, to: "/dashboard/roles" },
+  ...(role === "ADMIN"
+  ? [{ label: "Role Management", icon: FiShield, to: "/dashboard/roles" }]
+  : []),
   { label: "Notifications", icon: FiBell, to: "/dashboard/notifications" },
   { label: "Settings", icon: FiSettings, to: "/dashboard/settings" },
 ]
 
 export default function Sidebar({ open, onClose }) {
   const navigate = useNavigate()
+  const handleLogout = () => {
+  localStorage.removeItem("token");
+  navigate("/login");
+};
 
   return (
     <>
@@ -109,7 +115,7 @@ export default function Sidebar({ open, onClose }) {
         <div className="flex-shrink-0 border-t border-white/60 p-3">
           <button
             type="button"
-            onClick={() => navigate("/login")}
+            onClick={handleLogout}
             className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-red-50 hover:text-red-600"
           >
             <FiLogOut className="h-5 w-5 flex-shrink-0 text-slate-400 transition-colors group-hover:text-red-500" />
