@@ -5,6 +5,7 @@ import com.organizational.knowledge_gap_platform.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface PasswordResetTokenRepository extends JpaRepository<PasswordResetToken, Long> {
@@ -13,4 +14,7 @@ public interface PasswordResetTokenRepository extends JpaRepository<PasswordRese
 
     @Transactional
     void deleteByUser(User user);
+
+    @Transactional
+    long deleteByExpiresAtBefore(LocalDateTime expiryDate);
 }

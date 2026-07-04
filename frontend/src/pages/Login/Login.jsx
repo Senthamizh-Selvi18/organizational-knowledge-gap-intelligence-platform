@@ -8,17 +8,36 @@ import {
   FiArrowRight,
 } from "react-icons/fi"
 import { FcGoogle } from "react-icons/fc"
+import { login } from "../../services/authService";
+import { useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [remember, setRemember] = useState(false)
+  
+  const navigate = useNavigate();
+  const handleSubmit = async (e) => {
+  e.preventDefault();
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    // UI only — no authentication logic
+  try {
+    const data = await login(email, password);
+
+    console.log("Response:", data);
+
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("role", data.role);
+
+    alert("Login Successful!");
+
+    navigate("/dashboard");
+
+  } catch (error) {
+    console.error(error);
+    alert("Login failed");
   }
+};
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-100 px-4 py-10 font-sans">

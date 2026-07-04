@@ -12,14 +12,12 @@ import {
   FiX,
 } from "react-icons/fi"
 import { FcGoogle } from "react-icons/fc"
+import { register } from "../../services/authService";
 
 const ROLES = [
-  "Employee",
-  "Team Lead / Manager",
-  "HR Specialist",
-  "Department Head",
-  "Learning & Development Admin",
-  "System Administrator",
+  { id: 2, name: "Employee" },
+  { id: 3, name: "HR" },
+  { id: 1, name: "Admin" },
 ]
 
 function getPasswordStrength(password) {
@@ -68,10 +66,24 @@ export default function RegisterPage() {
   const passwordsMismatch =
     confirmPassword.length > 0 && password !== confirmPassword
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    // UI only — no authentication logic
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  try {
+    const data = await register({
+      name: fullName,
+      email: email,
+      password: password,
+      roleId: Number(role)// Make sure 24 exists in your roles table
+    });
+
+    console.log(data);
+    alert("Registration successful!");
+  } catch (err) {
+    console.error(err);
+    alert("Registration failed");
   }
+};
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-100 px-4 py-10 font-sans">
@@ -331,10 +343,10 @@ export default function RegisterPage() {
                       Select your role
                     </option>
                     {ROLES.map((r) => (
-                      <option key={r} value={r} className="text-slate-900">
-                        {r}
-                      </option>
-                    ))}
+  <option key={r.id} value={r.id}>
+    {r.name}
+  </option>
+))}
                   </select>
                   <svg
                     className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"

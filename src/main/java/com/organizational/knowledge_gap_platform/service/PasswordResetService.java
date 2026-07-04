@@ -5,11 +5,16 @@ import com.organizational.knowledge_gap_platform.entity.User;
 import com.organizational.knowledge_gap_platform.exception.InvalidTokenException;
 import com.organizational.knowledge_gap_platform.repository.PasswordResetTokenRepository;
 import com.organizational.knowledge_gap_platform.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -21,6 +26,8 @@ import java.util.Optional;
 
 @Service
 public class PasswordResetService {
+
+    private static final Logger log = LoggerFactory.getLogger(PasswordResetService.class);
 
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository tokenRepository;
@@ -44,8 +51,11 @@ public class PasswordResetService {
     }
 
     public void requestReset(String email) {
+        log.info("Password reset requested for email: {}", maskEmail(email));
+
         Optional<User> userOpt = userRepository.findByEmail(email);
         if (userOpt.isEmpty()) {
+            log.info("Password reset requested for an email with no matching account: {}", maskEmail(email));
             return;
         }
 
@@ -61,6 +71,8 @@ public class PasswordResetService {
         resetToken.setExpiresAt(LocalDateTime.now().plusMinutes(expiryMinutes));
         tokenRepository.save(resetToken);
 
+        log.info("Password reset token created for user id: {}", user.getId());
+
         sendResetEmail(user.getEmail(), rawToken);
     }
 
@@ -68,9 +80,13 @@ public class PasswordResetService {
         String tokenHash = hash(rawToken);
 
         PasswordResetToken token = tokenRepository.findByTokenHashAndUsedFalse(tokenHash)
-                .orElseThrow(() -> new InvalidTokenException("Invalid or already used token"));
+                .orElseThrow(() -> {
+                    log.warn("Password reset attempted with an invalid or already-used token");
+                    return new InvalidTokenException("Invalid or already used token");
+                });
 
         if (token.getExpiresAt().isBefore(LocalDateTime.now())) {
+            log.warn("Password reset attempted with an expired token for user id: {}", token.getUser().getId());
             throw new InvalidTokenException("This reset link has expired. Please request a new one.");
         }
 
@@ -80,6 +96,17 @@ public class PasswordResetService {
 
         token.setUsed(true);
         tokenRepository.save(token);
+
+        log.info("Password successfully reset for user id: {}", user.getId());
+    }
+
+    @Scheduled(cron = "0 0 * * * *")
+    @Transactional
+    public void cleanupExpiredTokens() {
+        long deleted = tokenRepository.deleteByExpiresAtBefore(LocalDateTime.now());
+        if (deleted > 0) {
+            log.info("Cleaned up {} expired password reset token(s)", deleted);
+        }
     }
 
     private String generateSecureToken() {
@@ -111,6 +138,20 @@ public class PasswordResetService {
                 "This link expires in " + expiryMinutes + " minutes.\n" +
                 "If you didn't request this, you can safely ignore this email."
         );
+        try {
+            mailSender.send(message);
+            log.info("Password reset email sent to {}", maskEmail(toEmail));
+        } catch (MailException ex) {
+            log.error("Failed to send password reset email to {}: {}", maskEmail(toEmail), ex.getMessage());
+        }
         mailSender.send(message);
+    }
+
+    private String maskEmail(String email) {
+        int at = email.indexOf('@');
+        if (at <= 1) {
+            return "***";
+        }
+        return email.charAt(0) + "***" + email.substring(at);
     }
 }

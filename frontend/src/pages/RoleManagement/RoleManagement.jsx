@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Navigate } from "react-router-dom";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import {
   FiUsers,
@@ -72,6 +73,11 @@ function StatCard({ title, value, icon: Icon, color }) {
 }
 
 export default function RoleManagement() {
+  const role = localStorage.getItem("role");
+
+if (role !== "ADMIN") {
+  return <Navigate to="/dashboard" replace />;
+}
   const [search, setSearch] = useState("");
 
   return (
