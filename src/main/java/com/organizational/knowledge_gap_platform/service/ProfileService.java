@@ -1,5 +1,8 @@
 package com.organizational.knowledge_gap_platform.service;
 
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import com.organizational.knowledge_gap_platform.dto.ProfileResponseDTO;
 import com.organizational.knowledge_gap_platform.dto.UpdateProfileRequestDTO;
 import com.organizational.knowledge_gap_platform.entity.Employee;
@@ -24,6 +27,14 @@ public class ProfileService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        String loggedInUserEmail = authentication.getName();
+
+        if (!user.getEmail().equals(loggedInUserEmail)) {
+            throw new AccessDeniedException("You are not authorized to access this profile.");
+        }
 
         Employee employee = employeeRepository.findByUser(user).orElse(null);
 
@@ -54,6 +65,14 @@ public class ProfileService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        String loggedInUserEmail = authentication.getName();
+
+        if (!user.getEmail().equals(loggedInUserEmail)) {
+            throw new AccessDeniedException("You are not authorized to update this profile.");
+        }
 
         // Update User table
         if (request.getName() != null && !request.getName().trim().isEmpty()) {
