@@ -9,22 +9,40 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.HashMap;
 import java.util.Map;
 
-// NOTE: For other GlobalExceptionHandler created (e.g. for JWT auth), merge the @ExceptionHandler methods into a single class
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidTokenException.class)
-    public ResponseEntity<Map<String, String>> handleInvalidToken(InvalidTokenException ex) {
-        Map<String, String> body = new HashMap<>();
-        body.put("message", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    public ResponseEntity<Map<String, Object>> handleInvalidToken(InvalidTokenException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody(ex.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
+    public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
+        Map<String, String> fieldErrors = new HashMap<>();
         ex.getBindingResult().getFieldErrors()
-                .forEach(err -> errors.put(err.getField(), err.getDefaultMessage()));
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+                .forEach(err -> fieldErrors.put(err.getField(), err.getDefaultMessage()));
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("message", "Validation failed");
+        body.put("errors", fieldErrors);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody(ex.getMessage()));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> handleException(Exception ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(errorBody("Something went wrong."));
+    }
+
+    private Map<String, Object> errorBody(String message) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("message", message);
+        return body;
     }
 }

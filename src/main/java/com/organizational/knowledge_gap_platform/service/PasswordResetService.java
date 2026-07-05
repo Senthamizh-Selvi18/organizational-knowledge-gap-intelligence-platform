@@ -50,7 +50,8 @@ public class PasswordResetService {
         this.passwordEncoder = passwordEncoder;
         this.mailSender = mailSender;
     }
-
+    
+    @Transactional
     public void requestReset(String email) {
         log.info("Password reset requested for email: {}", maskEmail(email));
 
@@ -76,7 +77,9 @@ public class PasswordResetService {
 
         try {
             sendResetEmail(user.getEmail(), rawToken);
-        } catch (EmailDeliveryException ex) {}
+        } catch (EmailDeliveryException ex) {
+            log.error("Password reset email could not be delivered for user id {}: {}", user.getId(), ex.getMessage());
+        }
     }
 
     @Transactional
