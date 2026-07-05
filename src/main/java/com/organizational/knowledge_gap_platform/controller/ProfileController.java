@@ -1,5 +1,5 @@
 package com.organizational.knowledge_gap_platform.controller;
-
+import jakarta.validation.Valid;
 import com.organizational.knowledge_gap_platform.dto.ProfileResponseDTO;
 import com.organizational.knowledge_gap_platform.dto.UpdateProfileRequestDTO;
 import com.organizational.knowledge_gap_platform.service.ProfileService;
@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:5173")
 @RequestMapping("/api/profile")
 public class ProfileController {
 
@@ -32,7 +31,7 @@ public class ProfileController {
     @PutMapping("/{userId}")
     public ResponseEntity<ProfileResponseDTO> updateProfile(
             @PathVariable Long userId,
-            @RequestBody UpdateProfileRequestDTO request) {
+            @Valid @RequestBody UpdateProfileRequestDTO request) {
 
         ProfileResponseDTO updatedProfile = profileService.updateProfile(userId, request);
 

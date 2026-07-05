@@ -22,11 +22,8 @@ public class ProfileService {
 
     public ProfileResponseDTO getProfile(Long userId) {
 
-        User user = userRepository.findById(userId).orElse(null);
-
-        if (user == null) {
-            return null;
-        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         Employee employee = employeeRepository.findByUser(user).orElse(null);
 
@@ -55,14 +52,13 @@ public class ProfileService {
     public ProfileResponseDTO updateProfile(Long userId,
                                             UpdateProfileRequestDTO request) {
 
-        User user = userRepository.findById(userId).orElse(null);
-
-        if (user == null) {
-            return null;
-        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         // Update User table
-        user.setName(request.getName());
+        if (request.getName() != null && !request.getName().trim().isEmpty()) {
+            user.setName(request.getName());
+        }
         userRepository.save(user);
 
         // Update Employee table
@@ -70,13 +66,33 @@ public class ProfileService {
 
         if (employee != null) {
 
-            employee.setDepartment(request.getDepartment());
-            employee.setDesignation(request.getDesignation());
-            employee.setPhoneNumber(request.getPhoneNumber());
-            employee.setLocation(request.getLocation());
-            employee.setJoiningDate(request.getJoiningDate());
-            employee.setExperience(request.getExperience());
-            employee.setManager(request.getManager());
+            if (request.getDepartment() != null && !request.getDepartment().trim().isEmpty()) {
+                employee.setDepartment(request.getDepartment());
+            }
+
+            if (request.getDesignation() != null && !request.getDesignation().trim().isEmpty()) {
+                employee.setDesignation(request.getDesignation());
+            }
+
+            if (request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {
+                employee.setPhoneNumber(request.getPhoneNumber());
+            }
+
+            if (request.getLocation() != null && !request.getLocation().trim().isEmpty()) {
+                employee.setLocation(request.getLocation());
+            }
+
+            if (request.getJoiningDate() != null) {
+                employee.setJoiningDate(request.getJoiningDate());
+            }
+
+            if (request.getExperience() != null) {
+                employee.setExperience(request.getExperience());
+            }
+
+            if (request.getManager() != null && !request.getManager().trim().isEmpty()) {
+                employee.setManager(request.getManager());
+            }
 
             employeeRepository.save(employee);
         }
