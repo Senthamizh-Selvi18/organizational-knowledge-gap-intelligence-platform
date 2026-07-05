@@ -15,6 +15,8 @@ import {
 import { FcGoogle } from "react-icons/fc"
 import { register } from "../../services/authService";
 
+
+// TODO: Fetch roles dynamically from backend API instead of hardcoding IDs.
 const ROLES = [
   { id: 24, name: "Employee" },
   { id: 27, name: "Intern" },

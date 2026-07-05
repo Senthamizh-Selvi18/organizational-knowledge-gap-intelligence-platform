@@ -1,12 +1,13 @@
 package com.organizational.knowledge_gap_platform.service;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
 import com.organizational.knowledge_gap_platform.entity.Role;
+import com.organizational.knowledge_gap_platform.entity.User;
 import com.organizational.knowledge_gap_platform.repository.RoleRepository;
 import com.organizational.knowledge_gap_platform.repository.UserRepository;
-import com.organizational.knowledge_gap_platform.service.RoleService;
-import org.springframework.stereotype.Service;
-import com.organizational.knowledge_gap_platform.entity.User;
-import java.util.List;
 
 @Service
 public class RoleServiceImpl implements RoleService {
