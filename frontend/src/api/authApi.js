@@ -10,7 +10,7 @@ async function handleResponse(res) {
 }
 
 export async function forgotPassword(email) {
-  const res = await fetch(`${API_BASE_URL}/forgot-password`, {
+  const res = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email }),
@@ -19,7 +19,7 @@ export async function forgotPassword(email) {
 }
 
 export async function resetPassword(token, newPassword) {
-  const res = await fetch(`${API_BASE_URL}/reset-password`, {
+  const res = await fetch(`${API_BASE_URL}/api/auth/reset-password`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ token, newPassword }),

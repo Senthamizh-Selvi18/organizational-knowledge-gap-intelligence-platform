@@ -2,6 +2,7 @@ package com.organizational.knowledge_gap_platform.service;
 
 import com.organizational.knowledge_gap_platform.entity.PasswordResetToken;
 import com.organizational.knowledge_gap_platform.entity.User;
+import com.organizational.knowledge_gap_platform.exception.EmailDeliveryException;
 import com.organizational.knowledge_gap_platform.exception.InvalidTokenException;
 import com.organizational.knowledge_gap_platform.repository.PasswordResetTokenRepository;
 import com.organizational.knowledge_gap_platform.repository.UserRepository;
@@ -73,9 +74,12 @@ public class PasswordResetService {
 
         log.info("Password reset token created for user id: {}", user.getId());
 
-        sendResetEmail(user.getEmail(), rawToken);
+        try {
+            sendResetEmail(user.getEmail(), rawToken);
+        } catch (EmailDeliveryException ex) {}
     }
 
+    @Transactional
     public void resetPassword(String rawToken, String newPassword) {
         String tokenHash = hash(rawToken);
 
@@ -143,6 +147,7 @@ public class PasswordResetService {
             log.info("Password reset email sent to {}", maskEmail(toEmail));
         } catch (MailException ex) {
             log.error("Failed to send password reset email to {}: {}", maskEmail(toEmail), ex.getMessage());
+            throw new EmailDeliveryException("Failed to send password reset email", ex);
         }
     }
 
