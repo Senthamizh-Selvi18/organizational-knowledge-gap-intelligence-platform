@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
+import { useNavigate } from "react-router-dom";
 import {
   FiUser,
   FiMail,
@@ -15,10 +16,9 @@ import { FcGoogle } from "react-icons/fc"
 import { register } from "../../services/authService";
 
 const ROLES = [
-  { id: 2, name: "Employee" },
-  { id: 3, name: "HR" },
-  { id: 1, name: "Admin" },
-]
+  { id: 24, name: "Employee" },
+  { id: 27, name: "Intern" },
+];
 
 function getPasswordStrength(password) {
   let score = 0
@@ -53,6 +53,7 @@ function getPasswordStrength(password) {
 }
 
 export default function RegisterPage() {
+  const navigate = useNavigate();
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -79,10 +80,17 @@ export default function RegisterPage() {
 
     console.log(data);
     alert("Registration successful!");
-  } catch (err) {
-    console.error(err);
-    alert("Registration failed");
-  }
+    navigate("/login");
+  }     
+    catch (err) {
+  console.log(err);
+  console.log(err.response);
+  console.log(err.response?.data);
+  console.log(err.response?.status);
+
+  console.log(err.response?.data);
+alert(err.response?.data?.message || JSON.stringify(err.response?.data) || err.message);
+}
 };
 
   return (

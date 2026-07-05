@@ -40,10 +40,11 @@ public class AuthService {
     // register() and login() will be added next
 
     public AuthResponse register(RegisterRequest request) {
-
+    System.out.println(request.getRoleId());
+    System.out.println("Role ID received: " + request.getRoleId());
     Role role = roleRepository.findById(request.getRoleId())
             .orElseThrow(() -> new RuntimeException("Role not found"));
-
+    System.out.println(role.getRoleName());
     User user = new User();
     user.setName(request.getName());
     user.setEmail(request.getEmail());

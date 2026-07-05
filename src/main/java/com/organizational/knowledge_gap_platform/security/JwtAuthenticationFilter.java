@@ -25,13 +25,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
     }
-
+    
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain)
             throws ServletException, IOException {
+            
+             System.out.println("========== JWT FILTER ==========");
+    System.out.println("URI: " + request.getRequestURI());
+    System.out.println("Authorization: " + request.getHeader("Authorization"));
+            System.out.println("Request URI: " + request.getRequestURI());
+System.out.println("Authorization: " + request.getHeader("Authorization"));
 
         final String authHeader = request.getHeader("Authorization");
 

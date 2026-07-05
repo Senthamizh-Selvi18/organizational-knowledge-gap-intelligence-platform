@@ -21,15 +21,15 @@ public class AuthController {
     public AuthController(AuthService authService) {
         this.authService = authService;
     }
+    @PostMapping("/register")
+public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
 
-   @PostMapping("/register")
-   public ResponseEntity<AuthResponse> register(
-        @Valid @RequestBody RegisterRequest request){
-
+    System.out.println("REGISTER API HIT");
 
     return ResponseEntity.ok(authService.register(request));
 }
-
+   
+   
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(
         @Valid @RequestBody LoginRequest request) {
