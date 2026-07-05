@@ -144,7 +144,6 @@ public class PasswordResetService {
         } catch (MailException ex) {
             log.error("Failed to send password reset email to {}: {}", maskEmail(toEmail), ex.getMessage());
         }
-        mailSender.send(message);
     }
 
     private String maskEmail(String email) {
