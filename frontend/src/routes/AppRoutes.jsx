@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "../pages/Login/Login";
 import RegisterPage from "../pages/Register/Register";
 import ForgotPasswordPage from "../pages/ForgotPassword/ForgotPassword";
+import ResetPasswordPage from "../pages/ResetPassword/ResetPassword";
 import DashboardPage from "../pages/Dashboard/DashboardPage";
 import EmployeeDashboard from "../pages/EmployeeDashboard/EmployeeDashboard";
 import Profile from "../pages/Profile/Profile";
@@ -23,6 +24,8 @@ function AppRoutes() {
         path="/forgot-password"
         element={<ForgotPasswordPage />}
       />
+
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       <Route
         path="/dashboard"
@@ -62,7 +65,6 @@ function AppRoutes() {
       
       <Route path="/oauth2/redirect" element={<OAuth2RedirectPage />} />
     </Routes>
-    
   );
 }
 

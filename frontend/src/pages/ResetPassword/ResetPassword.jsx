@@ -1,21 +1,41 @@
 import { useState } from "react"
-import { Link } from "react-router-dom"
-import { FiMail, FiArrowRight, FiArrowLeft, FiCheckCircle, FiLoader } from "react-icons/fi"
-import { forgotPassword } from "../../api/authApi"
+import { useSearchParams, useNavigate, Link } from "react-router-dom"
+import { FiLock, FiArrowRight, FiArrowLeft, FiCheckCircle, FiLoader } from "react-icons/fi"
+import { resetPassword } from "../../api/authApi"
 
-export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState("")
+export default function ResetPasswordPage() {
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const token = searchParams.get("token")
+
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const [loading, setLoading] = useState(false)
-  const [sent, setSent] = useState(false)
+  const [done, setDone] = useState(false)
   const [error, setError] = useState("")
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError("")
+
+    if (!token) {
+      setError("This reset link is invalid or missing a token.")
+      return
+    }
+    if (newPassword.length < 8) {
+      setError("Password must be at least 8 characters.")
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match.")
+      return
+    }
+
     setLoading(true)
     try {
-      await forgotPassword(email)
-      setSent(true)
+      await resetPassword(token, newPassword)
+      setDone(true)
+      setTimeout(() => navigate("/login"), 2500)
     } catch (err) {
       setError(err.message || "Something went wrong. Please try again.")
     } finally {
@@ -85,34 +105,21 @@ export default function ForgotPasswordPage() {
               </h1>
             </div>
 
-            {sent ? (
+            {done ? (
               <div className="flex flex-col items-center text-center">
                 <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600">
                   <FiCheckCircle className="h-9 w-9" />
                 </span>
                 <h2 className="mt-6 text-2xl font-bold tracking-tight text-slate-900">
-                  Check Your Email
+                  Password Reset
                 </h2>
                 <p className="mt-2 text-sm leading-relaxed text-slate-500">
-                  If an account exists for{" "}
-                  <span className="font-semibold text-slate-700">
-                    {email || "your email"}
-                  </span>
-                  , we&apos;ve sent a password reset link. Please check your inbox
-                  and spam folder.
+                  Your password has been updated. Redirecting you to login...
                 </p>
-
-                <button
-                  type="button"
-                  onClick={() => setSent(false)}
-                  className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white/80 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-md focus:outline-none focus:ring-4 focus:ring-slate-200"
-                >
-                  Resend Link
-                </button>
 
                 <Link
                   to="/login"
-                  className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 transition-colors hover:text-blue-700 hover:underline"
+                  className="mt-8 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 transition-colors hover:text-blue-700 hover:underline"
                 >
                   <FiArrowLeft className="h-4 w-4" />
                   Back to Login
@@ -122,32 +129,60 @@ export default function ForgotPasswordPage() {
               <>
                 <div className="text-center lg:text-left">
                   <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-                    Forgot Password
+                    Reset Password
                   </h2>
                   <p className="mt-1.5 text-sm leading-relaxed text-slate-500">
-                    Enter your registered email address and we&apos;ll send you a
-                    password reset link.
+                    Choose a new password for your account.
                   </p>
                 </div>
+
+                {!token && (
+                  <p className="mt-4 text-sm font-medium text-red-600">
+                    No reset token found. Please use the link from your email.
+                  </p>
+                )}
 
                 <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-5">
                   <div>
                     <label
-                      htmlFor="email"
+                      htmlFor="newPassword"
                       className="mb-1.5 block text-sm font-medium text-slate-700"
                     >
-                      Email Address
+                      New Password
                     </label>
                     <div className="group relative">
-                      <FiMail className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-blue-600" />
+                      <FiLock className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-blue-600" />
                       <input
-                        id="email"
-                        type="email"
+                        id="newPassword"
+                        type="password"
                         required
-                        autoComplete="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="you@company.com"
+                        minLength={8}
+                        autoComplete="new-password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="At least 8 characters"
+                        className="w-full rounded-xl border border-slate-200 bg-white/70 py-3 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 shadow-sm outline-none transition-all duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/15"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="confirmPassword"
+                      className="mb-1.5 block text-sm font-medium text-slate-700"
+                    >
+                      Confirm Password
+                    </label>
+                    <div className="group relative">
+                      <FiLock className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-blue-600" />
+                      <input
+                        id="confirmPassword"
+                        type="password"
+                        required
+                        autoComplete="new-password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Re-enter new password"
                         className="w-full rounded-xl border border-slate-200 bg-white/70 py-3 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 shadow-sm outline-none transition-all duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/15"
                       />
                     </div>
@@ -159,17 +194,17 @@ export default function ForgotPasswordPage() {
 
                   <button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || !token}
                     className="group mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/30 active:translate-y-0 focus:outline-none focus:ring-4 focus:ring-blue-500/30 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 disabled:hover:bg-blue-600"
                   >
                     {loading ? (
                       <>
                         <FiLoader className="h-4 w-4 animate-spin" />
-                        Sending...
+                        Resetting...
                       </>
                     ) : (
                       <>
-                        Send Reset Link
+                        Reset Password
                         <FiArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                       </>
                     )}

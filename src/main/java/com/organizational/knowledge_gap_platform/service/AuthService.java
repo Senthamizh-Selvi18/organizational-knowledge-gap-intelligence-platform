@@ -40,7 +40,7 @@ public class AuthService {
     // register() and login() will be added next
 
     public AuthResponse register(RegisterRequest request) {
-
+   
     Role role = roleRepository.findById(request.getRoleId())
             .orElseThrow(() -> new RuntimeException("Role not found"));
 
