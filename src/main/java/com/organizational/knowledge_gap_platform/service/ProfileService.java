@@ -10,6 +10,7 @@ import com.organizational.knowledge_gap_platform.entity.User;
 import com.organizational.knowledge_gap_platform.repository.EmployeeRepository;
 import com.organizational.knowledge_gap_platform.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ProfileService {
@@ -60,6 +61,7 @@ public class ProfileService {
         return response;
     }
 
+    @Transactional
     public ProfileResponseDTO updateProfile(Long userId,
                                             UpdateProfileRequestDTO request) {
 

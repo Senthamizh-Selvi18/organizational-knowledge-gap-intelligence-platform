@@ -20,11 +20,6 @@ public class ProfileController {
     public ResponseEntity<ProfileResponseDTO> getProfile(@PathVariable Long userId) {
 
         ProfileResponseDTO profile = profileService.getProfile(userId);
-
-        if (profile == null) {
-            return ResponseEntity.notFound().build();
-        }
-
         return ResponseEntity.ok(profile);
     }
 
@@ -34,11 +29,8 @@ public class ProfileController {
             @Valid @RequestBody UpdateProfileRequestDTO request) {
 
         ProfileResponseDTO updatedProfile = profileService.updateProfile(userId, request);
-
-        if (updatedProfile == null) {
-            return ResponseEntity.notFound().build();
-        }
-
         return ResponseEntity.ok(updatedProfile);
+
+
     }
 }
