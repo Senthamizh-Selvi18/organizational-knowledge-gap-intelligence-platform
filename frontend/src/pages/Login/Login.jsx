@@ -220,6 +220,9 @@ export default function LoginPage() {
               {/* Google */}
               <button
                 type="button"
+                onClick={() => {
+                  window.location.href = `${import.meta.env.VITE_API_ORIGIN}/oauth2/authorization/google`;
+                }}
                 className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white/80 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-md focus:outline-none focus:ring-4 focus:ring-slate-200"
               >
                 <FcGoogle className="h-5 w-5" />

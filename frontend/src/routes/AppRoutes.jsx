@@ -9,7 +9,7 @@ import EmployeeDashboard from "../pages/EmployeeDashboard/EmployeeDashboard";
 import Profile from "../pages/Profile/Profile";
 import RoleManagement from "../pages/RoleManagement/RoleManagement";
 import ProtectedRoute from "./ProtectedRoute";
-
+import OAuth2RedirectPage from "../pages/OAuth2Redirect/OAuth2Redirect";
 
 function AppRoutes() {
   return (
@@ -25,10 +25,7 @@ function AppRoutes() {
         element={<ForgotPasswordPage />}
       />
 
-      <Route
-        path="/reset-password"
-        element={<ResetPasswordPage />}
-      />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       <Route
         path="/dashboard"
@@ -47,6 +44,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/dashboard/profile"
         element={
@@ -55,6 +53,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/dashboard/roles"
         element={
@@ -63,6 +62,8 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      
+      <Route path="/oauth2/redirect" element={<OAuth2RedirectPage />} />
     </Routes>
   );
 }
