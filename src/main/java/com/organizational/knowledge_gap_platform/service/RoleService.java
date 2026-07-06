@@ -1,53 +1,19 @@
 package com.organizational.knowledge_gap_platform.service;
 
 import com.organizational.knowledge_gap_platform.entity.Role;
-import com.organizational.knowledge_gap_platform.repository.RoleRepository;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 
-@Service
-public class RoleService {
+public interface RoleService {
 
-    private final RoleRepository roleRepository;
+    List<Role> getAllRoles();
 
-    public RoleService(RoleRepository roleRepository) {
-        this.roleRepository = roleRepository;
-    }
+    Role getRoleById(Long id);
 
-    public List<Role> getAllRoles() {
-        return roleRepository.findAll();
-    }
+    Role createRole(Role role);
 
-    public Role getRoleById(Long id) {
-        return roleRepository.findById(id).orElse(null);
-    }
+    Role updateRole(Long id, Role updatedRole);
 
-    public Role createRole(Role role) {
-        return roleRepository.save(role);
-    }
+    boolean deleteRole(Long id);
 
-    public Role updateRole(Long id, Role updatedRole) {
-
-        Role role = roleRepository.findById(id).orElse(null);
-
-        if (role == null) {
-            return null;
-        }
-
-        role.setRoleName(updatedRole.getRoleName());
-
-        return roleRepository.save(role);
-    }
-
-    public boolean deleteRole(Long id) {
-
-        if (!roleRepository.existsById(id)) {
-            return false;
-        }
-
-        roleRepository.deleteById(id);
-
-        return true;
-    }
+    boolean assignRoleToUser(Long userId, Long roleId);
 }

@@ -22,13 +22,13 @@ export default function DashboardLayout({ children }) {
         />
       </div>
 
-      <div className="relative z-10 flex">
+      <div className="relative z-10 flex min-h-screen">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-        <div className="flex min-h-screen w-full min-w-0 flex-col">
+          <div className="flex flex-1 flex-col lg:ml-64">
           <Navbar onMenuClick={() => setSidebarOpen(true)} />
 
-          <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
+          <main className="flex-1 p-6 ">{children}</main>
         </div>
       </div>
     </div>
