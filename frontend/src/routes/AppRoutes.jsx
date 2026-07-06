@@ -8,7 +8,7 @@ import EmployeeDashboard from "../pages/EmployeeDashboard/EmployeeDashboard";
 import Profile from "../pages/Profile/Profile";
 import RoleManagement from "../pages/RoleManagement/RoleManagement";
 import ProtectedRoute from "./ProtectedRoute";
-
+import OAuth2RedirectPage from "../pages/OAuth2Redirect/OAuth2Redirect";
 
 function AppRoutes() {
   return (
@@ -25,38 +25,42 @@ function AppRoutes() {
       />
 
       <Route
-  path="/dashboard"
-  element={
-    <ProtectedRoute>
-      <DashboardPage />
-    </ProtectedRoute>
-  }
-/>
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
 
       <Route
-  path="/employee-dashboard"
-  element={
-    <ProtectedRoute>
-      <EmployeeDashboard />
-    </ProtectedRoute>
-  }
-/>
+        path="/employee-dashboard"
+        element={
+          <ProtectedRoute>
+            <EmployeeDashboard />
+          </ProtectedRoute>
+        }
+      />
+
       <Route
-  path="/dashboard/profile"
-  element={
-    <ProtectedRoute>
-      <Profile />
-    </ProtectedRoute>
-  }
-/>
+        path="/dashboard/profile"
+        element={
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        }
+      />
+
       <Route
-  path="/dashboard/roles"
-  element={
-    <ProtectedRoute>
-      <RoleManagement />
-    </ProtectedRoute>
-  }
-/>
+        path="/dashboard/roles"
+        element={
+          <ProtectedRoute>
+            <RoleManagement />
+          </ProtectedRoute>
+        }
+      />
+      
+      <Route path="/oauth2/redirect" element={<OAuth2RedirectPage />} />
     </Routes>
     
   );
