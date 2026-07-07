@@ -6,11 +6,12 @@
 |---|---|
 | id | Long (PK) |
 | name | String |
-| email | String |
+| email | String (Unique) |
 | password | String |
 | role_id | Long (FK) |
 | created_at | Timestamp |
 
+---
 
 ## Roles
 
@@ -19,31 +20,35 @@
 | id | Long (PK) |
 | role_name | String |
 
+### Default Roles
 
-## Auth
-
-| Column | Type |
+| id | role_name |
 |---|---|
-| id | Long (PK) |
-| user_id | Long (FK) |
-| provider | String |
-| created_at | Timestamp |
-
+| 1 | Employee |
+| 2 | Team Lead / Manager |
+| 3 | HR Specialist |
+| 4 | Department Head |
+| 5 | Learning & Development Admin |
+| 6 | System Administrator |
 
 ---
-
-# ER Diagram v1
 
 ## Employee
 
 | Column | Type |
 |---|---|
 | id | Long (PK) |
-| name | String |
-| email | String |
+| employee_code | String (Unique) |
+| user_id | Long (FK) |
 | department | String |
+| designation | String |
+| phone_number | String |
+| location | String |
+| joining_date | Date |
+| experience | Integer |
+| manager | String |
 | created_at | Timestamp |
-
+---
 
 ## Skill
 
@@ -52,6 +57,7 @@
 | id | Long (PK) |
 | skill_name | String |
 
+---
 
 ## Competency
 
@@ -63,9 +69,29 @@
 | level | String |
 | created_at | Timestamp |
 
+---
 
-## Relationships
+## Auth
 
-Employee 1 ---- * Competency
+| Column | Type |
+|---|---|
+| id | Long (PK) |
+| user_id | Long (FK) |
+| provider | String |
+| created_at | Timestamp |
 
-Skill 1 ---- * Competency
+---
+
+# Relationships
+
+Users (1) -------- (1) Employee
+
+Roles (1) -------- (*) Users
+
+Employee (1) -------- (*) Competency
+
+Skill (1) -------- (*) Competency
+
+Users (1) -------- (*) Auth
+
+Employee (1) -------- (*) Employee (Manager → Employees)

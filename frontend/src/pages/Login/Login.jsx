@@ -8,17 +8,36 @@ import {
   FiArrowRight,
 } from "react-icons/fi"
 import { FcGoogle } from "react-icons/fc"
+import { login } from "../../services/authService";
+import { useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [remember, setRemember] = useState(false)
+  
+  const navigate = useNavigate();
+  const handleSubmit = async (e) => {
+  e.preventDefault();
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    // UI only — no authentication logic
+  try {
+    const data = await login(email, password);
+
+    console.log("Response:", data);
+
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("role", data.role);
+
+    alert("Login Successful!");
+
+    navigate("/dashboard");
+
+  } catch (error) {
+    console.error(error);
+    alert("Login failed");
   }
+};
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-100 px-4 py-10 font-sans">
@@ -201,6 +220,9 @@ export default function LoginPage() {
               {/* Google */}
               <button
                 type="button"
+                onClick={() => {
+                  window.location.href = `${import.meta.env.VITE_API_ORIGIN}/oauth2/authorization/google`;
+                }}
                 className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white/80 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-md focus:outline-none focus:ring-4 focus:ring-slate-200"
               >
                 <FcGoogle className="h-5 w-5" />

@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
+import { useNavigate } from "react-router-dom";
 import {
   FiUser,
   FiMail,
@@ -12,15 +13,14 @@ import {
   FiX,
 } from "react-icons/fi"
 import { FcGoogle } from "react-icons/fc"
+import { register } from "../../services/authService";
 
+
+// TODO: Fetch roles dynamically from backend API instead of hardcoding IDs.
 const ROLES = [
-  "Employee",
-  "Team Lead / Manager",
-  "HR Specialist",
-  "Department Head",
-  "Learning & Development Admin",
-  "System Administrator",
-]
+  { id: 24, name: "Employee" },
+  { id: 27, name: "Intern" },
+];
 
 function getPasswordStrength(password) {
   let score = 0
@@ -55,6 +55,7 @@ function getPasswordStrength(password) {
 }
 
 export default function RegisterPage() {
+  const navigate = useNavigate();
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -68,10 +69,31 @@ export default function RegisterPage() {
   const passwordsMismatch =
     confirmPassword.length > 0 && password !== confirmPassword
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    // UI only — no authentication logic
-  }
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  try {
+    const data = await register({
+      name: fullName,
+      email: email,
+      password: password,
+      roleId: Number(role)// Make sure 24 exists in your roles table
+    });
+
+    console.log(data);
+    alert("Registration successful!");
+    navigate("/login");
+  }     
+    catch (err) {
+  console.log(err);
+  console.log(err.response);
+  console.log(err.response?.data);
+  console.log(err.response?.status);
+
+  console.log(err.response?.data);
+alert(err.response?.data?.message || JSON.stringify(err.response?.data) || err.message);
+}
+};
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-100 px-4 py-10 font-sans">
@@ -331,10 +353,10 @@ export default function RegisterPage() {
                       Select your role
                     </option>
                     {ROLES.map((r) => (
-                      <option key={r} value={r} className="text-slate-900">
-                        {r}
-                      </option>
-                    ))}
+  <option key={r.id} value={r.id}>
+    {r.name}
+  </option>
+))}
                   </select>
                   <svg
                     className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"

@@ -1,4 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import {
+  getRoles,
+  addRole,
+  updateRole,
+  deleteRole,
+} from "../../services/roleService";
+import { Navigate } from "react-router-dom";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import {
   FiUsers,
@@ -12,40 +19,7 @@ import {
   FiTrash2,
 } from "react-icons/fi";
 
-const roles = [
-  {
-    id: "R001",
-    role: "Employee",
-    description: "Basic employee access",
-    employees: 120,
-    status: "Active",
-    created: "10-Jan-2026",
-  },
-  {
-    id: "R002",
-    role: "Manager",
-    description: "Manage team members",
-    employees: 20,
-    status: "Active",
-    created: "18-Jan-2026",
-  },
-  {
-    id: "R003",
-    role: "HR Specialist",
-    description: "Employee management",
-    employees: 8,
-    status: "Active",
-    created: "25-Jan-2026",
-  },
-  {
-    id: "R004",
-    role: "System Admin",
-    description: "Complete system access",
-    employees: 3,
-    status: "Inactive",
-    created: "02-Feb-2026",
-  },
-];
+
 
 const activities = [
   "Created Employee Role",
@@ -72,7 +46,27 @@ function StatCard({ title, value, icon: Icon, color }) {
 }
 
 export default function RoleManagement() {
+  const role = localStorage.getItem("role");
+
+if (role !== "ADMIN") {
+  return <Navigate to="/dashboard" replace />;
+}
   const [search, setSearch] = useState("");
+  const [roles, setRoles] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [newRole, setNewRole] = useState("");
+  const loadRoles = async () => {
+  try {
+    const response = await getRoles();
+    setRoles(response.data);
+  } catch (err) {
+    console.error(err);
+  }
+};
+useEffect(() => {
+  loadRoles();
+}, []);
+
 
   return (
     <DashboardLayout>
@@ -95,7 +89,10 @@ export default function RoleManagement() {
 
           </div>
 
-          <button className="bg-blue-600 text-white px-5 py-3 rounded-xl flex items-center gap-2 hover:bg-blue-700">
+          <button
+  onClick={() => setShowModal(true)}
+  className="bg-blue-600 text-white px-5 py-3 rounded-xl flex items-center gap-2 hover:bg-blue-700"
+>
 
             <FiPlus />
 
@@ -198,7 +195,7 @@ export default function RoleManagement() {
 
                 {roles
                   .filter((item) =>
-                    item.role.toLowerCase().includes(search.toLowerCase())
+                    item.roleName.toLowerCase().includes(search.toLowerCase())
                   )
                   .map((item) => (
 
@@ -210,34 +207,22 @@ export default function RoleManagement() {
                       <td className="p-4">{item.id}</td>
 
                       <td className="p-4 font-semibold">
-                        {item.role}
+                        {item.roleName}
                       </td>
+                      <td className="p-4">-</td>
+
+                      <td className="p-4">-</td>
 
                       <td className="p-4">
-                        {item.description}
+                         <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full">
+                          Active
+                      </span>
                       </td>
 
-                      <td className="p-4">
-                        {item.employees}
-                      </td>
+                  <td className="p-4">-</td>
 
-                      <td className="p-4">
-
-                        <span
-                          className={`px-3 py-1 rounded-full text-sm ${
-                            item.status === "Active"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-600"
-                          }`}
-                        >
-                          {item.status}
-                        </span>
-
-                      </td>
-
-                      <td className="p-4">
-                        {item.created}
-                      </td>
+     
+     
 
                       <td className="p-4">
 
@@ -300,19 +285,48 @@ export default function RoleManagement() {
 
         </div>
 
-        {/* Add Role Modal (UI Only) */}
+        
 
-        <div className="fixed bottom-6 right-6">
+        
+      </div>
+      {showModal && (
+  <div className="fixed inset-0 bg-black/40 flex justify-center items-center">
 
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-full shadow-xl">
+    <div className="bg-white p-6 rounded-2xl w-96">
 
-            <FiPlus size={22} />
+      <h2 className="text-xl font-bold mb-5">
+        Add New Role
+      </h2>
 
-          </button>
+      <input
+        type="text"
+        placeholder="Enter Role Name"
+        value={newRole}
+        onChange={(e) => setNewRole(e.target.value)}
+        className="border w-full p-3 rounded-lg"
+      />
 
-        </div>
+      <div className="flex justify-end gap-3 mt-5">
+
+        <button
+          onClick={() => setShowModal(false)}
+          className="border px-4 py-2 rounded-lg"
+        >
+          Cancel
+        </button>
+
+        <button
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+        >
+          Save
+        </button>
 
       </div>
+
+    </div>
+
+  </div>
+)}
 
     </DashboardLayout>
 

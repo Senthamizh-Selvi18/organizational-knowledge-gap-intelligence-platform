@@ -1,5 +1,19 @@
 package com.organizational.knowledge_gap_platform.service;
 
-public class RoleService {
-    
+import com.organizational.knowledge_gap_platform.entity.Role;
+import java.util.List;
+
+public interface RoleService {
+
+    List<Role> getAllRoles();
+
+    Role getRoleById(Long id);
+
+    Role createRole(Role role);
+
+    Role updateRole(Long id, Role updatedRole);
+
+    boolean deleteRole(Long id);
+
+    boolean assignRoleToUser(Long userId, Long roleId);
 }

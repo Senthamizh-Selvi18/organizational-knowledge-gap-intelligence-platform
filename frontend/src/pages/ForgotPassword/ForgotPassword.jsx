@@ -1,25 +1,30 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import { FiMail, FiArrowRight, FiArrowLeft, FiCheckCircle, FiLoader } from "react-icons/fi"
+import { forgotPassword } from "../../api/authApi"
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
+  const [error, setError] = useState("")
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // UI only — no email sending or password reset logic
+    setError("")
     setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
+    try {
+      await forgotPassword(email)
       setSent(true)
-    }, 1400)
+    } catch (err) {
+      setError(err.message || "Something went wrong. Please try again.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-100 px-4 py-10 font-sans">
-      {/* Decorative background */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-slate-100 to-blue-100" />
         <div className="absolute -top-24 -left-24 h-96 w-96 rounded-full bg-blue-300/40 blur-3xl" />
@@ -36,14 +41,8 @@ export default function ForgotPasswordPage() {
       </div>
 
       <div className="relative z-10 grid w-full max-w-5xl items-center gap-10 lg:grid-cols-2">
-        {/* Left brand panel */}
         <section className="hidden flex-col justify-center lg:flex">
           <div className="flex items-center gap-3">
-            {/*<img
-              src="/logo.png"
-              alt="Company logo"
-              className="h-12 w-12 rounded-xl bg-white/60 p-1.5 shadow-sm ring-1 ring-white/60"
-            />*/}
             <span className="text-sm font-semibold tracking-wide text-blue-900/70 uppercase">
               KnowGap Intelligence
             </span>
@@ -73,10 +72,8 @@ export default function ForgotPasswordPage() {
           </ul>
         </section>
 
-        {/* Forgot password card */}
         <section className="mx-auto w-full max-w-md">
           <div className="rounded-3xl border border-white/60 bg-white/60 p-8 shadow-2xl shadow-blue-900/10 backdrop-blur-xl sm:p-10">
-            {/* Mobile logo + title */}
             <div className="mb-8 flex flex-col items-center text-center lg:hidden">
               <img
                 src="/logo.png"
@@ -89,7 +86,6 @@ export default function ForgotPasswordPage() {
             </div>
 
             {sent ? (
-              /* Success message placeholder (UI only) */
               <div className="flex flex-col items-center text-center">
                 <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600">
                   <FiCheckCircle className="h-9 w-9" />
@@ -135,7 +131,6 @@ export default function ForgotPasswordPage() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-5">
-                  {/* Email */}
                   <div>
                     <label
                       htmlFor="email"
@@ -158,7 +153,10 @@ export default function ForgotPasswordPage() {
                     </div>
                   </div>
 
-                  {/* Send reset link button with loading state (UI only) */}
+                  {error && (
+                    <p className="text-sm font-medium text-red-600">{error}</p>
+                  )}
+
                   <button
                     type="submit"
                     disabled={loading}
@@ -178,7 +176,6 @@ export default function ForgotPasswordPage() {
                   </button>
                 </form>
 
-                {/* Back to Login link */}
                 <p className="mt-8 text-center text-sm text-slate-600">
                   Remember your password?{" "}
                   <Link
