@@ -135,7 +135,7 @@ public class PasswordResetService {
 
     private void sendResetEmail(String toEmail, String rawToken) {
         String resetLink = resetFrontendUrl + "?token=" + rawToken;
-
+        log.info("Password reset link (for local testing): {}", resetLink);
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(toEmail);
         message.setSubject("Password Reset Request");
