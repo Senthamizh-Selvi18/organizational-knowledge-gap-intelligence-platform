@@ -72,7 +72,14 @@ public class RoleServiceImpl implements RoleService {
 
     return true;
 }
-@Override
+    @Override
+    public List<Role> getRegisterableRoles() {
+        return roleRepository.findAll().stream()
+                .filter(role -> !"ADMIN".equalsIgnoreCase(role.getRoleName()))
+                .toList();
+    }
+
+    @Override
     public boolean assignRoleToUser(Long userId, Long roleId) {
 
     User user = userRepository.findById(userId).orElse(null);
