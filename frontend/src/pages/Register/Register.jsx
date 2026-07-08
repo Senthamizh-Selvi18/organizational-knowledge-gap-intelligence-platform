@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { useNavigate } from "react-router-dom";
 import {
@@ -13,7 +13,8 @@ import {
   FiX,
 } from "react-icons/fi"
 import { FcGoogle } from "react-icons/fc"
-import { register } from "../../services/authService";
+
+import { register,getRegisterableRoles } from "../../services/authService";
 
 
 // TODO: Fetch roles dynamically from backend API instead of hardcoding IDs.
@@ -22,6 +23,7 @@ const ROLES = [
   { id: 2, name: "Admin" },
   { id: 3, name: "Intern" },
 ];
+
 
 function getPasswordStrength(password) {
   let score = 0
@@ -64,6 +66,15 @@ export default function RegisterPage() {
   const [role, setRole] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [roles, setRoles] = useState([])
+  const [rolesLoading, setRolesLoading] = useState(true)
+
+  useEffect(() => {
+    getRegisterableRoles()
+      .then((data) => setRoles(data))
+      .catch(() => alert("Failed to load roles. Please refresh the page."))
+      .finally(() => setRolesLoading(false))
+  }, [])
 
   const strength = getPasswordStrength(password)
   const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword
@@ -71,30 +82,49 @@ export default function RegisterPage() {
     confirmPassword.length > 0 && password !== confirmPassword
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
-    const data = await register({
-      name: fullName,
-      email: email,
-      password: password,
-      roleId: Number(role)// Make sure 24 exists in your roles table
-    });
+    if (!fullName.trim()) {
+      alert("Please enter your full name.");
+      return;
+    }
+    if (!email.trim()) {
+      alert("Please enter your email address.");
+      return;
+    }
+    if (!password) {
+      alert("Please enter a password.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
+    if (!role) {
+      alert("Please select a role.");
+      return;
+    }
 
-    console.log(data);
-    alert("Registration successful!");
-    navigate("/login");
-  }     
-    catch (err) {
-  console.log(err);
-  console.log(err.response);
-  console.log(err.response?.data);
-  console.log(err.response?.status);
+    try {
+      await register({
+        name: fullName.trim(),
+        email: email.trim(),
+        password,
+        roleId: Number(role),
+      });
 
-  console.log(err.response?.data);
-alert(err.response?.data?.message || JSON.stringify(err.response?.data) || err.message);
-}
-};
+      alert("Registration successful!");
+      navigate("/login");
+    } catch (err) {
+      const message =
+        err.response?.data?.message ||
+        (typeof err.response?.data === "string"
+          ? err.response.data
+          : null) ||
+        err.message;
+      alert(message || "Registration failed. Please try again.");
+    }
+  };
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-100 px-4 py-10 font-sans">
@@ -346,18 +376,23 @@ alert(err.response?.data?.message || JSON.stringify(err.response?.data) || err.m
                     id="role"
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
+                    disabled={rolesLoading || roles.length === 0}
                     className={`w-full appearance-none rounded-xl border border-slate-200 bg-white/70 py-3 pl-11 pr-10 text-sm shadow-sm outline-none transition-all duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/15 ${
                       role ? "text-slate-900" : "text-slate-400"
                     }`}
                   >
                     <option value="" disabled>
-                      Select your role
+                      {rolesLoading
+                        ? "Loading roles..."
+                        : roles.length === 0
+                          ? "No roles available"
+                          : "Select your role"}
                     </option>
-                    {ROLES.map((r) => (
-  <option key={r.id} value={r.id}>
-    {r.name}
-  </option>
-))}
+                    {roles.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.roleName}
+                      </option>
+                    ))}
                   </select>
                   <svg
                     className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
