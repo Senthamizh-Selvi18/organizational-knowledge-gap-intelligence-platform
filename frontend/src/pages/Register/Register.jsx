@@ -18,8 +18,9 @@ import { register } from "../../services/authService";
 
 // TODO: Fetch roles dynamically from backend API instead of hardcoding IDs.
 const ROLES = [
-  { id: 24, name: "Employee" },
-  { id: 27, name: "Intern" },
+  { id: 1, name: "Employee" },
+  { id: 2, name: "Admin" },
+  { id: 3, name: "Intern" },
 ];
 
 function getPasswordStrength(password) {

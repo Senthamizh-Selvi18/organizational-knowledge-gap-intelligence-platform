@@ -10,8 +10,12 @@ import {
   FiUsers,
   FiEdit,
   FiLock,
+  FiEye,
+  FiEyeOff,
 } from "react-icons/fi";
 import DashboardLayout from "../../components/layout/DashboardLayout";
+import { changePassword } from "../../services/profileService";
+
 
 const initialProfile = {
   userId: "",
@@ -54,14 +58,31 @@ const activities = [
 export default function Profile() {
           const [profile, setProfile] = useState(initialProfile);
           const [isEditing, setIsEditing] = useState(false);
+          const [showPasswordModal, setShowPasswordModal] = useState(false);
+          const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+          const [showNewPassword, setShowNewPassword] = useState(false);
+          const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+          const userId = localStorage.getItem("userId");
+          const [passwordData, setPasswordData] = useState({
+              currentPassword: "",
+              newPassword: "",
+              confirmPassword: ""
+          });
         useEffect(() => {
             fetchProfile();
         }, []);
 
         const fetchProfile = async () => {
             try {
+                const token = localStorage.getItem("token");
+
                 const response = await axios.get(
-                    "http://localhost:8080/api/profile/1"
+                    `http://localhost:8080/api/profile/${userId}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
                 );
 
                 setProfile(response.data);
@@ -72,10 +93,17 @@ export default function Profile() {
         };
         const updateProfile = async () => {
           try {
+           const token = localStorage.getItem("token");
+
             await axios.put(
-              "http://localhost:8080/api/profile/1",
-              profile
-            );
+              `http://localhost:8080/api/profile/${userId}`,
+              profile,
+              {
+                  headers: {
+                      Authorization: `Bearer ${token}`
+                  }
+              }
+          );
 
             alert("Profile updated successfully!");
 
@@ -88,6 +116,51 @@ export default function Profile() {
             alert("Failed to update profile.");
           }
         };
+             const handleChangePassword = async () => {
+
+    if (
+        !passwordData.currentPassword ||
+        !passwordData.newPassword ||
+        !passwordData.confirmPassword
+    ) {
+        alert("Please fill all the fields.");
+        return;
+    }
+
+    if (
+        passwordData.newPassword !==
+        passwordData.confirmPassword
+    ) {
+        alert("New Password and Confirm Password must match.");
+        return;
+    }
+
+    try {
+
+        await changePassword(
+            userId,
+            passwordData
+        );
+
+        alert("Password changed successfully.");
+
+        setPasswordData({
+            currentPassword: "",
+            newPassword: "",
+            confirmPassword: ""
+        });
+
+        setShowPasswordModal(false);
+
+    } catch (error) {
+
+        alert(
+            error.response?.data?.message ||
+            "Failed to change password."
+        );
+
+    }
+};
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -190,10 +263,13 @@ export default function Profile() {
                 {isEditing ? "Save Profile" : "Edit Profile"}
               </button>
 
-              <button className="flex items-center gap-2 border border-slate-300 px-5 py-3 rounded-xl hover:bg-slate-100 transition">
-                <FiLock />
-                Change Password
-              </button>
+              <button
+              onClick={() => setShowPasswordModal(true)}
+              className="flex items-center gap-2 border border-slate-300 px-5 py-3 rounded-xl hover:bg-slate-100 transition"
+              >
+              <FiLock />
+              Change Password
+          </button>
 
             </div>
 
@@ -478,6 +554,107 @@ export default function Profile() {
         </div>
 
       </div>
+       {showPasswordModal && (
+
+              <div className="fixed inset-0 bg-black/40 flex justify-center items-center">
+
+              <div className="bg-white rounded-xl p-6 w-96">
+
+              <h2 className="text-xl font-bold mb-5">
+              Change Password
+              </h2>
+
+              <div className="relative mb-3">
+              <input
+                type={showCurrentPassword ? "text" : "password"}
+                placeholder="Current Password"
+                className="w-full border rounded-lg p-3 pr-10"
+                value={passwordData.currentPassword}
+                onChange={(e) =>
+                  setPasswordData({
+                    ...passwordData,
+                    currentPassword: e.target.value,
+                  })
+                }
+              />
+
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+              >
+                {showCurrentPassword ? <FiEyeOff /> : <FiEye />}
+              </button>
+            </div>
+
+                          <div className="relative mb-3">
+              <input
+                type={showNewPassword ? "text" : "password"}
+                placeholder="New Password"
+                className="w-full border rounded-lg p-3 pr-10"
+                value={passwordData.newPassword}
+                onChange={(e) =>
+                  setPasswordData({
+                    ...passwordData,
+                    newPassword: e.target.value,
+                  })
+                }
+              />
+
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+              >
+                {showNewPassword ? <FiEyeOff /> : <FiEye />}
+              </button>
+            </div>
+
+                          <div className="relative mb-5">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Confirm Password"
+                className="w-full border rounded-lg p-3 pr-10"
+                value={passwordData.confirmPassword}
+                onChange={(e) =>
+                  setPasswordData({
+                    ...passwordData,
+                    confirmPassword: e.target.value,
+                  })
+                }
+              />
+
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
+              </button>
+            </div>
+              <div className="flex justify-end gap-3">
+
+              <button
+              onClick={()=>setShowPasswordModal(false)}
+              className="px-4 py-2 rounded-lg border"
+              >
+              Cancel
+              </button>
+
+              <button
+              onClick={handleChangePassword}
+              className="px-4 py-2 rounded-lg bg-blue-600 text-white"
+              >
+              Update
+              </button>
+
+              </div>
+
+              </div>
+
+              </div>
+
+              )}
     </DashboardLayout>
   );
 }

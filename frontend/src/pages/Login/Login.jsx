@@ -28,6 +28,8 @@ export default function LoginPage() {
 
     localStorage.setItem("token", data.token);
     localStorage.setItem("role", data.role);
+    localStorage.setItem("userId", data.userId);
+    localStorage.setItem("name", data.name);
 
     alert("Login Successful!");
 
