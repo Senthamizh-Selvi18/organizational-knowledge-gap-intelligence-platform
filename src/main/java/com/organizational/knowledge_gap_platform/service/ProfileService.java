@@ -11,19 +11,25 @@ import com.organizational.knowledge_gap_platform.repository.EmployeeRepository;
 import com.organizational.knowledge_gap_platform.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import com.organizational.knowledge_gap_platform.dto.ChangePasswordRequest;
+import java.time.LocalDateTime;
 
 @Service
 public class ProfileService {
 
     private final UserRepository userRepository;
     private final EmployeeRepository employeeRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public ProfileService(UserRepository userRepository,
-                          EmployeeRepository employeeRepository) {
+                          EmployeeRepository employeeRepository,
+                          PasswordEncoder passwordEncoder) {
+
         this.userRepository = userRepository;
         this.employeeRepository = employeeRepository;
+        this.passwordEncoder = passwordEncoder;
     }
-
     public ProfileResponseDTO getProfile(Long userId) {
 
         User user = userRepository.findById(userId)
@@ -85,39 +91,76 @@ public class ProfileService {
         // Update Employee table
         Employee employee = employeeRepository.findByUser(user).orElse(null);
 
-        if (employee != null) {
+// Create employee if not found
+        if (employee == null) {
+            employee = new Employee();
+            employee.setUser(user);
+            employee.setCreatedAt(LocalDateTime.now());
 
-            if (request.getDepartment() != null && !request.getDepartment().trim().isEmpty()) {
-                employee.setDepartment(request.getDepartment());
-            }
-
-            if (request.getDesignation() != null && !request.getDesignation().trim().isEmpty()) {
-                employee.setDesignation(request.getDesignation());
-            }
-
-            if (request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {
-                employee.setPhoneNumber(request.getPhoneNumber());
-            }
-
-            if (request.getLocation() != null && !request.getLocation().trim().isEmpty()) {
-                employee.setLocation(request.getLocation());
-            }
-
-            if (request.getJoiningDate() != null) {
-                employee.setJoiningDate(request.getJoiningDate());
-            }
-
-            if (request.getExperience() != null) {
-                employee.setExperience(request.getExperience());
-            }
-
-            if (request.getManager() != null && !request.getManager().trim().isEmpty()) {
-                employee.setManager(request.getManager());
-            }
-
-            employeeRepository.save(employee);
+            // Temporary employee code
+            employee.setEmployeeCode("EMP" + user.getId());
         }
 
+// Update fields
+        if (request.getDepartment() != null && !request.getDepartment().trim().isEmpty()) {
+            employee.setDepartment(request.getDepartment());
+        }
+
+        if (request.getDesignation() != null && !request.getDesignation().trim().isEmpty()) {
+            employee.setDesignation(request.getDesignation());
+        }
+
+        if (request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {
+            employee.setPhoneNumber(request.getPhoneNumber());
+        }
+
+        if (request.getLocation() != null && !request.getLocation().trim().isEmpty()) {
+            employee.setLocation(request.getLocation());
+        }
+
+        if (request.getJoiningDate() != null) {
+            employee.setJoiningDate(request.getJoiningDate());
+        }
+
+        if (request.getExperience() != null) {
+            employee.setExperience(request.getExperience());
+        }
+
+        if (request.getManager() != null && !request.getManager().trim().isEmpty()) {
+            employee.setManager(request.getManager());
+        }
+
+        employeeRepository.save(employee);
+
         return getProfile(userId);
+    }
+    @Transactional
+    public void changePassword(Long userId, ChangePasswordRequest request) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        String loggedInUserEmail = authentication.getName();
+
+        if (!user.getEmail().equals(loggedInUserEmail)) {
+            throw new AccessDeniedException("You are not authorized to change this password.");
+        }
+
+        // Verify current password
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new RuntimeException("Current password is incorrect.");
+        }
+
+        // Check new password and confirm password
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new RuntimeException("New password and confirm password do not match.");
+        }
+
+        // Encode and save new password
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+
+        userRepository.save(user);
     }
 }
