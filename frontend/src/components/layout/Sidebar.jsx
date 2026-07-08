@@ -19,7 +19,10 @@ const menuItems = [
   { label: "Competencies", icon: FiBarChart2, to: "/dashboard/competencies" },
   { label: "Employees", icon: FiUsers, to: "/dashboard/employees" },
   ...(role === "ADMIN"
-  ? [{ label: "Role Management", icon: FiShield, to: "/dashboard/roles" }]
+  ? [
+      { label: "Role Management", icon: FiShield, to: "/dashboard/roles" },
+      { label: "Role Skill Mapping", icon: FiShield, to: "/dashboard/role-skills" },
+    ]
   : []),
   { label: "Notifications", icon: FiBell, to: "/dashboard/notifications" },
   { label: "Settings", icon: FiSettings, to: "/dashboard/settings" },

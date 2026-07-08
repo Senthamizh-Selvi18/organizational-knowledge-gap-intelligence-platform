@@ -8,6 +8,7 @@ import DashboardPage from "../pages/Dashboard/DashboardPage";
 import EmployeeDashboard from "../pages/EmployeeDashboard/EmployeeDashboard";
 import Profile from "../pages/Profile/Profile";
 import RoleManagement from "../pages/RoleManagement/RoleManagement";
+import RoleSkillMapping from "../pages/RoleSkillMapping/RoleSkillMapping";
 import ProtectedRoute from "./ProtectedRoute";
 import OAuth2RedirectPage from "../pages/OAuth2Redirect/OAuth2Redirect";
 
@@ -63,6 +64,15 @@ function AppRoutes() {
         }
       />
       
+      <Route
+        path="/dashboard/role-skills"
+        element={
+          <ProtectedRoute>
+            <RoleSkillMapping />
+          </ProtectedRoute>
+        }
+      />
+
       <Route path="/oauth2/redirect" element={<OAuth2RedirectPage />} />
     </Routes>
   );
