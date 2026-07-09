@@ -39,8 +39,8 @@ public class AuthService {
 
     // register() and login() will be added next
 
-    public AuthResponse register(RegisterRequest request) {
-   
+   public AuthResponse register(RegisterRequest request) {
+
     Role role = roleRepository.findById(request.getRoleId())
             .orElseThrow(() -> new RuntimeException("Role not found"));
 
@@ -48,20 +48,29 @@ public class AuthService {
     user.setName(request.getName());
     user.setEmail(request.getEmail());
     user.setPassword(passwordEncoder.encode(request.getPassword()));
-    user.setRole(role);
+
+    user.getRoles().add(role);
+
     user.setCreatedAt(LocalDateTime.now());
 
     userRepository.save(user);
 
         String token = jwtService.generateToken(user.getEmail());
+        String roleName = user.getRoles()
+        .stream()
+        .findFirst()
+        .map(Role::getRoleName)
+        .orElse("Employee");
 
-        return new AuthResponse(
-                token,
-                user.getRole().getRoleName(),
-                user.getId(),
-                user.getName()
-        );
+return new AuthResponse(
+        token,
+        roleName,
+        user.getId(),
+        user.getName()
+);
 }
+
+
     public AuthResponse login(LoginRequest request) {
 
     authenticationManager.authenticate(
@@ -76,11 +85,25 @@ public class AuthService {
 
         String token = jwtService.generateToken(user.getEmail());
 
-        return new AuthResponse(
-                token,
-                user.getRole().getRoleName(),
-                user.getId(),
-                user.getName()
+        
+String role = user.getRoles()
+        .stream()
+        .map(Role::getRoleName)
+        .filter(r -> r.equalsIgnoreCase("Admin"))
+        .findFirst()
+        .orElse(
+            user.getRoles()
+            .stream()
+            .findFirst()
+            .map(Role::getRoleName)
+            .orElse("Employee")
         );
-}
+
+return new AuthResponse(
+        token,
+        role,
+        user.getId(),
+        user.getName()
+);
+    }
 }

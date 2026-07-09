@@ -7,6 +7,17 @@ export default function DashboardPage() {
   const navigate = useNavigate();
 
   const [users, setUsers] = useState([]);
+  const loggedInRole = localStorage.getItem("role");
+  const role = localStorage.getItem("role")?.toLowerCase();
+  const isOfficial =
+  role === "admin" ||
+  role === "hr" ||
+  role === "manager" ||
+  role === "team lead";
+
+console.log("Stored role:", role);
+console.log("Official:", isOfficial);
+
 
   useEffect(() => {
     loadUsers();
@@ -26,13 +37,13 @@ export default function DashboardPage() {
     navigate("/login");
   };
 
-  const employeeCount = users.filter(
-    (user) => user.role === "Employee"
-  ).length;
+ const employeeCount = users.filter(
+    user => user.role?.toLowerCase() === "employee"
+).length;
 
-  const internCount = users.filter(
-    (user) => user.role === "Intern"
-  ).length;
+const internCount = users.filter(
+    user => user.role?.toLowerCase() === "intern"
+).length;
 
   return (
     <DashboardLayout>
@@ -58,9 +69,9 @@ export default function DashboardPage() {
       </div>
 
       {/* Statistics */}
-
-      <div className="grid gap-6 md:grid-cols-3 mb-8">
-
+ 
+      {isOfficial && (
+<div className="grid gap-6 md:grid-cols-3 mb-8">
         <div className="rounded-2xl bg-white p-6 shadow-lg">
 
           <p className="text-slate-500 text-sm">
@@ -98,6 +109,7 @@ export default function DashboardPage() {
         </div>
 
       </div>
+      )}
 
       {/* Users Table */}
 

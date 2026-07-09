@@ -16,9 +16,13 @@ public class RoleDataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        createRoleIfMissing("Admin");
-        createRoleIfMissing("Employee");
-        createRoleIfMissing("Intern");
+       createRoleIfMissing("Admin");
+createRoleIfMissing("HR");
+createRoleIfMissing("Manager");
+createRoleIfMissing("Team Lead");
+createRoleIfMissing("Trainer");
+createRoleIfMissing("Employee");
+createRoleIfMissing("Intern");
     }
 
     private void createRoleIfMissing(String roleName) {

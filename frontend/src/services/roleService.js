@@ -16,6 +16,10 @@ export const getRoles = () => {
   return axios.get(API_URL, authHeader());
 };
 
+export const getRoleDetails = (id) => {
+  return axios.get(`${API_URL}/details/${id}`, authHeader());
+};
+
 export const addRole = (role) => {
   return axios.post(API_URL, role, authHeader());
 };
@@ -26,4 +30,12 @@ export const updateRole = (id, role) => {
 
 export const deleteRole = (id) => {
   return axios.delete(`${API_URL}/${id}`, authHeader());
+};
+
+export const assignRole = (userId, roleId) => {
+  return axios.put(
+    `${API_URL}/assign/${userId}`,
+    { roleId },
+    authHeader()
+  );
 };

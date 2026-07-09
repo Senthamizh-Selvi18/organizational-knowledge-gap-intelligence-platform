@@ -19,27 +19,33 @@ export default function LoginPage() {
   
   const navigate = useNavigate();
   const handleSubmit = async (e) => {
-    e.preventDefault();
-  
-    try {
-      const data = await login(email, password);
-  
-      console.log("Response:", data);
-  
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("role", data.role);
-  
-      alert("Login Successful!");
-  
-      navigate("/dashboard");
-  
-    } catch (error) {
-      console.error(error);
-      const message = error.response?.data?.message || "Login failed. Please try again.";
-      alert(message);
-    }
-  };
+  e.preventDefault();
 
+  try {
+    const data = await login(email, password);
+
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("role", data.role);
+
+    const role = data.role.toLowerCase();
+
+    if (
+      role === "admin" ||
+      role === "hr" ||
+      role === "manager" ||
+      role === "team lead"
+    ) {
+      navigate("/dashboard");
+    } else {
+      navigate("/employee-dashboard");
+    }
+  } catch (error) {
+    console.error(error);
+    const message =
+      error.response?.data?.message || "Login failed. Please try again.";
+    alert(message);
+  }
+};
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-100 px-4 py-10 font-sans">
       {/* Decorative background */}
