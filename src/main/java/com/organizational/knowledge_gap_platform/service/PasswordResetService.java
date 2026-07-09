@@ -41,6 +41,9 @@ public class PasswordResetService {
     @Value("${app.password-reset.frontend-url}")
     private String resetFrontendUrl;
 
+    @Value("${spring.mail.username}")
+    private String senderEmail;
+
     public PasswordResetService(UserRepository userRepository,
                                  PasswordResetTokenRepository tokenRepository,
                                  PasswordEncoder passwordEncoder,
@@ -137,6 +140,7 @@ public class PasswordResetService {
         String resetLink = resetFrontendUrl + "?token=" + rawToken;
         log.info("Password reset link (for local testing): {}", resetLink);
         SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(senderEmail);
         message.setTo(toEmail);
         message.setSubject("Password Reset Request");
         message.setText(
