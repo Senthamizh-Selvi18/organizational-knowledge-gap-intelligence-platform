@@ -18,7 +18,7 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(false)
   
   const navigate = useNavigate();
-  const handleSubmit = async (e) => {
+ const handleSubmit = async (e) => {
   e.preventDefault();
 
   try {
@@ -37,7 +37,9 @@ export default function LoginPage() {
 
   } catch (error) {
     console.error(error);
-    alert("Login failed");
+    const message =
+      error.response?.data?.message || "Login failed. Please try again.";
+    alert(message);
   }
 };
 

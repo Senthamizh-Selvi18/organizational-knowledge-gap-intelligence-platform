@@ -16,4 +16,6 @@ public interface RoleService {
     boolean deleteRole(Long id);
 
     boolean assignRoleToUser(Long userId, Long roleId);
+
+    List<Role> getRegisterableRoles();
 }
