@@ -35,7 +35,16 @@ export default function LoginPage() {
       role === "manager" ||
       role === "team lead"
     ) {
-      navigate("/dashboard");
+      localStorage.setItem("token", response.data.token);
+localStorage.setItem("role", response.data.role);
+
+const role = response.data.role.toLowerCase();
+
+if (role === "employee" || role === "intern") {
+    navigate("/employee-dashboard");
+} else {
+    navigate("/dashboard");
+}
     } else {
       navigate("/employee-dashboard");
     }

@@ -54,11 +54,11 @@ const internCount = users.filter(
 
         <div>
 
-          <h1 className="text-3xl font-bold text-slate-800">
+          <h1 className="text-3xl font-bold text-slate-800 dark:text-white">
             Dashboard
           </h1>
 
-          <p className="text-slate-500 mt-1">
+          <p className="text-slate-500 dark:text-slate-400 mt-1">
             Welcome to Organizational Knowledge Gap Intelligence Platform
           </p>
 
@@ -72,13 +72,13 @@ const internCount = users.filter(
  
       {isOfficial && (
 <div className="grid gap-6 md:grid-cols-3 mb-8">
-        <div className="rounded-2xl bg-white p-6 shadow-lg">
+        <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-lg">
 
-          <p className="text-slate-500 text-sm">
+          <p className="text-slate-500 dark:text-slate-300 text-sm">
             Total Users
           </p>
 
-          <h2 className="mt-3 text-4xl font-bold text-slate-800">
+          <h2 className="mt-3 text-4xl font-bold text-slate-800 dark:text-white">
             {users.length}
           </h2>
 
@@ -86,7 +86,7 @@ const internCount = users.filter(
 
         <div className="rounded-2xl bg-white p-6 shadow-lg">
 
-          <p className="text-slate-500 text-sm">
+          <p className="text-slate-500 dark:text-slate-300 text-sm">
             Employees
           </p>
 
@@ -96,9 +96,9 @@ const internCount = users.filter(
 
         </div>
 
-        <div className="rounded-2xl bg-white p-6 shadow-lg">
+        <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-lg">
 
-          <p className="text-slate-500 text-sm">
+          <p className="text-slate-500 dark:text-slate-300 text-sm">
             Interns
           </p>
 
@@ -112,10 +112,10 @@ const internCount = users.filter(
       )}
 
       {/* Users Table */}
-
-      <div className="rounded-2xl bg-white shadow-lg p-6">
-
-        <h2 className="text-2xl font-bold mb-6">
+<div className="rounded-2xl bg-white dark:bg-slate-800 shadow-lg p-6">
+      
+      <h2 className="text-2xl font-bold mb-6 text-slate-800 dark:text-white">
+        
           Registered Users
         </h2>
 
@@ -125,7 +125,7 @@ const internCount = users.filter(
 
             <thead>
 
-              <tr className="border-b bg-slate-50">
+              <tr className="border-b bg-slate-50 dark:bg-slate-700">
 
                 <th className="px-4 py-3 text-left font-semibold">
                   #
@@ -160,7 +160,7 @@ const internCount = users.filter(
                   className="border-b hover:bg-slate-50"
                 >
 
-                  <td className="px-4 py-4">
+                 <td className="px-4 py-4 text-slate-700 dark:text-slate-200">
                     {index + 1}
                   </td>
 
@@ -168,11 +168,11 @@ const internCount = users.filter(
                     {user.name}
                   </td>
 
-                  <td className="px-4 py-4">
+                  <td className="px-4 py-4 text-slate-700 dark:text-slate-200">
                     {user.email}
                   </td>
 
-                  <td className="px-4 py-4">
+                  <td className="px-4 py-4 text-slate-700 dark:text-slate-200">
 
                     <span
                       className={`rounded-full px-3 py-1 text-sm font-semibold
