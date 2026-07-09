@@ -18,27 +18,29 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(false)
   
   const navigate = useNavigate();
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
   e.preventDefault();
 
   try {
     const data = await login(email, password);
 
+    console.log("Response:", data);
+
     localStorage.setItem("token", data.token);
     localStorage.setItem("role", data.role);
+    localStorage.setItem("userId", data.userId);
+    localStorage.setItem("name", data.name);
+
+    alert("Login Successful!");
 
     const role = data.role.toLowerCase();
 
-    if (
-      role === "admin" ||
-      role === "hr" ||
-      role === "manager" ||
-      role === "team lead"
-    ) {
-      navigate("/dashboard");
-    } else {
+    if (role === "employee" || role === "intern") {
       navigate("/employee-dashboard");
+    } else {
+      navigate("/dashboard");
     }
+
   } catch (error) {
     console.error(error);
     const message =
@@ -46,6 +48,7 @@ export default function LoginPage() {
     alert(message);
   }
 };
+
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-100 px-4 py-10 font-sans">
       {/* Decorative background */}
@@ -68,11 +71,11 @@ export default function LoginPage() {
         {/* Left brand panel */}
         <section className="hidden flex-col justify-center lg:flex">
           <div className="flex items-center gap-3">
-           {/*<img
+           <img
               src="/logo.png"
               alt="Company logo"
               className="h-12 w-12 rounded-xl bg-white/60 p-1.5 shadow-sm ring-1 ring-white/60"
-            />*/}
+            />
             <span className="text-sm font-semibold tracking-wide text-blue-900/70 uppercase">
               KnowGap Intelligence
             </span>

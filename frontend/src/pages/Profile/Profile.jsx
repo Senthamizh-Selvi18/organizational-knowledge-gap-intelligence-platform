@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import axios from "axios";
 import {
   FiUser,
   FiMail,
@@ -8,21 +10,27 @@ import {
   FiUsers,
   FiEdit,
   FiLock,
+  FiEye,
+  FiEyeOff,
 } from "react-icons/fi";
 import DashboardLayout from "../../components/layout/DashboardLayout";
+import { changePassword } from "../../services/profileService";
 
-const profile = {
-  name: "Sneha",
-  email: "sneha@company.com",
-  employeeId: "EMP1025",
-  department: "Software Development",
-  designation: "Java Full Stack Developer",
-  role: "Employee",
-  phone: "+91 9876543210",
-  location: "Bengaluru, India",
-  joiningDate: "15 Jan 2025",
-  experience: "2 Years",
-  manager: "Anitha Sharma",
+
+const initialProfile = {
+  userId: "",
+  employeeCode: "",
+  name: "",
+  email: "",
+  role: "",
+  department: "",
+  designation: "",
+  phoneNumber: "",
+  location: "",
+  joiningDate: "",
+  experience: "",
+  manager: "",
+  createdAt: "",
 };
 
 const skills = [
@@ -48,6 +56,111 @@ const activities = [
 ];
 
 export default function Profile() {
+          const [profile, setProfile] = useState(initialProfile);
+          const [isEditing, setIsEditing] = useState(false);
+          const [showPasswordModal, setShowPasswordModal] = useState(false);
+          const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+          const [showNewPassword, setShowNewPassword] = useState(false);
+          const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+          const userId = localStorage.getItem("userId");
+          const [passwordData, setPasswordData] = useState({
+              currentPassword: "",
+              newPassword: "",
+              confirmPassword: ""
+          });
+        useEffect(() => {
+            fetchProfile();
+        }, []);
+
+        const fetchProfile = async () => {
+            try {
+                const token = localStorage.getItem("token");
+
+                const response = await axios.get(
+                    `http://localhost:8080/api/profile/${userId}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
+
+                setProfile(response.data);
+
+            } catch (error) {
+                console.error(error);
+            }
+        };
+        const updateProfile = async () => {
+          try {
+           const token = localStorage.getItem("token");
+
+            await axios.put(
+              `http://localhost:8080/api/profile/${userId}`,
+              profile,
+              {
+                  headers: {
+                      Authorization: `Bearer ${token}`
+                  }
+              }
+          );
+
+            alert("Profile updated successfully!");
+
+            setIsEditing(false);
+
+            fetchProfile();
+
+          } catch (error) {
+            console.error(error);
+            alert("Failed to update profile.");
+          }
+        };
+             const handleChangePassword = async () => {
+
+    if (
+        !passwordData.currentPassword ||
+        !passwordData.newPassword ||
+        !passwordData.confirmPassword
+    ) {
+        alert("Please fill all the fields.");
+        return;
+    }
+
+    if (
+        passwordData.newPassword !==
+        passwordData.confirmPassword
+    ) {
+        alert("New Password and Confirm Password must match.");
+        return;
+    }
+
+    try {
+
+        await changePassword(
+            userId,
+            passwordData
+        );
+
+        alert("Password changed successfully.");
+
+        setPasswordData({
+            currentPassword: "",
+            newPassword: "",
+            confirmPassword: ""
+        });
+
+        setShowPasswordModal(false);
+
+    } catch (error) {
+
+        alert(
+            error.response?.data?.message ||
+            "Failed to change password."
+        );
+
+    }
+};
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -60,27 +173,69 @@ export default function Profile() {
 
             <div className="flex items-center gap-6">
 
-              <img
-                src="https://ui-avatars.com/api/?name=Sneha&background=2563eb&color=fff&size=128"
-                className="w-28 h-28 rounded-full shadow-lg"
-                alt="profile"
-              />
+            <img
+            src={`https://ui-avatars.com/api/?name=${profile.name}&background=2563eb&color=fff&size=128`}
+            className="w-28 h-28 rounded-full shadow-lg"
+            alt="profile"
+          />
 
               <div>
 
+                {isEditing ? (
+                <input
+                  type="text"
+                  className="text-3xl font-bold border rounded-lg px-3 py-2 w-full"
+                  value={profile.name}
+                  onChange={(e) =>
+                    setProfile({
+                      ...profile,
+                      name: e.target.value,
+                    })
+                  }
+                />
+              ) : (
                 <h1 className="text-3xl font-bold text-slate-800">
                   {profile.name}
                 </h1>
+              )}
 
+               {isEditing ? (
+                <input
+                  type="text"
+                  className="border rounded-lg px-3 py-2 w-full mt-2"
+                  value={profile.designation}
+                  onChange={(e) =>
+                    setProfile({
+                      ...profile,
+                      designation: e.target.value,
+                    })
+                  }
+                />
+              ) : (
                 <p className="text-slate-500">
                   {profile.designation}
                 </p>
+              )}
 
-                <div className="mt-3 flex flex-wrap gap-3">
+                  <div className="mt-3 flex flex-wrap gap-3">
 
-                  <span className="px-4 py-1 rounded-full bg-blue-100 text-blue-700 text-sm">
-                    {profile.department}
-                  </span>
+                    {isEditing ? (
+                    <input
+                      type="text"
+                      className="border rounded-lg px-3 py-2"
+                      value={profile.department}
+                      onChange={(e) =>
+                        setProfile({
+                          ...profile,
+                          department: e.target.value,
+                        })
+                      }
+                    />
+                  ) : (
+                    <span className="px-4 py-1 rounded-full bg-blue-100 text-blue-700 text-sm">
+                      {profile.department}
+                    </span>
+                  )}
 
                   <span className="px-4 py-1 rounded-full bg-green-100 text-green-700 text-sm">
                     {profile.role}
@@ -94,15 +249,27 @@ export default function Profile() {
 
             <div className="flex gap-4 mt-6 md:mt-0">
 
-              <button className="flex items-center gap-2 bg-blue-600 text-white px-5 py-3 rounded-xl hover:bg-blue-700 transition">
+              <button
+                onClick={() => {
+                  if (isEditing) {
+                    updateProfile();
+                  } else {
+                    setIsEditing(true);
+                  }
+                }}
+                className="flex items-center gap-2 bg-blue-600 text-white px-5 py-3 rounded-xl hover:bg-blue-700 transition"
+              >
                 <FiEdit />
-                Edit Profile
+                {isEditing ? "Save Profile" : "Edit Profile"}
               </button>
 
-              <button className="flex items-center gap-2 border border-slate-300 px-5 py-3 rounded-xl hover:bg-slate-100 transition">
-                <FiLock />
-                Change Password
-              </button>
+              <button
+              onClick={() => setShowPasswordModal(true)}
+              className="flex items-center gap-2 border border-slate-300 px-5 py-3 rounded-xl hover:bg-slate-100 transition"
+              >
+              <FiLock />
+              Change Password
+          </button>
 
             </div>
 
@@ -112,43 +279,167 @@ export default function Profile() {
 
         {/* Profile Information */}
 
-        <div className="grid lg:grid-cols-2 gap-6">
+<div className="grid lg:grid-cols-2 gap-6">
 
-          <div className="bg-white rounded-3xl shadow-xl p-6">
+  <div className="bg-white rounded-3xl shadow-xl p-6">
 
-            <h2 className="text-xl font-bold mb-6">
-              Profile Information
-            </h2>
+    <h2 className="text-xl font-bold mb-6">
+      Profile Information
+    </h2>
 
-            <div className="space-y-5">
+    <div className="space-y-5">
 
-              <Info icon={<FiMail />} title="Email" value={profile.email} />
+      <Info
+        icon={<FiMail />}
+        title="Email"
+        value={profile.email}
+      />
 
-              <Info icon={<FiPhone />} title="Phone" value={profile.phone} />
+      <div className="flex items-start gap-4">
 
-              <Info icon={<FiMapPin />} title="Location" value={profile.location} />
+  <div className="p-3 rounded-xl bg-blue-100 text-blue-600">
+    <FiPhone />
+  </div>
 
-              <Info
-                icon={<FiCalendar />}
-                title="Joining Date"
-                value={profile.joiningDate}
-              />
+  <div className="flex-1">
 
-              <Info
-                icon={<FiBriefcase />}
-                title="Experience"
-                value={profile.experience}
-              />
+    <p className="text-sm text-slate-500">
+      Phone
+    </p>
 
-              <Info
-                icon={<FiUsers />}
-                title="Reporting Manager"
-                value={profile.manager}
-              />
+    {isEditing ? (
+      <input
+        type="text"
+        className="w-full mt-1 border rounded-lg px-3 py-2"
+        value={profile.phoneNumber}
+        onChange={(e) =>
+          setProfile({
+            ...profile,
+            phoneNumber: e.target.value,
+          })
+        }
+      />
+    ) : (
+      <p className="font-semibold text-slate-800">
+        {profile.phoneNumber}
+      </p>
+    )}
 
-            </div>
+  </div>
 
-          </div>
+</div>
+
+      <div className="flex items-start gap-4">
+
+  <div className="p-3 rounded-xl bg-blue-100 text-blue-600">
+    <FiMapPin />
+  </div>
+
+  <div className="flex-1">
+
+    <p className="text-sm text-slate-500">
+      Location
+    </p>
+
+    {isEditing ? (
+      <input
+        type="text"
+        className="w-full mt-1 border rounded-lg px-3 py-2"
+        value={profile.location}
+        onChange={(e) =>
+          setProfile({
+            ...profile,
+            location: e.target.value,
+          })
+        }
+      />
+    ) : (
+      <p className="font-semibold text-slate-800">
+        {profile.location}
+      </p>
+    )}
+
+  </div>
+
+</div>
+
+      <Info
+        icon={<FiCalendar />}
+        title="Joining Date"
+        value={profile.joiningDate}
+      />
+
+      <div className="flex items-start gap-4">
+
+  <div className="p-3 rounded-xl bg-blue-100 text-blue-600">
+    <FiBriefcase />
+  </div>
+
+  <div className="flex-1">
+
+    <p className="text-sm text-slate-500">
+      Experience
+    </p>
+
+    {isEditing ? (
+      <input
+        type="number"
+        className="w-full mt-1 border rounded-lg px-3 py-2"
+        value={profile.experience}
+        onChange={(e) =>
+          setProfile({
+            ...profile,
+            experience: e.target.value,
+          })
+        }
+      />
+    ) : (
+      <p className="font-semibold text-slate-800">
+        {profile.experience}
+      </p>
+    )}
+
+  </div>
+
+</div>
+
+      <div className="flex items-start gap-4">
+
+  <div className="p-3 rounded-xl bg-blue-100 text-blue-600">
+    <FiUsers />
+  </div>
+
+  <div className="flex-1">
+
+    <p className="text-sm text-slate-500">
+      Reporting Manager
+    </p>
+
+    {isEditing ? (
+      <input
+        type="text"
+        className="w-full mt-1 border rounded-lg px-3 py-2"
+        value={profile.manager}
+        onChange={(e) =>
+          setProfile({
+            ...profile,
+            manager: e.target.value,
+          })
+        }
+      />
+    ) : (
+      <p className="font-semibold text-slate-800">
+        {profile.manager}
+      </p>
+    )}
+
+  </div>
+
+</div>
+
+    </div>
+
+  </div>
                     {/* Skills */}
 
           <div className="bg-white rounded-3xl shadow-xl p-6">
@@ -263,6 +554,107 @@ export default function Profile() {
         </div>
 
       </div>
+       {showPasswordModal && (
+
+              <div className="fixed inset-0 bg-black/40 flex justify-center items-center">
+
+              <div className="bg-white rounded-xl p-6 w-96">
+
+              <h2 className="text-xl font-bold mb-5">
+              Change Password
+              </h2>
+
+              <div className="relative mb-3">
+              <input
+                type={showCurrentPassword ? "text" : "password"}
+                placeholder="Current Password"
+                className="w-full border rounded-lg p-3 pr-10"
+                value={passwordData.currentPassword}
+                onChange={(e) =>
+                  setPasswordData({
+                    ...passwordData,
+                    currentPassword: e.target.value,
+                  })
+                }
+              />
+
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+              >
+                {showCurrentPassword ? <FiEyeOff /> : <FiEye />}
+              </button>
+            </div>
+
+                          <div className="relative mb-3">
+              <input
+                type={showNewPassword ? "text" : "password"}
+                placeholder="New Password"
+                className="w-full border rounded-lg p-3 pr-10"
+                value={passwordData.newPassword}
+                onChange={(e) =>
+                  setPasswordData({
+                    ...passwordData,
+                    newPassword: e.target.value,
+                  })
+                }
+              />
+
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+              >
+                {showNewPassword ? <FiEyeOff /> : <FiEye />}
+              </button>
+            </div>
+
+                          <div className="relative mb-5">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Confirm Password"
+                className="w-full border rounded-lg p-3 pr-10"
+                value={passwordData.confirmPassword}
+                onChange={(e) =>
+                  setPasswordData({
+                    ...passwordData,
+                    confirmPassword: e.target.value,
+                  })
+                }
+              />
+
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
+              </button>
+            </div>
+              <div className="flex justify-end gap-3">
+
+              <button
+              onClick={()=>setShowPasswordModal(false)}
+              className="px-4 py-2 rounded-lg border"
+              >
+              Cancel
+              </button>
+
+              <button
+              onClick={handleChangePassword}
+              className="px-4 py-2 rounded-lg bg-blue-600 text-white"
+              >
+              Update
+              </button>
+
+              </div>
+
+              </div>
+
+              </div>
+
+              )}
     </DashboardLayout>
   );
 }
