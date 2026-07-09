@@ -30,23 +30,24 @@ function AppRoutes() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <DashboardPage />
-          </ProtectedRoute>
-        }
-      />
+  path="/dashboard"
+  element={
+    <ProtectedRoute allowedRoles={["admin","hr","manager","team lead"]}>
+      <DashboardPage />
+    </ProtectedRoute>
+  }
+/>
 
-      <Route
-        path="/employee-dashboard"
-        element={
-          <ProtectedRoute>
-            <EmployeeDashboard />
-          </ProtectedRoute>
-        }
-      />
+<Route
+  path="/employee-dashboard"
+  element={
+    <ProtectedRoute allowedRoles={["employee", "intern"]}>
+      <EmployeeDashboard />
+    </ProtectedRoute>
+  }
+/>
 
+      
       <Route
         path="/dashboard/profile"
         element={
@@ -55,16 +56,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
-      <Route
-        path="/dashboard/roles"
-        element={
-          <ProtectedRoute>
-            <RoleManagement />
-          </ProtectedRoute>
-        }
-      />
-      
+     
       <Route
         path="/dashboard/role-skills"
         element={
@@ -79,6 +71,15 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <SkillManagement />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/dashboard/roles"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "hr"]}>
+            <RoleManagement />
           </ProtectedRoute>
         }
       />

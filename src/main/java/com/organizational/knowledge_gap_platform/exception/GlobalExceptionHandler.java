@@ -34,11 +34,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody(ex.getMessage()));
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleException(Exception ex) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(errorBody("Something went wrong."));
-    }
+   @ExceptionHandler(Exception.class)
+public ResponseEntity<Map<String, Object>> handleException(Exception ex) {
+
+    ex.printStackTrace();
+
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(errorBody(ex.getMessage()));
+}
 
     private Map<String, Object> errorBody(String message) {
         Map<String, Object> body = new HashMap<>();

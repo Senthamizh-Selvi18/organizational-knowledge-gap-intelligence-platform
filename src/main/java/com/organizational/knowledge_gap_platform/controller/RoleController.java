@@ -7,6 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.organizational.knowledge_gap_platform.dto.AssignRoleRequest;
+import com.organizational.knowledge_gap_platform.dto.RoleDetailsResponse;
+
 import java.util.List;
 import org.springframework.security.access.prepost.PreAuthorize;
 
@@ -20,12 +22,11 @@ public class RoleController {
         this.roleService = roleService;
     }
     
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping
-    public ResponseEntity<List<Role>> getAllRoles() {
-        return ResponseEntity.ok(roleService.getAllRoles());
-    }
-
+  
+   @GetMapping
+public ResponseEntity<List<RoleDetailsResponse>> getAllRoles() {
+    return ResponseEntity.ok(roleService.getAllRoles());
+}
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<Role> getRoleById(@PathVariable Long id) {
@@ -97,5 +98,19 @@ public ResponseEntity<String> assignRoleToUser(
 
     return ResponseEntity.ok("Role assigned successfully.");
 
+}
+
+        @GetMapping("/details/{id}")
+@PreAuthorize("hasRole('ADMIN')")
+public ResponseEntity<RoleDetailsResponse> getRoleDetails(
+        @PathVariable Long id) {
+
+    RoleDetailsResponse response = roleService.getRoleDetails(id);
+
+    if (response == null) {
+        return ResponseEntity.notFound().build();
+    }
+
+    return ResponseEntity.ok(response);
 }
 }

@@ -2,7 +2,6 @@ package com.organizational.knowledge_gap_platform.security;
 
 import com.organizational.knowledge_gap_platform.entity.Role;
 import com.organizational.knowledge_gap_platform.entity.User;
-import com.organizational.knowledge_gap_platform.exception.RoleNotFoundException;
 import com.organizational.knowledge_gap_platform.repository.RoleRepository;
 import com.organizational.knowledge_gap_platform.repository.UserRepository;
 import jakarta.servlet.ServletException;
@@ -70,7 +69,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             newUser.setName(name);
             newUser.setEmail(email);
             newUser.setPassword(passwordEncoder.encode(generateRandomPassword()));
-            newUser.setRole(role);
+            newUser.getRoles().add(role);
             newUser.setCreatedAt(LocalDateTime.now());
             return userRepository.save(newUser);
         });

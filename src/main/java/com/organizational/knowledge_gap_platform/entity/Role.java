@@ -1,9 +1,11 @@
 package com.organizational.knowledge_gap_platform.entity;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -30,4 +32,26 @@ public class Role {
             inverseJoinColumns = @JoinColumn(name = "skill_id")
     )
     private Set<Skill> skills = new HashSet<>();
+
+    @ManyToMany(mappedBy = "roles")
+    @JsonIgnore
+    private Set<User> users = new HashSet<>();
+
+    @Column(name = "description")
+    private String description;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "active")
+    private Boolean active = true;
+
+    @PrePersist
+    public void onCreate() {
+        createdAt = LocalDateTime.now();
+
+        if (active == null) {
+            active = true;
+        }
+    }
 }
