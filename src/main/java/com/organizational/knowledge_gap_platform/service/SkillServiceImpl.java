@@ -1,12 +1,13 @@
 package com.organizational.knowledge_gap_platform.service;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
 import com.organizational.knowledge_gap_platform.dto.SkillDTO;
 import com.organizational.knowledge_gap_platform.entity.Skill;
 import com.organizational.knowledge_gap_platform.exception.SkillNotFoundException;
 import com.organizational.knowledge_gap_platform.repository.SkillRepository;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class SkillServiceImpl implements SkillService {
@@ -71,6 +72,7 @@ public class SkillServiceImpl implements SkillService {
 
     private Skill getSkillOrThrow(Long id) {
         return skillRepository.findById(id)
-                .orElseThrow(() -> new SkillNotFoundException("Skill not found with id: " + id));
+                .orElseThrow(() ->
+                        new SkillNotFoundException("Skill not found with id: " + id));
     }
 }
