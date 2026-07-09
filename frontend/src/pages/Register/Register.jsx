@@ -59,12 +59,18 @@ export default function RegisterPage() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [rolesLoading, setRolesLoading] = useState(true)
 
-  useEffect(() => {
-    getRegisterableRoles()
-      .then((data) => setRoles(data))
-      .catch(() => alert("Failed to load roles. Please refresh the page."))
-      .finally(() => setRolesLoading(false))
-  }, []);
+ useEffect(() => {
+  getRegisterableRoles()
+    .then((data) => {
+      console.log("Roles API:", data);
+      setRoles(data);
+    })
+    .catch((error) => {
+      console.error("Failed to load roles:", error);
+      alert("Failed to load roles. Please refresh the page.");
+    })
+    .finally(() => setRolesLoading(false));
+}, []);
 
   const strength = getPasswordStrength(password)
   const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword

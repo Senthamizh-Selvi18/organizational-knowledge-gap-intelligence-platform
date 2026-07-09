@@ -7,6 +7,17 @@ export default function DashboardPage() {
   const navigate = useNavigate();
 
   const [users, setUsers] = useState([]);
+  const loggedInRole = localStorage.getItem("role");
+  const role = localStorage.getItem("role")?.toLowerCase();
+  const isOfficial =
+  role === "admin" ||
+  role === "hr" ||
+  role === "manager" ||
+  role === "team lead";
+
+console.log("Stored role:", role);
+console.log("Official:", isOfficial);
+
 
   useEffect(() => {
     loadUsers();
@@ -26,13 +37,13 @@ export default function DashboardPage() {
     navigate("/login");
   };
 
-  const employeeCount = users.filter(
-    (user) => user.role === "Employee"
-  ).length;
+ const employeeCount = users.filter(
+    user => user.role?.toLowerCase() === "employee"
+).length;
 
-  const internCount = users.filter(
-    (user) => user.role === "Intern"
-  ).length;
+const internCount = users.filter(
+    user => user.role?.toLowerCase() === "intern"
+).length;
 
   return (
     <DashboardLayout>
@@ -43,11 +54,11 @@ export default function DashboardPage() {
 
         <div>
 
-          <h1 className="text-3xl font-bold text-slate-800">
+          <h1 className="text-3xl font-bold text-slate-800 dark:text-white">
             Dashboard
           </h1>
 
-          <p className="text-slate-500 mt-1">
+          <p className="text-slate-500 dark:text-slate-400 mt-1">
             Welcome to Organizational Knowledge Gap Intelligence Platform
           </p>
 
@@ -58,16 +69,16 @@ export default function DashboardPage() {
       </div>
 
       {/* Statistics */}
+ 
+      {isOfficial && (
+<div className="grid gap-6 md:grid-cols-3 mb-8">
+        <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-lg">
 
-      <div className="grid gap-6 md:grid-cols-3 mb-8">
-
-        <div className="rounded-2xl bg-white p-6 shadow-lg">
-
-          <p className="text-slate-500 text-sm">
+          <p className="text-slate-500 dark:text-slate-300 text-sm">
             Total Users
           </p>
 
-          <h2 className="mt-3 text-4xl font-bold text-slate-800">
+          <h2 className="mt-3 text-4xl font-bold text-slate-800 dark:text-white">
             {users.length}
           </h2>
 
@@ -75,7 +86,7 @@ export default function DashboardPage() {
 
         <div className="rounded-2xl bg-white p-6 shadow-lg">
 
-          <p className="text-slate-500 text-sm">
+          <p className="text-slate-500 dark:text-slate-300 text-sm">
             Employees
           </p>
 
@@ -85,9 +96,9 @@ export default function DashboardPage() {
 
         </div>
 
-        <div className="rounded-2xl bg-white p-6 shadow-lg">
+        <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-lg">
 
-          <p className="text-slate-500 text-sm">
+          <p className="text-slate-500 dark:text-slate-300 text-sm">
             Interns
           </p>
 
@@ -98,12 +109,13 @@ export default function DashboardPage() {
         </div>
 
       </div>
+      )}
 
       {/* Users Table */}
-
-      <div className="rounded-2xl bg-white shadow-lg p-6">
-
-        <h2 className="text-2xl font-bold mb-6">
+<div className="rounded-2xl bg-white dark:bg-slate-800 shadow-lg p-6">
+      
+      <h2 className="text-2xl font-bold mb-6 text-slate-800 dark:text-white">
+        
           Registered Users
         </h2>
 
@@ -113,7 +125,7 @@ export default function DashboardPage() {
 
             <thead>
 
-              <tr className="border-b bg-slate-50">
+              <tr className="border-b bg-slate-50 dark:bg-slate-700">
 
                 <th className="px-4 py-3 text-left font-semibold">
                   #
@@ -148,7 +160,7 @@ export default function DashboardPage() {
                   className="border-b hover:bg-slate-50"
                 >
 
-                  <td className="px-4 py-4">
+                 <td className="px-4 py-4 text-slate-700 dark:text-slate-200">
                     {index + 1}
                   </td>
 
@@ -156,11 +168,11 @@ export default function DashboardPage() {
                     {user.name}
                   </td>
 
-                  <td className="px-4 py-4">
+                  <td className="px-4 py-4 text-slate-700 dark:text-slate-200">
                     {user.email}
                   </td>
 
-                  <td className="px-4 py-4">
+                  <td className="px-4 py-4 text-slate-700 dark:text-slate-200">
 
                     <span
                       className={`rounded-full px-3 py-1 text-sm font-semibold

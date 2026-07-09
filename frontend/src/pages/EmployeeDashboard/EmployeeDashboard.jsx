@@ -150,16 +150,16 @@ const ACTIVITY = [
 ]
 
 const cardClass =
-  "rounded-3xl border border-white/60 bg-white/60 shadow-2xl shadow-blue-900/10 backdrop-blur-xl"
+  "rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-2xl shadow-blue-900/10 backdrop-blur-xl"
 
 function SkillBar({ name, level }) {
   return (
     <div>
       <div className="mb-1.5 flex items-center justify-between text-sm">
-        <span className="font-medium text-slate-700">{name}</span>
-        <span className="font-semibold text-slate-500">{level}%</span>
+       <span className="font-medium text-slate-700 dark:text-slate-200">{name}</span>
+        <span className="font-semibold text-slate-500 dark:text-slate-400">{level}%</span>
       </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+     <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
         <div
           className="h-full rounded-full bg-gradient-to-r from-blue-500 to-sky-500 transition-all duration-700 ease-out"
           style={{ width: `${level}%` }}
@@ -239,7 +239,7 @@ export default function EmployeeDashboard() {
           <div className={`${cardClass} p-6`}>
             <div className="mb-5 flex items-center gap-2">
               <FiAward className="h-5 w-5 text-blue-600" />
-              <h2 className="text-lg font-bold text-slate-900">Skills Overview</h2>
+             <h2 className="text-lg font-bold text-slate-900 dark:text-white">Skills Overview</h2>
             </div>
             <div className="flex flex-col gap-5">
               {SKILLS.map((s) => (
@@ -342,7 +342,7 @@ export default function EmployeeDashboard() {
               {NOTIFICATIONS.map((n, i) => (
                 <li
                   key={i}
-                  className="group flex items-start gap-3 rounded-2xl border border-transparent p-3 transition-all duration-200 hover:border-slate-200 hover:bg-white/70"
+                  className="group flex items-start gap-3 rounded-2xl border border-transparent p-3 transition-all duration-200 hover:border-slate-200 hover:bg-white/70 dark:hover:bg-slate-700"
                 >
                   <span
                     className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${n.accent}`}
@@ -350,10 +350,10 @@ export default function EmployeeDashboard() {
                     <n.icon className="h-4.5 w-4.5" />
                   </span>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-slate-800">
+                    <p className="text-sm font-medium text-slate-800 dark:text-white">
                       {n.title}
                     </p>
-                    <p className="mt-0.5 text-xs text-slate-400">{n.meta}</p>
+                    <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">{n.meta}</p>
                   </div>
                 </li>
               ))}
@@ -374,8 +374,8 @@ export default function EmployeeDashboard() {
                   >
                     <a.icon className="h-4 w-4" />
                   </span>
-                  <div className="rounded-2xl p-2 transition-colors duration-200 group-hover:bg-white/70">
-                    <p className="text-sm font-medium text-slate-800">
+                  <div className="rounded-2xl p-2 transition-colors duration-200 group-hover:bg-white/70 dark:hover:bg-slate-700">
+                    <p className="text-sm font-medium text-slate-800 dark:text-white">
                       {a.title}
                     </p>
                     <p className="mt-0.5 text-xs text-slate-400">{a.meta}</p>

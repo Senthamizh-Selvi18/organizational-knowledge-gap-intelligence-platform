@@ -14,7 +14,13 @@ import {
 } from "react-icons/fi"
 
 export default function Navbar({ onMenuClick }) {
-  const [darkMode, setDarkMode] = useState(false)
+ const [darkMode, setDarkMode] = useState(
+  document.documentElement.classList.contains("dark")
+);
+
+useEffect(() => {
+  document.documentElement.classList.toggle("dark", darkMode);
+}, [darkMode]);
   const [menuOpen, setMenuOpen] = useState(false)
   const dropdownRef = useRef(null)
   const navigate = useNavigate()
@@ -33,21 +39,21 @@ const role = localStorage.getItem("role") || "";
   }, [])
 
   return (
-    <header className="sticky top-0 z-20 border-b border-white/60 bg-white/70 backdrop-blur-xl">
+   <header className="sticky top-0 z-20 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 backdrop-blur-xl dark:bg-slate-900 dark:border-slate-700">
       <div className="flex h-16 items-center gap-3 px-4 sm:gap-4 sm:px-6">
         {/* Mobile menu toggle */}
         <button
           type="button"
           onClick={onMenuClick}
           aria-label="Open sidebar"
-          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 lg:hidden"
+          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-slate-600 dark:text-slate-300 transition-colors hover:bg-slate-100 hover:text-slate-900 lg:hidden"
         >
           <FiMenu className="h-5 w-5" />
         </button>
 
         {/* Project name (hidden on small) */}
         <div className="hidden min-w-0 items-center gap-2 md:flex">
-          <span className="truncate text-sm font-semibold tracking-tight text-slate-800">
+          <span className="truncate text-sm font-semibold tracking-tight text-slate-800 dark:text-white">
             Organizational Knowledge Gap Intelligence Platform
           </span>
         </div>
@@ -58,7 +64,7 @@ const role = localStorage.getItem("role") || "";
           <input
             type="search"
             placeholder="Search skills, employees, competencies…"
-            className="w-full rounded-xl border border-slate-200 bg-white/70 py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 shadow-sm outline-none transition-all duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/15"
+            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/70 py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 shadow-sm outline-none transition-all duration-200 focus:border-blue-500 focus:bg-white dark:bg-slate-800 focus:ring-4 focus:ring-blue-500/15"
           />
         </div>
 
@@ -109,9 +115,10 @@ const role = localStorage.getItem("role") || "";
                 {userName.charAt(0).toUpperCase()}
               </span>
               <span className="hidden text-left leading-tight sm:block">
-                <span className="block text-sm font-semibold text-slate-800">
+
+                <span className="block text-sm font-semibold text-slate-800 dark:text-white">
                   {userName}
-                </span>
+                  </span>
                 <span className="block text-xs text-slate-500">{role}</span>
               </span>
               <FiChevronDown
@@ -124,27 +131,27 @@ const role = localStorage.getItem("role") || "";
             {/* Dropdown menu */}
             <div
               role="menu"
-              className={`absolute right-0 mt-2 w-56 origin-top-right overflow-hidden rounded-2xl border border-white/60 bg-white/80 shadow-2xl shadow-blue-900/10 backdrop-blur-xl transition-all duration-200 ${
+              className={`absolute right-0 mt-2 w-56 origin-top-right overflow-hidden rounded-2xl border border-white/60 bg-white dark:bg-slate-800/80 shadow-2xl shadow-blue-900/10 backdrop-blur-xl transition-all duration-200 ${
                 menuOpen
                   ? "scale-100 opacity-100"
                   : "pointer-events-none scale-95 opacity-0"
               }`}
             >
               <div className="border-b border-slate-100 px-4 py-3">
-               <p className="text-sm font-semibold text-slate-800">
+                <p className="text-sm font-semibold text-slate-800 dark:text-white">
                   {userName}
-              </p>
+                </p>
 
-              <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500">
                   {role}
-              </p>
+                </p>
               </div>
               <div className="p-1.5">
                 <Link
                   to="/dashboard/profile"
                   role="menuitem"
                   onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 transition-colors hover:bg-blue-50 hover:text-blue-700"
                 >
                   <FiUser className="h-4.5 w-4.5" />
                   My Profile
@@ -153,7 +160,7 @@ const role = localStorage.getItem("role") || "";
                   to="/dashboard/settings"
                   role="menuitem"
                   onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 transition-colors hover:bg-blue-50 hover:text-blue-700"
                 >
                   <FiSettings className="h-4.5 w-4.5" />
                   Settings
@@ -165,7 +172,7 @@ const role = localStorage.getItem("role") || "";
                     setMenuOpen(false)
                     navigate("/login")
                   }}
-                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-red-50 hover:text-red-600"
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 transition-colors hover:bg-red-50 hover:text-red-600"
                 >
                   <FiLogOut className="h-4.5 w-4.5" />
                   Logout

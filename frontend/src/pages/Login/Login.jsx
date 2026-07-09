@@ -18,7 +18,7 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(false)
   
   const navigate = useNavigate();
- const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
   e.preventDefault();
 
   try {
@@ -33,7 +33,13 @@ export default function LoginPage() {
 
     alert("Login Successful!");
 
-    navigate("/dashboard");
+    const role = data.role.toLowerCase();
+
+    if (role === "employee" || role === "intern") {
+      navigate("/employee-dashboard");
+    } else {
+      navigate("/dashboard");
+    }
 
   } catch (error) {
     console.error(error);
