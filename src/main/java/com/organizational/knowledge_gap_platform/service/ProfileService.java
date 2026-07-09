@@ -10,6 +10,7 @@ import com.organizational.knowledge_gap_platform.entity.User;
 import com.organizational.knowledge_gap_platform.repository.EmployeeRepository;
 import com.organizational.knowledge_gap_platform.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import com.organizational.knowledge_gap_platform.entity.Role;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import com.organizational.knowledge_gap_platform.dto.ChangePasswordRequest;
@@ -50,7 +51,13 @@ public class ProfileService {
         response.setUserId(user.getId());
         response.setName(user.getName());
         response.setEmail(user.getEmail());
-        response.setRole(user.getRole().getRoleName());
+        response.setRole(
+        user.getRoles()
+                .stream()
+                .findFirst()
+                .map(Role::getRoleName)
+                .orElse("NO_ROLE")
+);
 
         if (employee != null) {
             response.setEmployeeCode(employee.getEmployeeCode());

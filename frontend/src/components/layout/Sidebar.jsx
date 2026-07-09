@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom"
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   FiHome,
   FiUser,
@@ -10,122 +10,112 @@ import {
   FiSettings,
   FiLogOut,
   FiX,
-} from "react-icons/fi"
-const role = localStorage.getItem("role");
-const menuItems = [
-  { label: "Dashboard", icon: FiHome, to: "/employee-dashboard" },
-  { label: "Profile", icon: FiUser, to: "/dashboard/profile" },
-  { label: "Skills", icon: FiCpu, to: "/dashboard/skills" },
-  { label: "Competencies", icon: FiBarChart2, to: "/dashboard/competencies" },
-  { label: "Employees", icon: FiUsers, to: "/dashboard/employees" },
-  ...(role === "ADMIN"
-  ? [
-      { label: "Role Management", icon: FiShield, to: "/dashboard/roles" },
-      { label: "Role Skill Mapping", icon: FiShield, to: "/dashboard/role-skills" },
-    ]
-  : []),
-  { label: "Notifications", icon: FiBell, to: "/dashboard/notifications" },
-  { label: "Settings", icon: FiSettings, to: "/dashboard/settings" },
-]
+} from "react-icons/fi";
+
+
 
 export default function Sidebar({ open, onClose }) {
-  const navigate = useNavigate()
+
+  const navigate = useNavigate();
+
+  const role = localStorage.getItem("role")?.toLowerCase();
+
+  console.log("Sidebar Role:", role);
+
+  const menuItems = [
+    {
+      label: "Dashboard",
+      icon: FiHome,
+      to:
+        role === "employee" || role === "intern"
+          ? "/employee-dashboard"
+          : "/dashboard",
+    },
+
+    { label: "Profile", icon: FiUser, to: "/dashboard/profile" },
+    { label: "Skills", icon: FiCpu, to: "/dashboard/skills" },
+    { label: "Competencies", icon: FiBarChart2, to: "/dashboard/competencies" },
+
+    ...(role === "admin" || role === "hr"
+      ? [{ label: "Employees", icon: FiUsers, to: "/dashboard/employees" }]
+      : []),
+
+    ...(role === "admin"
+      ? [{ label: "Role Management", icon: FiShield, to: "/dashboard/roles" }]
+      : []),
+
+    { label: "Notifications", icon: FiBell, to: "/dashboard/notifications" },
+    { label: "Settings", icon: FiSettings, to: "/dashboard/settings" },
+  ];
+
   const handleLogout = () => {
-  localStorage.removeItem("token");
-  navigate("/login");
-};
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    navigate("/login");
+  };
 
   return (
     <>
-      {/* Mobile overlay */}
       <div
         onClick={onClose}
         className={`fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
           open ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
-        aria-hidden="true"
       />
 
       <aside
         className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-slate-200 bg-white shadow-xl transition-transform duration-300 lg:translate-x-0 ${
-  open ? "translate-x-0" : "-translate-x-full"
-}`}
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
-        {/* Brand */}
         <div className="flex h-14 items-center justify-between border-b px-4">
           <div className="flex items-center gap-3">
             <img
               src="/logo.png"
-              alt="Company logo"
-              className="h-8 w-8 rounded-lg bg-white/70 p-1 shadow-sm ring-1 ring-white/60"
+              alt="logo"
+              className="h-8 w-8 rounded-lg"
             />
-            <div className="leading-tight">
-              <p className="text-sm font-bold tracking-tight text-slate-900">
-                KnowGap
-              </p>
-              <p className="text-[11px] font-medium tracking-wide text-blue-700/70 uppercase">
-                Intelligence
-              </p>
+            <div>
+              <p className="font-bold">KnowGap</p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close sidebar"
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 lg:hidden"
-          >
-            <FiX className="h-5 w-5" />
+
+          <button onClick={onClose}>
+            <FiX />
           </button>
         </div>
 
-        {/* Menu */}
         <nav className="flex-1 overflow-y-auto px-2 py-3">
-          <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-            Menu
-          </p>
           <ul className="space-y-1">
             {menuItems.map(({ label, icon: Icon, to }) => (
               <li key={label}>
                 <NavLink
                   to={to}
-                  end={to === "/dashboard"}
                   onClick={onClose}
                   className={({ isActive }) =>
-                    `group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200 ${
-                      isActive
-                        ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
-                        : "text-slate-600 hover:translate-x-0.5 hover:bg-blue-50 hover:text-blue-700"
-                    }`
+                    isActive
+                      ? "flex items-center gap-3 rounded-xl bg-blue-600 text-white px-3 py-2"
+                      : "flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-blue-50"
                   }
                 >
-                  {({ isActive }) => (
-                    <>
-                      <Icon
-                        className={`h-5 w-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110 ${
-                          isActive ? "text-white" : "text-slate-400 group-hover:text-blue-600"
-                        }`}
-                      />
-                      {label}
-                    </>
-                  )}
+                  <Icon />
+                  {label}
                 </NavLink>
               </li>
             ))}
           </ul>
         </nav>
 
-        {/* Logout */}
-        <div className="mt-auto border-t p-3">
+        <div className="border-t p-3">
           <button
-            type="button"
             onClick={handleLogout}
-            className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-red-50 hover:text-red-600"
+            className="flex items-center gap-3"
           >
-            <FiLogOut className="h-5 w-5 flex-shrink-0 text-slate-400 transition-colors group-hover:text-red-500" />
+            <FiLogOut />
             Logout
           </button>
         </div>
       </aside>
     </>
-  )
+  );
 }

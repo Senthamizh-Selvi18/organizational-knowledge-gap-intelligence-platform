@@ -27,7 +27,13 @@ public List<UserResponse> getAllUsers() {
         response.setId(user.getId());
         response.setName(user.getName());
         response.setEmail(user.getEmail());
-        response.setRole(user.getRole().getRoleName());
+        response.setRole(
+    user.getRoles()
+        .stream()
+        .map(role -> role.getRoleName())
+        .findFirst()
+        .orElse("NO_ROLE")
+);
         response.setCreatedAt(user.getCreatedAt().toString());
 
         return response;
