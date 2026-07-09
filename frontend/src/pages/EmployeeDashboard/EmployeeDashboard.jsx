@@ -170,6 +170,7 @@ function SkillBar({ name, level }) {
 }
 
 export default function EmployeeDashboard() {
+    const userName = localStorage.getItem("name") || "User";
   const [today] = useState(
     new Date().toLocaleDateString("en-US", {
       weekday: "long",
@@ -191,7 +192,7 @@ export default function EmployeeDashboard() {
             <div>
               <p className="text-sm font-medium text-blue-600">{today}</p>
               <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                Welcome back, Sneha
+                Welcome back, {userName}
               </h1>
               <p className="mt-2 max-w-xl text-pretty text-sm leading-relaxed text-slate-600">
                 Every skill you sharpen closes a gap in your team. Keep learning,
