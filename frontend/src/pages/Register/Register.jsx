@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { useNavigate } from "react-router-dom";
 import {
@@ -16,12 +16,7 @@ import { FcGoogle } from "react-icons/fc"
 import { register } from "../../services/authService";
 
 
-// TODO: Fetch roles dynamically from backend API instead of hardcoding IDs.
-const ROLES = [
-  { id: 1, name: "Employee" },
-  { id: 2, name: "Admin" },
-  { id: 3, name: "Intern" },
-];
+
 
 function getPasswordStrength(password) {
   let score = 0
@@ -62,8 +57,15 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [role, setRole] = useState("")
+  const [roles, setRoles] = useState([]);
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+  useEffect(() => {
+  fetch("http://localhost:8080/api/roles/public")
+    .then((response) => response.json())
+    .then((data) => setRoles(data))
+    .catch((error) => console.error("Error fetching roles:", error));
+}, []);
 
   const strength = getPasswordStrength(password)
   const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword
@@ -118,11 +120,11 @@ alert(err.response?.data?.message || JSON.stringify(err.response?.data) || err.m
         {/* Left brand panel */}
         <section className="hidden flex-col justify-center lg:flex">
           <div className="flex items-center gap-3">
-            {/*<img
+            <img
               src="/logo.png"
               alt="Company logo"
               className="h-12 w-12 rounded-xl bg-white/60 p-1.5 shadow-sm ring-1 ring-white/60"
-            />*/}
+            />
             <span className="text-sm font-semibold tracking-wide text-blue-900/70 uppercase">
               KnowGap Intelligence
             </span>
@@ -353,11 +355,11 @@ alert(err.response?.data?.message || JSON.stringify(err.response?.data) || err.m
                     <option value="" disabled>
                       Select your role
                     </option>
-                    {ROLES.map((r) => (
-  <option key={r.id} value={r.id}>
-    {r.name}
-  </option>
-))}
+                   {roles.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.roleName}
+                      </option>
+                    ))}
                   </select>
                   <svg
                     className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
