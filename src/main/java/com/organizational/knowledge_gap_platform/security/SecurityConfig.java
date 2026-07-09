@@ -1,6 +1,5 @@
 package com.organizational.knowledge_gap_platform.security;
 
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -20,8 +19,6 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final AuthenticationProvider authenticationProvider;
-
-
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
             AuthenticationProvider authenticationProvider
@@ -37,48 +34,31 @@ public class SecurityConfig {
             throws Exception {
 
 
-        http
-            .csrf(csrf -> csrf.disable())
+       http
+    .csrf(csrf -> csrf.disable())
+    .sessionManagement(session ->
+        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+    )
+    .authorizeHttpRequests(auth -> auth
+        .requestMatchers(
+            "/",
+            "/auth/**",
+            "/api/auth/**",
+            "/oauth2/**",
+            "/login/**"
+        ).permitAll()
 
-            .sessionManagement(session ->
-                    session.sessionCreationPolicy(
-                            SessionCreationPolicy.STATELESS
-                    )
-            )
+        .requestMatchers("/api/roles/**").hasRole("ADMIN")
+        .requestMatchers("/api/skills/**").hasRole("ADMIN")
+        .requestMatchers("/api/users/**").authenticated()
 
-
-            .authorizeHttpRequests(auth -> auth
-
-
-                    // allow login APIs
-                   .requestMatchers(
-        "/",
-        "/auth/**",
-        "/api/auth/**",
-        "/oauth2/**",
-        "/login/**"
-)
-.permitAll()
-
-
-                    .requestMatchers("/api/roles/**").hasRole("ADMIN")
-
-
-                    .anyRequest()
-                    .authenticated()
-
-            )
-
-
-            .authenticationProvider(authenticationProvider)
-
-
-            .addFilterBefore(
-                    jwtAuthenticationFilter,
-                    UsernamePasswordAuthenticationFilter.class
-            );
-
-
+        .anyRequest().authenticated()
+    )
+    .authenticationProvider(authenticationProvider)
+    .addFilterBefore(
+        jwtAuthenticationFilter,
+        UsernamePasswordAuthenticationFilter.class
+    );
         return http.build();
 
     }
