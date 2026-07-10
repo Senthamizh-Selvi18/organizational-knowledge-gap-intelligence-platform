@@ -10,8 +10,23 @@ export const getDashboardStats = async () => {
   return response.data;
 };
 
+// CONFIRMED REAL ENDPOINT — matches EmployeeSkillController:
+//   @RestController @RequestMapping("/api/employees")
+//   @GetMapping("/{employeeId}/skills")
+//   public ResponseEntity<List<EmployeeSkillResponseDTO>> getEmployeeSkills(...)
+//
+// employeeId comes from the JWT-derived localStorage "userId" (set at login,
+// per the existing auth pattern used across the app).
 export const getSkillsOverview = async () => {
-  const response = await axios.get(`${API_BASE_URL}/dashboard/skills-overview`);
+  const employeeId = localStorage.getItem("userId");
+
+  if (!employeeId) {
+    // No logged-in employee id available — throw so the caller's .catch()
+    // falls back to the existing dummy data instead of hitting a broken URL.
+    throw new Error("No employeeId found in localStorage; cannot fetch skills overview.");
+  }
+
+  const response = await axios.get(`${API_BASE_URL}/employees/${employeeId}/skills`);
   return response.data;
 };
 
