@@ -12,10 +12,7 @@ import {
   FiX,
 } from "react-icons/fi";
 
-
-
 export default function Sidebar({ open, onClose }) {
-
   const navigate = useNavigate();
 
   const role = localStorage.getItem("role")?.toLowerCase();
@@ -32,31 +29,77 @@ export default function Sidebar({ open, onClose }) {
           : "/dashboard",
     },
 
-    { label: "Profile", icon: FiUser, to: "/dashboard/profile" },
-   { label: "Employee Skills", icon: FiCpu, to: "/dashboard/employee-skills" },
-   
-  {
-  label: "Gap Analysis",
-  icon: FiBarChart2,
-  to: "/dashboard/gap-analysis",
-},
     {
-  label: "AI Recommendation",
-  icon: FiCpu,
-  to: "/dashboard/recommendation"
-},
-    { label: "Competencies", icon: FiBarChart2, to: "/dashboard/competencies" },
-    
+      label: "Profile",
+      icon: FiUser,
+      to: "/dashboard/profile",
+    },
+
+    ...(role === "admin"
+      ? [
+          {
+            label: "Skills",
+            icon: FiCpu,
+            to: "/dashboard/skills",
+          },
+        ]
+      : []),
+
+    {
+      label: "Employee Skills",
+      icon: FiCpu,
+      to: "/dashboard/employee-skills",
+    },
+
+    {
+      label: "Gap Analysis",
+      icon: FiBarChart2,
+      to: "/dashboard/gap-analysis",
+    },
+
+    {
+      label: "AI Recommendation",
+      icon: FiCpu,
+      to: "/dashboard/recommendation",
+    },
+
+    {
+      label: "Competencies",
+      icon: FiBarChart2,
+      to: "/dashboard/competencies",
+    },
+
     ...(role === "admin" || role === "hr"
-      ? [{ label: "Employees", icon: FiUsers, to: "/dashboard/employees" }]
+      ? [
+          {
+            label: "Employees",
+            icon: FiUsers,
+            to: "/dashboard/employees",
+          },
+        ]
       : []),
 
     ...(role === "admin"
-      ? [{ label: "Role Management", icon: FiShield, to: "/dashboard/roles" }]
+      ? [
+          {
+            label: "Role Management",
+            icon: FiShield,
+            to: "/dashboard/roles",
+          },
+        ]
       : []),
 
-    { label: "Notifications", icon: FiBell, to: "/dashboard/notifications" },
-    { label: "Settings", icon: FiSettings, to: "/dashboard/settings" },
+    {
+      label: "Notifications",
+      icon: FiBell,
+      to: "/dashboard/notifications",
+    },
+
+    {
+      label: "Settings",
+      icon: FiSettings,
+      to: "/dashboard/settings",
+    },
   ];
 
   const handleLogout = () => {
@@ -93,15 +136,18 @@ lg:translate-x-0 ${
               alt="logo"
               className="h-8 w-8 rounded-lg"
             />
+
             <div>
-             <p className="font-bold text-slate-900 dark:text-white">KnowGap</p>
+              <p className="font-bold text-slate-900 dark:text-white">
+                KnowGap
+              </p>
             </div>
           </div>
 
           <button
-onClick={onClose}
-className="text-slate-700 dark:text-white"
->
+            onClick={onClose}
+            className="text-slate-700 dark:text-white"
+          >
             <FiX />
           </button>
         </div>
