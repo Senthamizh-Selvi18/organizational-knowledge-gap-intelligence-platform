@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Navigate } from "react-router-dom";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import {
   getAllSkills,
@@ -34,12 +33,6 @@ function StatCard({ title, value, icon: Icon, color }) {
 }
 
 export default function SkillManagement() {
-  const role = localStorage.getItem("role");
-
-  if (role !== "ADMIN") {
-    return <Navigate to="/dashboard" replace />;
-  }
-
   const [search, setSearch] = useState("");
   const [skills, setSkills] = useState([]);
   const [loading, setLoading] = useState(true);
