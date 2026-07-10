@@ -25,6 +25,9 @@ useEffect(() => {
   const dropdownRef = useRef(null)
   const navigate = useNavigate()
 
+  const userName = localStorage.getItem("name") || "User";
+const role = localStorage.getItem("role") || "";
+
   useEffect(() => {
     function handleClickOutside(e) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -109,13 +112,14 @@ useEffect(() => {
               className="flex items-center gap-2.5 rounded-xl py-1.5 pl-1.5 pr-2 transition-colors hover:bg-slate-100"
             >
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white shadow-sm">
-                S
+                {userName.charAt(0).toUpperCase()}
               </span>
               <span className="hidden text-left leading-tight sm:block">
-                <span className="block text-sm font-semibol text-slate-800 dark:text-white">
-                  Sneha
-                </span>
-                <span className="block text-xs text-slate-500">Employee</span>
+
+                <span className="block text-sm font-semibold text-slate-800 dark:text-white">
+                  {userName}
+                  </span>
+                <span className="block text-xs text-slate-500">{role}</span>
               </span>
               <FiChevronDown
                 className={`hidden h-4 w-4 text-slate-400 transition-transform duration-200 sm:block ${
@@ -134,8 +138,13 @@ useEffect(() => {
               }`}
             >
               <div className="border-b border-slate-100 px-4 py-3">
-                <p className="text-sm font-semibold text-slate-800 dark:text-white">Sneha</p>
-                <p className="text-xs text-slate-500">Employee</p>
+                <p className="text-sm font-semibold text-slate-800 dark:text-white">
+                  {userName}
+                </p>
+
+                <p className="text-xs text-slate-500">
+                  {role}
+                </p>
               </div>
               <div className="p-1.5">
                 <Link

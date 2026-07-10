@@ -34,8 +34,13 @@ export default function Sidebar({ open, onClose }) {
 
     { label: "Profile", icon: FiUser, to: "/dashboard/profile" },
     { label: "Skills", icon: FiCpu, to: "/dashboard/skills" },
+    {
+  label: "AI Recommendation",
+  icon: FiCpu,
+  to: "/dashboard/recommendation"
+},
     { label: "Competencies", icon: FiBarChart2, to: "/dashboard/competencies" },
-
+    
     ...(role === "admin" || role === "hr"
       ? [{ label: "Employees", icon: FiUsers, to: "/dashboard/employees" }]
       : []),
