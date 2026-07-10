@@ -47,3 +47,21 @@ export const login = async (email, password) => {
 
   return response.data;
 };
+
+export const sendOtp = async (userId, phone) => {
+  const response = await axios.post(`${API_BASE_URL}/auth/otp/send`, {
+    userId,
+    phone,
+  });
+
+  return response.data;
+};
+
+export const verifyOtp = async (userId, otp) => {
+  const response = await axios.post(`${API_BASE_URL}/auth/otp/verify`, {
+    userId,
+    otp,
+  });
+
+  return response.data;
+};
