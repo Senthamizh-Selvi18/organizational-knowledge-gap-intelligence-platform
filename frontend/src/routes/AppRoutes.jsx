@@ -1,5 +1,4 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-
 import LoginPage from "../pages/Login/Login";
 import RegisterPage from "../pages/Register/Register";
 import ForgotPasswordPage from "../pages/ForgotPassword/ForgotPassword";
@@ -19,7 +18,6 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/login" />} />
-
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -73,7 +71,7 @@ function AppRoutes() {
       <Route
         path="/dashboard/skills"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={["admin"]}>
             <SkillManagement />
           </ProtectedRoute>
         }
@@ -97,10 +95,7 @@ function AppRoutes() {
         }
       />
 
-      <Route
-        path="/oauth2/redirect"
-        element={<OAuth2RedirectPage />}
-      />
+      <Route path="/oauth2/redirect" element={<OAuth2RedirectPage />} />
     </Routes>
   );
 }
