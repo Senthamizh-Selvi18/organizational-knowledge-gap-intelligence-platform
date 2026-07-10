@@ -34,4 +34,8 @@ public class EmployeeSkill {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+    
+    @Column(name = "proficiency_level")
+    private Integer proficiencyLevel;
+
 }

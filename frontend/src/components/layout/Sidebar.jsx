@@ -12,12 +12,8 @@ import {
   FiX,
 } from "react-icons/fi";
 
-
-
 export default function Sidebar({ open, onClose }) {
-
   const navigate = useNavigate();
-
   const role = localStorage.getItem("role")?.toLowerCase();
 
   console.log("Sidebar Role:", role);
@@ -31,23 +27,27 @@ export default function Sidebar({ open, onClose }) {
           ? "/employee-dashboard"
           : "/dashboard",
     },
-
     { label: "Profile", icon: FiUser, to: "/dashboard/profile" },
 
     ...(role === "admin"
       ? [{ label: "Skills", icon: FiCpu, to: "/dashboard/skills" }]
       : []),
 
+    { label: "Employee Skills", icon: FiCpu, to: "/dashboard/employee-skills" },
+    {
+      label: "AI Recommendation",
+      icon: FiCpu,
+      to: "/dashboard/recommendation",
+    },
+
     { label: "Competencies", icon: FiBarChart2, to: "/dashboard/competencies" },
 
     ...(role === "admin" || role === "hr"
       ? [{ label: "Employees", icon: FiUsers, to: "/dashboard/employees" }]
       : []),
-
     ...(role === "admin"
       ? [{ label: "Role Management", icon: FiShield, to: "/dashboard/roles" }]
       : []),
-
     { label: "Notifications", icon: FiBell, to: "/dashboard/notifications" },
     { label: "Settings", icon: FiSettings, to: "/dashboard/settings" },
   ];
@@ -66,7 +66,6 @@ export default function Sidebar({ open, onClose }) {
           open ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       />
-
       <aside
         className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col
 border-r border-slate-200
@@ -90,7 +89,6 @@ lg:translate-x-0 ${
              <p className="font-bold text-slate-900 dark:text-white">KnowGap</p>
             </div>
           </div>
-
           <button
 onClick={onClose}
 className="text-slate-700 dark:text-white"
@@ -98,7 +96,6 @@ className="text-slate-700 dark:text-white"
             <FiX />
           </button>
         </div>
-
         <nav className="flex-1 overflow-y-auto px-2 py-3">
           <ul className="space-y-1">
             {menuItems.map(({ label, icon: Icon, to }) => (
@@ -119,7 +116,6 @@ className="text-slate-700 dark:text-white"
             ))}
           </ul>
         </nav>
-
         <div className="border-t p-3">
           <button
             onClick={handleLogout}
