@@ -11,6 +11,7 @@ import RoleManagement from "../pages/RoleManagement/RoleManagement";
 import RoleSkillMapping from "../pages/RoleSkillMapping/RoleSkillMapping";
 import ProtectedRoute from "./ProtectedRoute";
 import OAuth2RedirectPage from "../pages/OAuth2Redirect/OAuth2Redirect";
+import Recommendation from "../pages/recommendation/Recommendation";
 
 function AppRoutes() {
   return (
@@ -74,6 +75,10 @@ function AppRoutes() {
   }
 />
 
+   <Route
+ path="/dashboard/recommendation"
+ element={<Recommendation />}
+/>
       <Route path="/oauth2/redirect" element={<OAuth2RedirectPage />} />
     </Routes>
   );

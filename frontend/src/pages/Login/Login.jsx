@@ -26,27 +26,15 @@ export default function LoginPage() {
 
     localStorage.setItem("token", data.token);
     localStorage.setItem("role", data.role);
+    localStorage.setItem("userId", data.userId);
+    localStorage.setItem("name", data.name);
 
     const role = data.role.toLowerCase();
 
-    if (
-      role === "admin" ||
-      role === "hr" ||
-      role === "manager" ||
-      role === "team lead"
-    ) {
-      localStorage.setItem("token", response.data.token);
-localStorage.setItem("role", response.data.role);
-
-const role = response.data.role.toLowerCase();
-
-if (role === "employee" || role === "intern") {
-    navigate("/employee-dashboard");
-} else {
-    navigate("/dashboard");
-}
-    } else {
+    if (role === "employee" || role === "intern") {
       navigate("/employee-dashboard");
+    } else {
+      navigate("/dashboard");
     }
   } catch (error) {
     console.error(error);
