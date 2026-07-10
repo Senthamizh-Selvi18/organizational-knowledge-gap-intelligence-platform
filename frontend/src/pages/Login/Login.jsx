@@ -30,9 +30,7 @@ const handleSubmit = async (e) => {
     localStorage.setItem("role", data.role);
     localStorage.setItem("userId", data.userId);
     localStorage.setItem("name", data.name);
-
     alert("Login Successful!");
-
     const role = data.role.toLowerCase();
 
     if (role === "employee" || role === "intern") {
