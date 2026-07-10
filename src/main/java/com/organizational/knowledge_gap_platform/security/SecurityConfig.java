@@ -69,6 +69,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/users/**")
                         .authenticated()
 
+                        .requestMatchers("/api/gap-analysis/**")
+                        .authenticated()
+
                         .anyRequest()
                         .authenticated()
                 )
