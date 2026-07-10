@@ -33,7 +33,7 @@ export default function Sidebar({ open, onClose }) {
     },
 
     { label: "Profile", icon: FiUser, to: "/dashboard/profile" },
-    { label: "Skills", icon: FiCpu, to: "/dashboard/skills" },
+   { label: "Employee Skills", icon: FiCpu, to: "/dashboard/employee-skills" },
     {
   label: "AI Recommendation",
   icon: FiCpu,

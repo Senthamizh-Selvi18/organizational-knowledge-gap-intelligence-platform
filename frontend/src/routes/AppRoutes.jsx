@@ -9,14 +9,11 @@ import EmployeeDashboard from "../pages/EmployeeDashboard/EmployeeDashboard";
 import Profile from "../pages/Profile/Profile";
 import RoleManagement from "../pages/RoleManagement/RoleManagement";
 import RoleSkillMapping from "../pages/RoleSkillMapping/RoleSkillMapping";
-import SkillManagement from "../pages/SkillManagement/SkillManagement";
-import ProtectedRoute from "./ProtectedRoute";
-import OAuth2RedirectPage from "../pages/OAuth2Redirect/OAuth2Redirect";
-
+import EmployeeSkillManagement from "../pages/EmployeeSkillManagement/EmployeeSkillManagement";
 import Recommendation from "../pages/recommendation/Recommendation";
-
-import Skills from "../pages/Skills/Skills";
-
+import OAuth2RedirectPage from "../pages/OAuth2Redirect/OAuth2Redirect";
+import ProtectedRoute from "./ProtectedRoute";
+import SkillManagement from "../pages/SkillManagement/SkillManagement";
 
 function AppRoutes() {
   return (
@@ -24,35 +21,28 @@ function AppRoutes() {
       <Route path="/" element={<Navigate to="/login" />} />
 
       <Route path="/login" element={<LoginPage />} />
-
       <Route path="/register" element={<RegisterPage />} />
-
-      <Route
-        path="/forgot-password"
-        element={<ForgotPasswordPage />}
-      />
-
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       <Route
-  path="/dashboard"
-  element={
-    <ProtectedRoute allowedRoles={["admin","hr","manager","team lead"]}>
-      <DashboardPage />
-    </ProtectedRoute>
-  }
-/>
+        path="/dashboard"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "hr", "manager", "team lead"]}>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
 
-<Route
-  path="/employee-dashboard"
-  element={
-    <ProtectedRoute allowedRoles={["employee", "intern"]}>
-      <EmployeeDashboard />
-    </ProtectedRoute>
-  }
-/>
+      <Route
+        path="/employee-dashboard"
+        element={
+          <ProtectedRoute allowedRoles={["employee", "intern"]}>
+            <EmployeeDashboard />
+          </ProtectedRoute>
+        }
+      />
 
-      
       <Route
         path="/dashboard/profile"
         element={
@@ -61,7 +51,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-     
+
       <Route
         path="/dashboard/role-skills"
         element={
@@ -78,11 +68,12 @@ function AppRoutes() {
     </ProtectedRoute>
   }
 />
+
 <Route
-  path="/dashboard/recommendation"
+  path="/dashboard/employee-skills"
   element={
-    <ProtectedRoute>
-      <Recommendation />
+    <ProtectedRoute allowedRoles={["admin", "hr"]}>
+      <EmployeeSkillManagement />
     </ProtectedRoute>
   }
 />
@@ -96,9 +87,20 @@ function AppRoutes() {
   }
 />
 
-<Route path="/oauth2/redirect" element={<OAuth2RedirectPage />} />
-    </Routes>
+<Route
+  path="/dashboard/recommendation"
+  element={
+    <ProtectedRoute>
+      <Recommendation />
+    </ProtectedRoute>
+  }
+/>
 
+<Route
+  path="/oauth2/redirect"
+  element={<OAuth2RedirectPage />}
+/>
+    </Routes>
   );
 }
 
