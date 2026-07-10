@@ -12,7 +12,11 @@ import RoleSkillMapping from "../pages/RoleSkillMapping/RoleSkillMapping";
 import SkillManagement from "../pages/SkillManagement/SkillManagement";
 import ProtectedRoute from "./ProtectedRoute";
 import OAuth2RedirectPage from "../pages/OAuth2Redirect/OAuth2Redirect";
+
 import Recommendation from "../pages/recommendation/Recommendation";
+
+import Skills from "../pages/Skills/Skills";
+
 
 function AppRoutes() {
   return (
@@ -74,7 +78,6 @@ function AppRoutes() {
     </ProtectedRoute>
   }
 />
-
 <Route
   path="/dashboard/recommendation"
   element={
@@ -87,7 +90,7 @@ function AppRoutes() {
 <Route
   path="/dashboard/skills"
   element={
-    <ProtectedRoute>
+    <ProtectedRoute allowedRoles={["admin", "hr"]}>
       <SkillManagement />
     </ProtectedRoute>
   }
@@ -95,6 +98,7 @@ function AppRoutes() {
 
 <Route path="/oauth2/redirect" element={<OAuth2RedirectPage />} />
     </Routes>
+
   );
 }
 
