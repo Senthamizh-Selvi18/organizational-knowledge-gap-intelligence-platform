@@ -34,4 +34,4 @@ build/
 
 ### Local configuration ###
 src/main/resources/application-local.properties
-src/.env
+src/.envsrc/main/resources/application-local.properties
