@@ -285,7 +285,16 @@ export default function EmployeeDashboard() {
     getSkillsOverview()
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
-          setSkills(data)
+          // Real backend field names for EmployeeSkillResponseDTO aren't
+          // confirmed yet, so we defensively check common variants here.
+          // This guarantees the chart never breaks/crashes even if the
+          // exact field names differ from what's guessed below — worst
+          // case a row shows a generic label until confirmed.
+          const mapped = data.map((s) => ({
+            name: s.skillName ?? s.name ?? s.skill ?? "Skill",
+            level: Number(s.proficiencyLevel ?? s.level ?? s.score ?? s.proficiency ?? 0),
+          }))
+          setSkills(mapped)
         }
       })
       .catch((error) => {

@@ -44,19 +44,21 @@ export default function Sidebar({ open, onClose }) {
           },
         ]
       : []),
-
-    {
-      label: "Employee Skills",
-      icon: FiCpu,
-      to: "/dashboard/employee-skills",
-    },
+    ...(role === "admin" || role === "hr"
+      ? [
+          {
+            label: "Employee Skills",
+            icon: FiCpu,
+            to: "/dashboard/employee-skills",
+          },
+        ]
+      : []),
 
     {
       label: "Gap Analysis",
       icon: FiBarChart2,
       to: "/dashboard/gap-analysis",
     },
-
     {
       label: "AI Recommendation",
       icon: FiCpu,
