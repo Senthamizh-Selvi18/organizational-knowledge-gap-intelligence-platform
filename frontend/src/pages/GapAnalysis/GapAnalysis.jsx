@@ -1,10 +1,13 @@
 import { useEffect, useState, useCallback } from "react";
 import Select, { components } from "react-select";
 import DashboardLayout from "../../components/layout/DashboardLayout";
+
 import {
   getEmployees,
   getSkills,
 } from "../../services/EmployeeSkillService";
+
+import { getGapAnalysis } from "../../services/GapAnalysisService";
 
 import {
   FiUsers,
@@ -12,6 +15,7 @@ import {
   FiAlertCircle,
   FiRefreshCw,
   FiBarChart2,
+  FiCheckCircle,
 } from "react-icons/fi";
 
 export default function GapAnalysis() {
@@ -25,26 +29,18 @@ export default function GapAnalysis() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  // Dummy Gap Analysis Data
-  const [gapData, setGapData] = useState({
-    employeeSkills: [],
-    requiredSkills: [],
-    missingSkills: [],
-    gapPercentage: 0,
-  });
+  // Backend Gap Analysis Data
+  const [gapData, setGapData] = useState([]);
 
   const employeeOptions = employees.map((employee) => ({
     value: employee.id,
-
     label: `${employee.user?.name} (${employee.employeeCode})`,
-
     searchText: `
       ${employee.user?.name}
       ${employee.employeeCode}
       ${employee.department}
       ${employee.designation}
     `,
-
     employee,
   }));
 
@@ -53,6 +49,18 @@ export default function GapAnalysis() {
       .toLowerCase()
       .includes(inputValue.toLowerCase());
   };
+
+  const handleRefresh = async () => {
+  setSelectedEmployee("");
+
+  setGapData([]);
+
+  setMessage("");
+
+  setError("");
+
+  await loadData();
+};
 
   const CustomOption = (props) => {
     const employee = props.data.employee;
@@ -83,7 +91,6 @@ export default function GapAnalysis() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-
       setError("");
       setMessage("");
 
@@ -94,13 +101,15 @@ export default function GapAnalysis() {
 
       setEmployees(employeeResponse?.data || []);
       setSkills(skillResponse?.data || []);
+
     } catch (err) {
       console.error(err);
 
       setError(
         err.response?.data?.message ||
-          "Unable to load employees."
+        "Unable to load employees."
       );
+
     } finally {
       setLoading(false);
     }
@@ -110,45 +119,69 @@ export default function GapAnalysis() {
     loadData();
   }, [loadData]);
 
-  const loadGapAnalysis = (employeeId) => {
+  const loadGapAnalysis = async (employeeId) => {
     if (!employeeId) {
-      setGapData({
-        employeeSkills: [],
-        requiredSkills: [],
-        missingSkills: [],
-        gapPercentage: 0,
-      });
-
+      setGapData([]);
       return;
     }
 
-    // Dummy Data
-    setGapData({
-      employeeSkills: [
-        "Java",
-        "HTML",
-        "CSS",
-        "JavaScript",
-      ],
+    try {
+      setLoading(true);
+      setError("");
+      setMessage("");
 
-      requiredSkills: [
-        "Java",
-        "Spring Boot",
-        "React",
-        "Docker",
-        "SQL",
-      ],
+      const response = await getGapAnalysis(employeeId);
 
-      missingSkills: [
-        "Spring Boot",
-        "React",
-        "Docker",
-      ],
+      console.log("Gap Analysis Response:", response.data);
 
-      gapPercentage: 60,
-    });
+      setGapData(response.data || []);
+
+      if ((response.data || []).length === 0) {
+        setMessage("No gap analysis found for this employee.");
+      }
+
+    } catch (err) {
+      console.error("Gap Analysis Error:", err);
+
+      setGapData([]);
+
+      setError(
+        err.response?.data?.message ||
+        "Unable to load Gap Analysis."
+      );
+
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // Current Gap Analysis
+  const currentGap =
+    gapData.length > 0 ? gapData[0] : null;
+
+  const matchedSkills =
+    currentGap?.matchedSkills || [];
+
+  const missingSkills =
+    currentGap?.missingSkills || [];
+
+  const gapPercentage =
+    currentGap?.gapPercentage || 0;
+
+  const matchedSkillCount =
+    currentGap?.matchedSkillCount || 0;
+
+  const missingSkillCount =
+    currentGap?.missingSkillCount || 0;
+
+  const totalRequiredSkills =
+    currentGap?.totalRequiredSkills || 0;
+
+  const employeeName =
+    currentGap?.employeeName || "";
+
+  const roleName =
+    currentGap?.roleName || "";
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -158,7 +191,6 @@ export default function GapAnalysis() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between rounded-3xl bg-gradient-to-r from-blue-600 to-indigo-600 p-8 text-white shadow-lg">
 
           <div>
-
             <h1 className="text-4xl font-bold">
               Gap Analysis
             </h1>
@@ -166,21 +198,21 @@ export default function GapAnalysis() {
             <p className="mt-2 text-blue-100 text-lg">
               Analyze employee skill gaps and identify missing competencies.
             </p>
-
           </div>
 
         </div>
 
         {/* Dashboard Cards */}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+
+          {/* Employees */}
 
           <div className="rounded-3xl bg-white p-6 shadow-lg">
 
             <div className="flex items-center justify-between">
 
               <div>
-
                 <p className="text-sm uppercase text-gray-500">
                   Employees
                 </p>
@@ -188,65 +220,82 @@ export default function GapAnalysis() {
                 <h2 className="mt-2 text-4xl font-bold">
                   {employees.length}
                 </h2>
-
               </div>
 
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-
                 <FiUsers className="text-3xl text-blue-600" />
-
               </div>
 
             </div>
 
           </div>
 
+          {/* Required Skills */}
+
           <div className="rounded-3xl bg-white p-6 shadow-lg">
 
             <div className="flex items-center justify-between">
 
               <div>
-
                 <p className="text-sm uppercase text-gray-500">
-                  Total Skills
+                  Required Skills
                 </p>
 
-                <h2 className="mt-2 text-4xl font-bold">
-                  {skills.length}
+                <h2 className="mt-2 text-4xl font-bold text-blue-600">
+                  {totalRequiredSkills}
                 </h2>
-
               </div>
 
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-
-                <FiCpu className="text-3xl text-green-600" />
-
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
+                <FiCpu className="text-3xl text-blue-600" />
               </div>
 
             </div>
 
           </div>
 
+          {/* Missing Skills */}
+
           <div className="rounded-3xl bg-white p-6 shadow-lg">
 
             <div className="flex items-center justify-between">
 
               <div>
+                <p className="text-sm uppercase text-gray-500">
+                  Missing Skills
+                </p>
 
+                <h2 className="mt-2 text-4xl font-bold text-orange-600">
+                  {missingSkillCount}
+                </h2>
+              </div>
+
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-orange-100">
+                <FiAlertCircle className="text-3xl text-orange-600" />
+              </div>
+
+            </div>
+
+          </div>
+
+          {/* Gap Percentage */}
+
+          <div className="rounded-3xl bg-white p-6 shadow-lg">
+
+            <div className="flex items-center justify-between">
+
+              <div>
                 <p className="text-sm uppercase text-gray-500">
                   Gap %
                 </p>
 
                 <h2 className="mt-2 text-4xl font-bold text-red-600">
-                  {gapData.gapPercentage}%
+                  {gapPercentage.toFixed(1)}%
                 </h2>
-
               </div>
 
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
-
                 <FiBarChart2 className="text-3xl text-red-600" />
-
               </div>
 
             </div>
@@ -256,420 +305,443 @@ export default function GapAnalysis() {
         </div>
 
         {/* Employee Selection */}
+<div className="rounded-3xl bg-white p-6 shadow-lg">
 
-        <div className="rounded-3xl bg-white p-6 shadow-lg">
+  <div className="mb-5 flex items-center justify-between">
 
-          <div className="mb-5 flex items-center justify-between">
+    <h2 className="text-2xl font-bold">
+      Select Employee
+    </h2>
 
-            <h2 className="text-2xl font-bold">
-              Select Employee
-            </h2>
+    <button
+  onClick={handleRefresh}
+  className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-white"
+>
+  <FiRefreshCw />
+  Refresh
+</button>
 
-            <button
-              onClick={loadData}
-              className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-white"
-            >
-              <FiRefreshCw />
-              Refresh
-            </button>
+  </div>
 
-          </div>
+  <Select
+    options={employeeOptions}
+    placeholder="Search Employee..."
+    filterOption={filterEmployeeOption}
+    components={{ Option: CustomOption }}
+    isSearchable
+    isClearable
+    value={
+      employeeOptions.find(
+        (option) => option.value === Number(selectedEmployee)
+      ) || null
+    }
+    onChange={(selectedOption) => {
+      if (selectedOption) {
+        setSelectedEmployee(selectedOption.value);
+        loadGapAnalysis(selectedOption.value);
+      } else {
+        setSelectedEmployee("");
+        loadGapAnalysis(null);
+      }
+    }}
+  />
 
-          <Select
-            options={employeeOptions}
-            placeholder="Search Employee..."
-            filterOption={filterEmployeeOption}
-            components={{ Option: CustomOption }}
-            isSearchable
-            isClearable
-            value={
-              employeeOptions.find(
-                (option) =>
-                  option.value === Number(selectedEmployee)
-              ) || null
-            }
-            onChange={(selectedOption) => {
-              if (selectedOption) {
-                setSelectedEmployee(selectedOption.value);
-                loadGapAnalysis(selectedOption.value);
-              } else {
-                setSelectedEmployee("");
-                loadGapAnalysis(null);
-              }
-            }}
-          />
-                  </div>
+  {currentGap && (
+    <div className="mt-5 rounded-xl bg-slate-50 p-4">
+      <p className="font-semibold text-slate-800">
+        Employee : {employeeName}
+      </p>
 
-        {/* Gap Progress */}
+      <p className="mt-1 text-slate-600">
+        Role : {roleName}
+      </p>
+    </div>
+  )}
 
-        <div className="rounded-3xl bg-white p-6 shadow-lg">
+</div>
 
-          <div className="mb-6">
+{/* Gap Progress */}
 
-            <h2 className="text-2xl font-bold text-slate-800">
-              Overall Skill Gap
-            </h2>
+<div className="rounded-3xl bg-white p-6 shadow-lg">
 
-            <p className="mt-1 text-sm text-slate-500">
-              Percentage of missing skills for the selected employee.
-            </p>
+  <div className="mb-6">
 
-          </div>
+    <h2 className="text-2xl font-bold text-slate-800">
+      Overall Skill Gap
+    </h2>
 
-          <div className="w-full rounded-full bg-slate-200 h-5 overflow-hidden">
+    <p className="mt-1 text-sm text-slate-500">
+      Percentage of missing skills for the selected employee.
+    </p>
 
-            <div
-              className="h-5 rounded-full bg-gradient-to-r from-red-500 to-orange-500 transition-all duration-500"
-              style={{
-                width: `${gapData.gapPercentage}%`,
-              }}
-            />
+  </div>
 
-          </div>
+  <div className="w-full rounded-full bg-slate-200 h-5 overflow-hidden">
 
-          <div className="mt-4 flex justify-between text-sm font-semibold">
+    <div
+      className="h-5 rounded-full bg-gradient-to-r from-red-500 to-orange-500 transition-all duration-500"
+      style={{
+        width: `${gapPercentage}%`,
+      }}
+    />
 
-            <span className="text-green-600">
-              Skills Available
-            </span>
+  </div>
 
-            <span className="text-red-600">
-              Gap {gapData.gapPercentage}%
-            </span>
+  <div className="mt-4 flex justify-between text-sm font-semibold">
 
-          </div>
+    <span className="text-green-600">
+      Matched Skills : {matchedSkillCount}
+    </span>
 
-        </div>
+    <span className="text-red-600">
+      Gap {gapPercentage.toFixed(1)}%
+    </span>
+
+  </div>
+
+  <div className="mt-2 flex justify-between text-sm text-slate-500">
+
+    <span>
+      Required Skills : {totalRequiredSkills}
+    </span>
+
+    <span>
+      Missing Skills : {missingSkillCount}
+    </span>
+
+  </div>
+
+</div>
 
         {/* Skills Grid */}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* Employee Skills */}
+  {/* Matched Skills */}
+<div className="rounded-3xl bg-white shadow-lg p-6">
 
-          <div className="rounded-3xl bg-white shadow-lg p-6">
+  <h2 className="mb-5 text-xl font-bold text-slate-800">
+    Matched Skills
+  </h2>
 
-            <h2 className="mb-5 text-xl font-bold text-slate-800">
-              Employee Skills
-            </h2>
+  {!currentGap ? (
 
-            {gapData.employeeSkills.length === 0 ? (
+    <p className="text-slate-400">
+      Select an employee.
+    </p>
 
-              <p className="text-slate-400">
-                Select an employee.
-              </p>
+  ) : matchedSkills.length === 0 ? (
 
-            ) : (
+    <p className="text-slate-400">
+      No matched skills found.
+    </p>
 
-              <div className="flex flex-wrap gap-3">
+  ) : (
 
-                {gapData.employeeSkills.map((skill, index) => (
+    <div className="flex flex-wrap gap-3">
 
-                  <span
-                    key={index}
-                    className="rounded-full bg-green-100 px-4 py-2 text-sm font-medium text-green-700"
-                  >
-                    {skill}
-                  </span>
+      {matchedSkills.map((skill) => (
 
-                ))}
+        <span
+          key={skill.id}
+          className="rounded-full bg-green-100 px-4 py-2 text-sm font-medium text-green-700"
+        >
+          {skill.skillName}
+        </span>
 
-              </div>
+      ))}
 
-            )}
+    </div>
 
-          </div>
+  )}
 
-          {/* Required Skills */}
+</div>
 
-          <div className="rounded-3xl bg-white shadow-lg p-6">
+  {/* Required Skills */}
 
-            <h2 className="mb-5 text-xl font-bold text-slate-800">
-              Required Skills
-            </h2>
+  <div className="rounded-3xl bg-white shadow-lg p-6">
 
-            {gapData.requiredSkills.length === 0 ? (
+    <h2 className="mb-5 text-xl font-bold text-slate-800">
+      Required Skills
+    </h2>
 
-              <p className="text-slate-400">
-                Select an employee.
-              </p>
+    <div className="flex h-full items-center justify-center">
 
-            ) : (
+      <div className="text-center">
 
-              <div className="flex flex-wrap gap-3">
+        <p className="text-5xl font-bold text-blue-600">
+          {totalRequiredSkills}
+        </p>
 
-                {gapData.requiredSkills.map((skill, index) => (
+        <p className="mt-3 text-slate-500">
+          Total Required Skills
+        </p>
 
-                  <span
-                    key={index}
-                    className="rounded-full bg-blue-100 px-4 py-2 text-sm font-medium text-blue-700"
-                  >
-                    {skill}
-                  </span>
+      </div>
 
-                ))}
+    </div>
 
-              </div>
+  </div>
 
-            )}
+  {/* Missing Skills */}
 
-          </div>
+  <div className="rounded-3xl bg-white shadow-lg p-6">
 
-          {/* Missing Skills */}
+    <h2 className="mb-5 text-xl font-bold text-slate-800">
+      Missing Skills
+    </h2>
 
-          <div className="rounded-3xl bg-white shadow-lg p-6">
+    {missingSkills.length === 0 ? (
 
-            <h2 className="mb-5 text-xl font-bold text-slate-800">
-              Missing Skills
-            </h2>
+      <div className="flex items-center gap-2 text-green-600">
 
-            {gapData.missingSkills.length === 0 ? (
+        <FiCheckCircle />
 
-              <div className="flex items-center gap-2 text-green-600">
+        <span>No Skill Gap</span>
 
-                <FiCheckCircle />
+      </div>
 
-                <span>
-                  No Skill Gap
-                </span>
+    ) : (
 
-              </div>
+      <div className="flex flex-wrap gap-3">
 
-            ) : (
+        {missingSkills.map((skill) => (
 
-              <div className="flex flex-wrap gap-3">
+          <span
+            key={skill.id}
+            className="rounded-full bg-red-100 px-4 py-2 text-sm font-medium text-red-700"
+          >
+            {skill.skillName}
+          </span>
 
-                {gapData.missingSkills.map((skill, index) => (
+        ))}
 
-                  <span
-                    key={index}
-                    className="rounded-full bg-red-100 px-4 py-2 text-sm font-medium text-red-700"
-                  >
-                    {skill}
-                  </span>
+      </div>
 
-                ))}
+    )}
 
-              </div>
+  </div>
 
-            )}
-
-          </div>
-
-        </div>
-
+</div>
         {/* Summary Card */}
 
         <div className="rounded-3xl bg-white p-6 shadow-lg">
 
-          <h2 className="text-2xl font-bold text-slate-800 mb-4">
-            Gap Analysis Summary
-          </h2>
+  <h2 className="text-2xl font-bold text-slate-800 mb-4">
+    Gap Analysis Summary
+  </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-            <div className="rounded-2xl bg-green-50 p-5 text-center">
+    <div className="rounded-2xl bg-green-50 p-5 text-center">
 
-              <h3 className="text-4xl font-bold text-green-600">
-                {gapData.employeeSkills.length}
-              </h3>
+      <h3 className="text-4xl font-bold text-green-600">
+        {matchedSkillCount}
+      </h3>
 
-              <p className="mt-2 text-slate-600">
-                Current Skills
-              </p>
+      <p className="mt-2 text-slate-600">
+        Matched Skills
+      </p>
 
-            </div>
+    </div>
 
-            <div className="rounded-2xl bg-blue-50 p-5 text-center">
+    <div className="rounded-2xl bg-blue-50 p-5 text-center">
 
-              <h3 className="text-4xl font-bold text-blue-600">
-                {gapData.requiredSkills.length}
-              </h3>
+      <h3 className="text-4xl font-bold text-blue-600">
+        {totalRequiredSkills}
+      </h3>
 
-              <p className="mt-2 text-slate-600">
-                Required Skills
-              </p>
+      <p className="mt-2 text-slate-600">
+        Required Skills
+      </p>
 
-            </div>
+    </div>
 
-            <div className="rounded-2xl bg-red-50 p-5 text-center">
+    <div className="rounded-2xl bg-red-50 p-5 text-center">
 
-              <h3 className="text-4xl font-bold text-red-600">
-                {gapData.missingSkills.length}
-              </h3>
+      <h3 className="text-4xl font-bold text-red-600">
+        {missingSkillCount}
+      </h3>
 
-              <p className="mt-2 text-slate-600">
-                Missing Skills
-              </p>
+      <p className="mt-2 text-slate-600">
+        Missing Skills
+      </p>
 
-            </div>
+    </div>
 
-          </div>
+  </div>
 
-        </div>
-                {/* Information Message */}
+</div>
 
-        {message && (
-          <div className="rounded-2xl border border-green-300 bg-green-50 p-4 text-green-700 shadow-sm">
+{/* Information Message */}
 
-            <div className="flex items-center gap-2">
+{message && (
+  <div className="rounded-2xl border border-green-300 bg-green-50 p-4 text-green-700 shadow-sm">
 
-              <FiCheckCircle className="text-xl" />
+    <div className="flex items-center gap-2">
 
-              <span className="font-medium">
-                {message}
-              </span>
+      <FiCheckCircle className="text-xl" />
 
-            </div>
+      <span className="font-medium">
+        {message}
+      </span>
 
-          </div>
+    </div>
+
+  </div>
+)}
+
+{/* Error Message */}
+
+{error && (
+  <div className="rounded-2xl border border-red-300 bg-red-50 p-4 text-red-700 shadow-sm">
+
+    <div className="flex items-center gap-2">
+
+      <FiAlertCircle className="text-xl" />
+
+      <span className="font-medium">
+        {error}
+      </span>
+
+    </div>
+
+  </div>
+)}
+
+{/* Analysis Table */}
+
+<div className="overflow-hidden rounded-3xl bg-white shadow-lg">
+
+  <div className="border-b p-6">
+    <h2 className="text-2xl font-bold text-slate-800">
+      Gap Analysis Details
+    </h2>
+
+    <p className="mt-2 text-slate-500">
+      Comparison between employee skills and required skills.
+    </p>
+  </div>
+
+  <div className="overflow-x-auto">
+
+    <table className="min-w-full">
+
+      <thead className="bg-slate-100">
+
+        <tr>
+          <th className="px-6 py-4 text-left text-sm font-semibold uppercase">
+            Skill
+          </th>
+
+          <th className="px-6 py-4 text-left text-sm font-semibold uppercase">
+            Employee
+          </th>
+
+          <th className="px-6 py-4 text-left text-sm font-semibold uppercase">
+            Required
+          </th>
+
+          <th className="px-6 py-4 text-left text-sm font-semibold uppercase">
+            Status
+          </th>
+        </tr>
+
+      </thead>
+
+      <tbody>
+
+        {currentGap === null ? (
+
+          <tr>
+
+            <td
+              colSpan={4}
+              className="py-12 text-center text-slate-400"
+            >
+              Select an employee to view gap analysis.
+            </td>
+
+          </tr>
+
+        ) : (
+
+          <>
+
+            {matchedSkills.map((skill) => (
+
+              <tr
+                key={`matched-${skill.id}`}
+                className="border-b hover:bg-slate-50"
+              >
+
+                <td className="px-6 py-4 font-semibold">
+                  {skill.skillName}
+                </td>
+
+                <td className="px-6 py-4 text-green-600">
+                  ✔
+                </td>
+
+                <td className="px-6 py-4">
+                  ✔
+                </td>
+
+                <td className="px-6 py-4">
+                  <span className="rounded-full bg-green-100 px-3 py-1 text-sm text-green-700">
+                    Matched
+                  </span>
+                </td>
+
+              </tr>
+
+            ))}
+
+            {missingSkills.map((skill) => (
+
+              <tr
+                key={`missing-${skill.id}`}
+                className="border-b hover:bg-slate-50"
+              >
+
+                <td className="px-6 py-4 font-semibold">
+                  {skill.skillName}
+                </td>
+
+                <td className="px-6 py-4 text-red-600">
+                  ✘
+                </td>
+
+                <td className="px-6 py-4">
+                  ✔
+                </td>
+
+                <td className="px-6 py-4">
+                  <span className="rounded-full bg-red-100 px-3 py-1 text-sm text-red-700">
+                    Missing
+                  </span>
+                </td>
+
+              </tr>
+
+            ))}
+
+          </>
+
         )}
 
-        {/* Error Message */}
+      </tbody>
 
-        {error && (
-          <div className="rounded-2xl border border-red-300 bg-red-50 p-4 text-red-700 shadow-sm">
+    </table>
 
-            <div className="flex items-center gap-2">
+  </div>
 
-              <FiAlertCircle className="text-xl" />
+</div>
 
-              <span className="font-medium">
-                {error}
-              </span>
+</div>
 
-            </div>
+</DashboardLayout>
 
-          </div>
-        )}
-
-        {/* Analysis Table */}
-
-        <div className="overflow-hidden rounded-3xl bg-white shadow-lg">
-
-          <div className="border-b p-6">
-
-            <h2 className="text-2xl font-bold text-slate-800">
-              Gap Analysis Details
-            </h2>
-
-            <p className="mt-2 text-slate-500">
-              Comparison between employee skills and required skills.
-            </p>
-
-          </div>
-
-          <div className="overflow-x-auto">
-
-            <table className="min-w-full">
-
-              <thead className="bg-slate-100">
-
-                <tr>
-
-                  <th className="px-6 py-4 text-left text-sm font-semibold uppercase">
-                    Skill
-                  </th>
-
-                  <th className="px-6 py-4 text-left text-sm font-semibold uppercase">
-                    Employee
-                  </th>
-
-                  <th className="px-6 py-4 text-left text-sm font-semibold uppercase">
-                    Required
-                  </th>
-
-                  <th className="px-6 py-4 text-left text-sm font-semibold uppercase">
-                    Status
-                  </th>
-
-                </tr>
-
-              </thead>
-
-              <tbody>
-
-                {gapData.requiredSkills.length === 0 ? (
-
-                  <tr>
-
-                    <td
-                      colSpan={4}
-                      className="py-12 text-center text-slate-400"
-                    >
-                      Select an employee to view gap analysis.
-                    </td>
-
-                  </tr>
-
-                ) : (
-
-                  gapData.requiredSkills.map((skill, index) => {
-
-                    const available =
-                      gapData.employeeSkills.includes(skill);
-
-                    return (
-
-                      <tr
-                        key={index}
-                        className="border-b hover:bg-slate-50"
-                      >
-
-                        <td className="px-6 py-4 font-semibold">
-                          {skill}
-                        </td>
-
-                        <td className="px-6 py-4">
-                          {available ? "✔" : "-"}
-                        </td>
-
-                        <td className="px-6 py-4">
-                          ✔
-                        </td>
-
-                        <td className="px-6 py-4">
-
-                          {available ? (
-
-                            <span className="rounded-full bg-green-100 px-3 py-1 text-sm text-green-700">
-
-                              Available
-
-                            </span>
-
-                          ) : (
-
-                            <span className="rounded-full bg-red-100 px-3 py-1 text-sm text-red-700">
-
-                              Missing
-
-                            </span>
-
-                          )}
-
-                        </td>
-
-                      </tr>
-
-                    );
-
-                  })
-
-                )}
-
-              </tbody>
-
-            </table>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </DashboardLayout>
-
-  );
+);
 
 }
