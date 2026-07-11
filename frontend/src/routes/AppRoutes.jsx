@@ -13,6 +13,7 @@ import EmployeeSkillManagement from "../pages/EmployeeSkillManagement/EmployeeSk
 import Recommendation from "../pages/recommendation/Recommendation";
 import OAuth2RedirectPage from "../pages/OAuth2Redirect/OAuth2Redirect";
 import ProtectedRoute from "./ProtectedRoute";
+import GapAnalysis from "../pages/GapAnalysis/GapAnalysis";
 
 function AppRoutes() {
   return (
@@ -94,8 +95,19 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/dashboard/gap-analysis"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "hr", "manager", "team lead"]}>
+            <GapAnalysis />
+          </ProtectedRoute>
+        }
+      />
 
-      <Route path="/oauth2/redirect" element={<OAuth2RedirectPage />} />
+      <Route
+        path="/oauth2/redirect"
+        element={<OAuth2RedirectPage />}
+      />
     </Routes>
   );
 }
