@@ -13,7 +13,9 @@ import EmployeeSkillManagement from "../pages/EmployeeSkillManagement/EmployeeSk
 import Recommendation from "../pages/recommendation/Recommendation";
 import OAuth2RedirectPage from "../pages/OAuth2Redirect/OAuth2Redirect";
 import ProtectedRoute from "./ProtectedRoute";
+import EmployeeGapAnalysis from "../pages/EmployeeGapAnalysis/EmployeeGapAnalysis";
 import GapAnalysis from "../pages/GapAnalysis/GapAnalysis";
+import EmployeeManagement from "../pages/EmployeeManagement/EmployeeManagement";
 
 function AppRoutes() {
   return (
@@ -42,6 +44,22 @@ function AppRoutes() {
         }
       />
 
+      <Route
+  path="/employee-dashboard/gap-analysis"
+  element={
+    <ProtectedRoute allowedRoles={["Employee", "Intern"]}>
+      <EmployeeGapAnalysis />
+    </ProtectedRoute>
+  }
+/>
+    <Route
+    path="/dashboard/employees"
+    element={
+        <ProtectedRoute allowedRoles={["Admin"]}>
+            <EmployeeManagement />
+        </ProtectedRoute>
+    }
+/>
       <Route
         path="/dashboard/profile"
         element={
