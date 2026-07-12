@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -22,13 +23,16 @@ public class EmployeeSkillServiceImpl implements EmployeeSkillService {
     private final EmployeeRepository employeeRepository;
     private final SkillRepository skillRepository;
     private final EmployeeSkillRepository employeeSkillRepository;
+    private final NotificationService notificationService;
 
     public EmployeeSkillServiceImpl(EmployeeRepository employeeRepository,
                                     SkillRepository skillRepository,
-                                    EmployeeSkillRepository employeeSkillRepository) {
+                                    EmployeeSkillRepository employeeSkillRepository,
+                                    NotificationService notificationService) {
         this.employeeRepository = employeeRepository;
         this.skillRepository = skillRepository;
         this.employeeSkillRepository = employeeSkillRepository;
+        this.notificationService = notificationService;
     }
     @Override
     @Transactional
@@ -44,6 +48,8 @@ public class EmployeeSkillServiceImpl implements EmployeeSkillService {
             throw new SkillNotFoundException("One or more skills not found.");
         }
 
+        List<String> newlyAssignedSkillNames = new ArrayList<>();
+
         for (Skill skill : skills) {
 
             // Skip if the employee already has this skill
@@ -57,7 +63,10 @@ public class EmployeeSkillServiceImpl implements EmployeeSkillService {
             employeeSkill.setCreatedAt(LocalDateTime.now());
 
             employeeSkillRepository.save(employeeSkill);
+            newlyAssignedSkillNames.add(skill.getSkillName());
         }
+
+        notificationService.notifySkillAssigned(employee, newlyAssignedSkillNames);
     }
 
     @Override
@@ -85,6 +94,12 @@ public class EmployeeSkillServiceImpl implements EmployeeSkillService {
 
             employeeSkillRepository.save(employeeSkill);
         }
+
+        List<String> updatedSkillNames = skills.stream()
+                .map(Skill::getSkillName)
+                .toList();
+
+        notificationService.notifySkillUpdated(employee, updatedSkillNames);
     }
 
 

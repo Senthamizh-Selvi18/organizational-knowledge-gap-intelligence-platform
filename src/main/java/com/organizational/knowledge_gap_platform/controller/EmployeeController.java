@@ -1,10 +1,10 @@
 package com.organizational.knowledge_gap_platform.controller;
 
 import com.organizational.knowledge_gap_platform.dto.EmployeeResponseDTO;
+import com.organizational.knowledge_gap_platform.dto.EmployeeSummaryDTO;
 import com.organizational.knowledge_gap_platform.dto.EmployeeUpdateDTO;
 import com.organizational.knowledge_gap_platform.service.EmployeeService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,7 +20,6 @@ public class EmployeeController {
     }
 
     // Get All Employees
-    //@PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<EmployeeResponseDTO>> getAllEmployees() {
         return ResponseEntity.ok(employeeService.getAllEmployees());
@@ -53,5 +52,15 @@ public class EmployeeController {
         employeeService.deleteEmployee(id);
 
         return ResponseEntity.ok("Employee deleted successfully.");
+    }
+
+    // Get Employee Summary By User id
+    @GetMapping("/by-user/{userId}")
+    public ResponseEntity<EmployeeSummaryDTO> getEmployeeByUserId(
+            @PathVariable Long userId) {
+
+        return ResponseEntity.ok(
+                employeeService.getEmployeeByUserId(userId)
+        );
     }
 }
