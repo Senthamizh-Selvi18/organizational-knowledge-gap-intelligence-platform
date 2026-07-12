@@ -30,6 +30,7 @@ import {
   FiGrid,
 } from "react-icons/fi"
 import DashboardLayout from "../../components/layout/DashboardLayout.jsx"
+import EmployeeGapAnalysis from "../EmployeeGapAnalysis/EmployeeGapAnalysis";
 import {
   getDashboardStats,
   getSkillsOverview,
@@ -414,7 +415,8 @@ export default function EmployeeDashboard() {
             </div>
           ))}
         </section>
-
+        {/* My Gap Analysis */}
+          <EmployeeGapAnalysis />
         {/* 3 & 4. Skills Overview + Competency Analytics */}
         <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Skills Overview */}
