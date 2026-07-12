@@ -54,17 +54,23 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [role, setRole] = useState("")
+  const [roles, setRoles] = useState([]);
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
-  const [roles, setRoles] = useState([])
   const [rolesLoading, setRolesLoading] = useState(true)
 
-  useEffect(() => {
-    getRegisterableRoles()
-      .then((data) => setRoles(data))
-      .catch(() => alert("Failed to load roles. Please refresh the page."))
-      .finally(() => setRolesLoading(false))
-  }, [])
+ useEffect(() => {
+  getRegisterableRoles()
+    .then((data) => {
+      console.log("Roles API:", data);
+      setRoles(data);
+    })
+    .catch((error) => {
+      console.error("Failed to load roles:", error);
+      alert("Failed to load roles. Please refresh the page.");
+    })
+    .finally(() => setRolesLoading(false));
+}, []);
 
   const strength = getPasswordStrength(password)
   const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword
@@ -138,11 +144,11 @@ export default function RegisterPage() {
         {/* Left brand panel */}
         <section className="hidden flex-col justify-center lg:flex">
           <div className="flex items-center gap-3">
-            {/*<img
+            <img
               src="/logo.png"
               alt="Company logo"
               className="h-12 w-12 rounded-xl bg-white/60 p-1.5 shadow-sm ring-1 ring-white/60"
-            />*/}
+            />
             <span className="text-sm font-semibold tracking-wide text-blue-900/70 uppercase">
               KnowGap Intelligence
             </span>
@@ -378,7 +384,7 @@ export default function RegisterPage() {
                           ? "No roles available"
                           : "Select your role"}
                     </option>
-                    {roles.map((r) => (
+                   {roles.map((r) => (
                       <option key={r.id} value={r.id}>
                         {r.roleName}
                       </option>

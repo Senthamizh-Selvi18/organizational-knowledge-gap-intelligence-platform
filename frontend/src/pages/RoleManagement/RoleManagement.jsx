@@ -4,6 +4,7 @@ import {
   addRole,
   updateRole,
   deleteRole,
+  getRoleDetails,
 } from "../../services/roleService";
 import { Navigate } from "react-router-dom";
 import DashboardLayout from "../../components/layout/DashboardLayout";
@@ -19,14 +20,6 @@ import {
   FiTrash2,
 } from "react-icons/fi";
 
-
-
-const activities = [
-  "Created Employee Role",
-  "Updated Manager Permissions",
-  "Deleted Temporary Role",
-  "Assigned HR Specialist Role",
-];
 
 function StatCard({ title, value, icon: Icon, color }) {
   return (
@@ -46,15 +39,27 @@ function StatCard({ title, value, icon: Icon, color }) {
 }
 
 export default function RoleManagement() {
-  const role = localStorage.getItem("role");
+  const role = localStorage.getItem("role")?.toLowerCase();
 
-if (role !== "ADMIN") {
+if (role !== "admin") {
   return <Navigate to="/dashboard" replace />;
 }
   const [search, setSearch] = useState("");
   const [roles, setRoles] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [newRole, setNewRole] = useState("");
+  const [editId, setEditId] = useState(null);
+const [editRole, setEditRole] = useState("");
+const [selectedRole, setSelectedRole] = useState(null);
+const [showViewModal, setShowViewModal] = useState(false);
+const [status,setStatus]=useState("All");
+const activities = [...roles]
+  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+  .slice(0, 5)
+  .map((role) => ({
+    message: `Role "${role.roleName}" created`,
+    date: role.createdAt,
+  }));
   const loadRoles = async () => {
   try {
     const response = await getRoles();
@@ -63,9 +68,33 @@ if (role !== "ADMIN") {
     console.error(err);
   }
 };
+
+const handleAddRole = async () => {
+  if (!newRole.trim()) {
+    alert("Enter a role name");
+    return;
+  }
+
+  try {
+    await addRole({
+      roleName: newRole,
+    });
+
+    alert("Role added successfully");
+
+    setNewRole("");
+    setShowModal(false);
+
+    loadRoles();
+  } catch (err) {
+    alert(err.response?.data || "Failed to add role");
+  }
+};
+
 useEffect(() => {
   loadRoles();
 }, []);
+
 
 
   return (
@@ -156,7 +185,10 @@ useEffect(() => {
 
             </div>
 
-            <select className="border rounded-xl px-4">
+            <select
+value={status}
+onChange={(e)=>setStatus(e.target.value)}
+>
 
               <option>All</option>
               <option>Active</option>
@@ -192,63 +224,109 @@ useEffect(() => {
               </thead>
 
               <tbody>
+  {roles
+    .filter((item) =>
+      item.roleName.toLowerCase().includes(search.toLowerCase())
+    )
+    .map((item) => (
+      <tr key={item.id} className="border-b hover:bg-slate-50">
 
-                {roles
-                  .filter((item) =>
-                    item.roleName.toLowerCase().includes(search.toLowerCase())
-                  )
-                  .map((item) => (
+        <td className="p-4">{item.id}</td>
 
-                    <tr
-                      key={item.id}
-                      className="border-b hover:bg-slate-50"
-                    >
+        <td className="p-4 font-semibold">
+          {editId === item.id ? (
+            <input
+              value={editRole}
+              onChange={(e) => setEditRole(e.target.value)}
+              className="border rounded px-2 py-1"
+            />
+          ) : (
+            item.roleName
+          )}
+        </td>
 
-                      <td className="p-4">{item.id}</td>
+        <td className="p-4">
+          {item.description || "-"}
+        </td>
 
-                      <td className="p-4 font-semibold">
-                        {item.roleName}
-                      </td>
-                      <td className="p-4">-</td>
+        <td className="p-4">
+          {item.totalUsers ?? 0}
+        </td>
 
-                      <td className="p-4">-</td>
+        <td className="p-4">
+          <span
+            className={
+              item.active
+                ? "bg-green-100 text-green-700 px-3 py-1 rounded-full"
+                : "bg-red-100 text-red-700 px-3 py-1 rounded-full"
+            }
+          >
+            {item.active ? "Active" : "Inactive"}
+          </span>
+        </td>
 
-                      <td className="p-4">
-                         <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full">
-                          Active
-                      </span>
-                      </td>
+        <td className="p-4">
+          {item.createdAt
+            ? new Date(item.createdAt).toLocaleDateString()
+            : "-"}
+        </td>
 
-                  <td className="p-4">-</td>
+        <td className="p-4">
+          <div className="flex justify-center gap-3">
 
-     
-     
+            <button
+              onClick={async () => {
+                const response = await getRoleDetails(item.id);
+                setSelectedRole(response.data);
+                setShowViewModal(true);
+              }}
+              className="text-blue-600 hover:text-blue-800"
+            >
+              <FiEye />
+            </button>
 
-                      <td className="p-4">
+            <button
+              onClick={async () => {
+                if (editId === item.id) {
+                  await updateRole(item.id, {
+                    roleName: editRole,
+                  });
 
-                        <div className="flex justify-center gap-3">
+                  setEditId(null);
+                  setEditRole("");
+                  loadRoles();
+                } else {
+                  setEditId(item.id);
+                  setEditRole(item.roleName);
+                }
+              }}
+              className="text-green-600 hover:text-green-800"
+            >
+              {editId === item.id ? "Save" : <FiEdit />}
+            </button>
 
-                          <button className="text-blue-600 hover:text-blue-800">
-                            <FiEye />
-                          </button>
+            <button
+              onClick={async () => {
+                if (!window.confirm("Delete this role?")) return;
 
-                          <button className="text-green-600 hover:text-green-800">
-                            <FiEdit />
-                          </button>
+                try {
+                  await deleteRole(item.id);
+                  loadRoles();
+                } catch {
+                  alert("Unable to delete role");
+                }
+              }}
+              className="text-red-600 hover:text-red-800"
+            >
+              <FiTrash2 />
+            </button>
 
-                          <button className="text-red-600 hover:text-red-800">
-                            <FiTrash2 />
-                          </button>
+          </div>
+        </td>
 
-                        </div>
-
-                      </td>
-
-                    </tr>
-
-                  ))}
-
-              </tbody>
+      </tr>
+    ))}
+</tbody>
 
             </table>
 
@@ -266,20 +344,21 @@ useEffect(() => {
 
           <div className="space-y-4">
 
-            {activities.map((activity, index) => (
+         {activities.map((activity, index) => (
+  <div
+    key={index}
+    className="flex items-center gap-3 bg-slate-100 rounded-xl p-4"
+  >
+    <div className="w-3 h-3 rounded-full bg-blue-600"></div>
 
-              <div
-                key={index}
-                className="flex items-center gap-3 bg-slate-100 rounded-xl p-4"
-              >
-
-                <div className="w-3 h-3 rounded-full bg-blue-600"></div>
-
-                <span>{activity}</span>
-
-              </div>
-
-            ))}
+    <div>
+      <p>{activity.message}</p>
+      <p className="text-xs text-gray-500">
+        {new Date(activity.date).toLocaleString()}
+      </p>
+    </div>
+  </div>
+))}  
 
           </div>
 
@@ -315,16 +394,71 @@ useEffect(() => {
           Cancel
         </button>
 
-        <button
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg"
-        >
-          Save
-        </button>
+       <button
+  onClick={async () => {
+    try {
+      await addRole({
+        roleName: newRole,
+      });
+
+      alert("Role added successfully");
+
+      setNewRole("");
+      setShowModal(false);
+
+      loadRoles();
+    } catch (err) {
+      alert(
+        err.response?.data || "Unable to add role"
+      );
+    }
+  }}
+  className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+>
+  Save
+</button>
 
       </div>
 
+
     </div>
 
+  </div>
+)}
+
+
+    {showViewModal && selectedRole && (
+  <div className="fixed inset-0 bg-black/40 flex justify-center items-center">
+    <div className="bg-white p-6 rounded-xl w-[500px]">
+      <h2 className="text-xl font-bold mb-4">
+        {selectedRole.roleName}
+      </h2>
+
+      <p className="mb-3">
+        Total Users: {selectedRole.totalUsers}
+      </p>
+
+      <div className="max-h-60 overflow-y-auto">
+        {selectedRole.users.map((user) => (
+          <div
+            key={user.id}
+            className="border-b py-2"
+          >
+            <div>{user.name}</div>
+            <div className="text-gray-500 text-sm">
+              {user.email}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={() => setShowViewModal(false)}
+        className="mt-5 bg-blue-600 text-white px-4 py-2 rounded"
+      >
+        Close
+      </button>
+    </div>
   </div>
 )}
 

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import {
   FiMail,
@@ -6,9 +6,11 @@ import {
   FiEye,
   FiEyeOff,
   FiArrowRight,
+  FiPhone,
+  FiShield,
 } from "react-icons/fi"
 import { FcGoogle } from "react-icons/fc"
-import { login } from "../../services/authService";
+import { login, sendOtp, verifyOtp } from "../../services/authService";
 import { useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
@@ -16,27 +18,116 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [remember, setRemember] = useState(false)
-  
+
+  const [step, setStep] = useState("login") // "login" | "otp"
+  const [userId, setUserId] = useState(null)
+  const [pendingRole, setPendingRole] = useState(null)
+  const [phone, setPhone] = useState("")
+  const [otp, setOtp] = useState("")
+  const [otpSent, setOtpSent] = useState(false)
+  const [otpLoading, setOtpLoading] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
+
   const navigate = useNavigate();
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-  
-    try {
-      const data = await login(email, password);
-  
-      console.log("Response:", data);
-  
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("role", data.role);
-  
-      alert("Login Successful!");
-  
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
+  const proceedToDashboard = (role) => {
+    const normalizedRole = (role || "employee").toLowerCase();
+
+    if (normalizedRole === "employee" || normalizedRole === "intern") {
+      navigate("/employee-dashboard");
+    } else {
       navigate("/dashboard");
-  
+    }
+  };
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  try {
+    const data = await login(email, password);
+
+    console.log("Response:", data);
+
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("role", data.role);
+    localStorage.setItem("userId", data.userId);
+    localStorage.setItem("name", data.name);
+
+    if (data.firstLogin) {
+      setUserId(data.userId);
+      setPendingRole(data.role);
+      setStep("otp");
+      return;
+    }
+
+    alert("Login Successful!");
+    proceedToDashboard(data.role);
+
+  } catch (error) {
+    console.error(error);
+    const message =
+      error.response?.data?.message || "Login failed. Please try again.";
+    alert(message);
+  }
+};
+
+  const handleSendOtp = async (e) => {
+    e.preventDefault();
+
+    if (!/^[6-9]\d{9}$/.test(phone)) {
+      alert("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+
+    setOtpLoading(true);
+    try {
+      await sendOtp(userId, phone);
+      setOtpSent(true);
+      setResendCooldown(60);
+      alert("OTP sent to your mobile number.");
     } catch (error) {
       console.error(error);
-      const message = error.response?.data?.message || "Login failed. Please try again.";
+      const message =
+        error.response?.data?.message || "Failed to send OTP. Please try again.";
       alert(message);
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+
+    if (otp.length !== 6) {
+      alert("Please enter the 6-digit OTP.");
+      return;
+    }
+
+    setOtpLoading(true);
+    try {
+      const data = await verifyOtp(userId, otp);
+
+      if (data.verified) {
+        alert("Verification successful! Login complete.");
+        proceedToDashboard(pendingRole);
+      } else {
+        alert("Invalid OTP. Please try again.");
+      }
+    } catch (error) {
+      console.error(error);
+      const message =
+        error.response?.data?.message || "OTP verification failed. Please try again.";
+      alert(message);
+    } finally {
+      setOtpLoading(false);
     }
   };
 
@@ -62,11 +153,11 @@ export default function LoginPage() {
         {/* Left brand panel */}
         <section className="hidden flex-col justify-center lg:flex">
           <div className="flex items-center gap-3">
-           {/*<img
+           <img
               src="/logo.png"
               alt="Company logo"
               className="h-12 w-12 rounded-xl bg-white/60 p-1.5 shadow-sm ring-1 ring-white/60"
-            />*/}
+            />
             <span className="text-sm font-semibold tracking-wide text-blue-900/70 uppercase">
               KnowGap Intelligence
             </span>
@@ -111,136 +202,228 @@ export default function LoginPage() {
               </h1>
             </div>
 
-            <div className="text-center lg:text-left">
-              <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-                Welcome Back
-              </h2>
-              <p className="mt-1.5 text-sm text-slate-500">
-                Sign in to access your intelligence dashboard.
-              </p>
-            </div>
-
-            <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-5">
-              {/* Email */}
-              <div>
-                <label
-                  htmlFor="email"
-                  className="mb-1.5 block text-sm font-medium text-slate-700"
-                >
-                  Email
-                </label>
-                <div className="group relative">
-                  <FiMail className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-blue-600" />
-                  <input
-                    id="email"
-                    type="email"
-                    autoComplete="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@company.com"
-                    className="w-full rounded-xl border border-slate-200 bg-white/70 py-3 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 shadow-sm outline-none transition-all duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/15"
-                  />
+            {step === "login" ? (
+              <>
+                <div className="text-center lg:text-left">
+                  <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+                    Welcome Back
+                  </h2>
+                  <p className="mt-1.5 text-sm text-slate-500">
+                    Sign in to access your intelligence dashboard.
+                  </p>
                 </div>
-              </div>
 
-              {/* Password */}
-              <div>
-                <label
-                  htmlFor="password"
-                  className="mb-1.5 block text-sm font-medium text-slate-700"
-                >
-                  Password
-                </label>
-                <div className="group relative">
-                  <FiLock className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-blue-600" />
-                  <input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    className="w-full rounded-xl border border-slate-200 bg-white/70 py-3 pl-11 pr-11 text-sm text-slate-900 placeholder-slate-400 shadow-sm outline-none transition-all duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/15"
-                  />
+                <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-5">
+                  {/* Email */}
+                  <div>
+                    <label
+                      htmlFor="email"
+                      className="mb-1.5 block text-sm font-medium text-slate-700"
+                    >
+                      Email
+                    </label>
+                    <div className="group relative">
+                      <FiMail className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-blue-600" />
+                      <input
+                        id="email"
+                        type="email"
+                        autoComplete="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="you@company.com"
+                        className="w-full rounded-xl border border-slate-200 bg-white/70 py-3 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 shadow-sm outline-none transition-all duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/15"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Password */}
+                  <div>
+                    <label
+                      htmlFor="password"
+                      className="mb-1.5 block text-sm font-medium text-slate-700"
+                    >
+                      Password
+                    </label>
+                    <div className="group relative">
+                      <FiLock className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-blue-600" />
+                      <input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        autoComplete="current-password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter your password"
+                        className="w-full rounded-xl border border-slate-200 bg-white/70 py-3 pl-11 pr-11 text-sm text-slate-900 placeholder-slate-400 shadow-sm outline-none transition-all duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/15"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((s) => !s)}
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                      >
+                        {showPassword ? (
+                          <FiEyeOff className="h-5 w-5" />
+                        ) : (
+                          <FiEye className="h-5 w-5" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Remember + Forgot */}
+                  <div className="flex items-center justify-between">
+                    <label
+                      htmlFor="remember"
+                      className="flex cursor-pointer items-center gap-2 text-sm text-slate-600 select-none"
+                    >
+                      <input
+                        id="remember"
+                        type="checkbox"
+                        checked={remember}
+                        onChange={(e) => setRemember(e.target.checked)}
+                        className="h-4 w-4 rounded border-slate-300 text-blue-600 accent-blue-600 focus:ring-blue-500"
+                      />
+                      Remember Me
+                    </label>
+                    <Link
+                      to="/forgot-password"
+                      className="text-sm font-medium text-blue-600 transition-colors hover:text-blue-700 hover:underline"
+                    >
+                      Forgot Password?
+                    </Link>
+                  </div>
+
+                  {/* Login button */}
+                  <button
+                    type="submit"
+                    className="group mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/30 active:translate-y-0 focus:outline-none focus:ring-4 focus:ring-blue-500/30"
+                  >
+                    Login
+                    <FiArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+                  </button>
+
+                  {/* Divider */}
+                  <div className="flex items-center gap-4">
+                    <span className="h-px flex-1 bg-slate-200" />
+                    <span className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                      or
+                    </span>
+                    <span className="h-px flex-1 bg-slate-200" />
+                  </div>
+
+                  {/* Google */}
                   <button
                     type="button"
-                    onClick={() => setShowPassword((s) => !s)}
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                    className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                    onClick={() => {
+                      window.location.href = `${import.meta.env.VITE_API_ORIGIN}/oauth2/authorization/google`;
+                    }}
+                    className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white/80 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-md focus:outline-none focus:ring-4 focus:ring-slate-200"
                   >
-                    {showPassword ? (
-                      <FiEyeOff className="h-5 w-5" />
-                    ) : (
-                      <FiEye className="h-5 w-5" />
-                    )}
+                    <FcGoogle className="h-5 w-5" />
+                    Continue with Google
                   </button>
+                </form>
+
+                {/* Register */}
+                <p className="mt-8 text-center text-sm text-slate-600">
+                  Don&apos;t have an account?{" "}
+                  <Link
+                    to="/register"
+                    className="font-semibold text-blue-600 transition-colors hover:text-blue-700 hover:underline"
+                  >
+                    Register
+                  </Link>
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="text-center lg:text-left">
+                  <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+                    Verify Your Mobile Number
+                  </h2>
+                  <p className="mt-1.5 text-sm text-slate-500">
+                    {otpSent
+                      ? "Enter the 6-digit OTP sent to your mobile number."
+                      : "This is your first login — please verify your mobile number via OTP."}
+                  </p>
                 </div>
-              </div>
 
-              {/* Remember + Forgot */}
-              <div className="flex items-center justify-between">
-                <label
-                  htmlFor="remember"
-                  className="flex cursor-pointer items-center gap-2 text-sm text-slate-600 select-none"
-                >
-                  <input
-                    id="remember"
-                    type="checkbox"
-                    checked={remember}
-                    onChange={(e) => setRemember(e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-300 text-blue-600 accent-blue-600 focus:ring-blue-500"
-                  />
-                  Remember Me
-                </label>
-                <Link
-                  to="/forgot-password"
-                  className="text-sm font-medium text-blue-600 transition-colors hover:text-blue-700 hover:underline"
-                >
-                  Forgot Password?
-                </Link>
-              </div>
+                {!otpSent ? (
+                  <form onSubmit={handleSendOtp} className="mt-8 flex flex-col gap-5">
+                    <div>
+                      <label
+                        htmlFor="phone"
+                        className="mb-1.5 block text-sm font-medium text-slate-700"
+                      >
+                        Mobile Number
+                      </label>
+                      <div className="group relative">
+                        <FiPhone className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-blue-600" />
+                        <input
+                          id="phone"
+                          type="tel"
+                          maxLength={10}
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+                          placeholder="Enter 10-digit mobile number"
+                          className="w-full rounded-xl border border-slate-200 bg-white/70 py-3 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 shadow-sm outline-none transition-all duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/15"
+                        />
+                      </div>
+                    </div>
 
-              {/* Login button */}
-              <button
-                type="submit"
-                className="group mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/30 active:translate-y-0 focus:outline-none focus:ring-4 focus:ring-blue-500/30"
-              >
-                Login
-                <FiArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
-              </button>
+                    <button
+                      type="submit"
+                      disabled={otpLoading}
+                      className="group mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/30 active:translate-y-0 focus:outline-none focus:ring-4 focus:ring-blue-500/30 disabled:opacity-60"
+                    >
+                      {otpLoading ? "Sending..." : "Send OTP"}
+                      <FiArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+                    </button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleVerifyOtp} className="mt-8 flex flex-col gap-5">
+                    <div>
+                      <label
+                        htmlFor="otp"
+                        className="mb-1.5 block text-sm font-medium text-slate-700"
+                      >
+                        Enter OTP
+                      </label>
+                      <div className="group relative">
+                        <FiShield className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-blue-600" />
+                        <input
+                          id="otp"
+                          type="text"
+                          maxLength={6}
+                          value={otp}
+                          onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                          placeholder="6-digit OTP"
+                          className="w-full rounded-xl border border-slate-200 bg-white/70 py-3 pl-11 pr-4 text-sm tracking-widest text-slate-900 placeholder-slate-400 shadow-sm outline-none transition-all duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/15"
+                        />
+                      </div>
+                    </div>
 
-              {/* Divider */}
-              <div className="flex items-center gap-4">
-                <span className="h-px flex-1 bg-slate-200" />
-                <span className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                  or
-                </span>
-                <span className="h-px flex-1 bg-slate-200" />
-              </div>
+                    <button
+                      type="submit"
+                      disabled={otpLoading}
+                      className="group mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/30 active:translate-y-0 focus:outline-none focus:ring-4 focus:ring-blue-500/30 disabled:opacity-60"
+                    >
+                      {otpLoading ? "Verifying..." : "Verify & Continue"}
+                      <FiArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+                    </button>
 
-              {/* Google */}
-              <button
-                type="button"
-                onClick={() => {
-                  window.location.href = `${import.meta.env.VITE_API_ORIGIN}/oauth2/authorization/google`;
-                }}
-                className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white/80 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-md focus:outline-none focus:ring-4 focus:ring-slate-200"
-              >
-                <FcGoogle className="h-5 w-5" />
-                Continue with Google
-              </button>
-            </form>
-
-            {/* Register */}
-            <p className="mt-8 text-center text-sm text-slate-600">
-              Don&apos;t have an account?{" "}
-              <Link
-                to="/register"
-                className="font-semibold text-blue-600 transition-colors hover:text-blue-700 hover:underline"
-              >
-                Register
-              </Link>
-            </p>
+                    <button
+                      type="button"
+                      onClick={handleSendOtp}
+                      disabled={resendCooldown > 0 || otpLoading}
+                      className="text-sm font-medium text-blue-600 transition-colors hover:text-blue-700 hover:underline disabled:cursor-not-allowed disabled:text-slate-400 disabled:no-underline"
+                    >
+                      {resendCooldown > 0 ? `Resend OTP in ${resendCooldown}s` : "Resend OTP"}
+                    </button>
+                  </form>
+                )}
+              </>
+            )}
           </div>
 
           <p className="mt-6 text-center text-xs text-slate-400">

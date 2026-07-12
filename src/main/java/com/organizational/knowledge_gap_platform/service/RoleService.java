@@ -1,11 +1,13 @@
 package com.organizational.knowledge_gap_platform.service;
 
+import com.organizational.knowledge_gap_platform.dto.RoleDetailsResponse;
 import com.organizational.knowledge_gap_platform.entity.Role;
+
 import java.util.List;
 
 public interface RoleService {
 
-    List<Role> getAllRoles();
+    List<RoleDetailsResponse> getAllRoles();
 
     Role getRoleById(Long id);
 
@@ -18,4 +20,6 @@ public interface RoleService {
     boolean assignRoleToUser(Long userId, Long roleId);
 
     List<Role> getRegisterableRoles();
+
+    RoleDetailsResponse getRoleDetails(Long id);
 }

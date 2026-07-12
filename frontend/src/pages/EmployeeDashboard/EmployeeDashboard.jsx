@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   ResponsiveContainer,
   RadarChart,
@@ -27,10 +27,27 @@ import {
   FiCheckSquare,
   FiBarChart2,
   FiArrowUpRight,
+  FiGrid,
 } from "react-icons/fi"
 import DashboardLayout from "../../components/layout/DashboardLayout.jsx"
+import {
+  getDashboardStats,
+  getSkillsOverview,
+  getCompetencyAnalytics,
+  getTrainingProgress,
+  getNotifications,
+  getRecentActivity,
+  getSkillGapHeatmap,
+} from "../../services/dashboardService"
 
-const STATS = [
+// ---------------------------------------------------------------------------
+// FALLBACK / DEFAULT DATA
+// Used whenever a real backend endpoint isn't available yet, or the call
+// fails for any reason. This guarantees the dashboard never renders blank
+// or broken, even before Members 1-4 finish their APIs.
+// ---------------------------------------------------------------------------
+
+const DEFAULT_STATS = [
   {
     label: "Total Skills",
     value: 42,
@@ -69,7 +86,16 @@ const STATS = [
   },
 ]
 
-const SKILLS = [
+// Icon/color metadata cannot come from a JSON API, so real stats data is
+// merged into this shape by label when it arrives (see mergeStats below).
+const STAT_ICON_MAP = {
+  "Total Skills": { icon: FiAward, accent: "text-blue-600", ring: "ring-blue-500/15", bg: "bg-blue-50" },
+  "Competencies": { icon: FiTarget, accent: "text-sky-600", ring: "ring-sky-500/15", bg: "bg-sky-50" },
+  "Completed Trainings": { icon: FiCheckCircle, accent: "text-emerald-600", ring: "ring-emerald-500/15", bg: "bg-emerald-50" },
+  "Pending Programs": { icon: FiClock, accent: "text-amber-600", ring: "ring-amber-500/15", bg: "bg-amber-50" },
+}
+
+const DEFAULT_SKILLS = [
   { name: "React & Frontend", level: 88 },
   { name: "Data Analysis", level: 76 },
   { name: "Cloud Architecture", level: 64 },
@@ -77,7 +103,7 @@ const SKILLS = [
   { name: "Communication", level: 92 },
 ]
 
-const COMPETENCY_DATA = [
+const DEFAULT_COMPETENCY_DATA = [
   { area: "Technical", value: 85 },
   { area: "Leadership", value: 68 },
   { area: "Communication", value: 90 },
@@ -86,7 +112,7 @@ const COMPETENCY_DATA = [
   { area: "Innovation", value: 70 },
 ]
 
-const TRAINING_PROGRESS = [
+const DEFAULT_TRAINING_PROGRESS = [
   { month: "Jan", completed: 3 },
   { month: "Feb", completed: 5 },
   { month: "Mar", completed: 4 },
@@ -95,7 +121,7 @@ const TRAINING_PROGRESS = [
   { month: "Jun", completed: 8 },
 ]
 
-const NOTIFICATIONS = [
+const DEFAULT_NOTIFICATIONS = [
   {
     icon: FiBell,
     accent: "text-blue-600 bg-blue-50",
@@ -122,7 +148,13 @@ const NOTIFICATIONS = [
   },
 ]
 
-const ACTIVITY = [
+const NOTIFICATION_ICON_MAP = {
+  bell: FiBell,
+  book: FiBookOpen,
+  user: FiUserCheck,
+}
+
+const DEFAULT_ACTIVITY = [
   {
     icon: FiEdit3,
     accent: "text-blue-600 bg-blue-50",
@@ -149,17 +181,49 @@ const ACTIVITY = [
   },
 ]
 
+const ACTIVITY_ICON_MAP = {
+  edit: FiEdit3,
+  check: FiCheckSquare,
+  chart: FiBarChart2,
+}
+
+// Dummy skill-gap heatmap data: rows = employees, columns = skills.
+// value: 0-100, where higher = smaller gap (more proficient),
+// lower = bigger gap (needs training).
+const DEFAULT_HEATMAP_SKILLS = ["Java", "Spring Boot", "React.js", "PostgreSQL", "AWS", "Docker"]
+
+const DEFAULT_HEATMAP_DATA = [
+  { employee: "Senthamizh", values: [90, 85, 80, 78, 40, 35] },
+  { employee: "Sneha", values: [55, 60, 88, 45, 30, 20] },
+  { employee: "Arjun", values: [70, 75, 65, 82, 60, 55] },
+  { employee: "Priya", values: [95, 92, 70, 88, 75, 65] },
+  { employee: "Karthik", values: [40, 35, 90, 30, 25, 15] },
+]
+
+function getHeatmapColor(value) {
+  // 0-39: red (critical gap), 40-59: orange, 60-79: yellow, 80-100: green
+  if (value >= 80) return "bg-emerald-500"
+  if (value >= 60) return "bg-lime-400"
+  if (value >= 40) return "bg-amber-400"
+  return "bg-red-500"
+}
+
+function getHeatmapTextColor(value) {
+  if (value >= 60) return "text-slate-900"
+  return "text-white"
+}
+
 const cardClass =
-  "rounded-3xl border border-white/60 bg-white/60 shadow-2xl shadow-blue-900/10 backdrop-blur-xl"
+  "rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-2xl shadow-blue-900/10 backdrop-blur-xl"
 
 function SkillBar({ name, level }) {
   return (
     <div>
       <div className="mb-1.5 flex items-center justify-between text-sm">
-        <span className="font-medium text-slate-700">{name}</span>
-        <span className="font-semibold text-slate-500">{level}%</span>
+       <span className="font-medium text-slate-700 dark:text-slate-200">{name}</span>
+        <span className="font-semibold text-slate-500 dark:text-slate-400">{level}%</span>
       </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+     <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
         <div
           className="h-full rounded-full bg-gradient-to-r from-blue-500 to-sky-500 transition-all duration-700 ease-out"
           style={{ width: `${level}%` }}
@@ -170,6 +234,7 @@ function SkillBar({ name, level }) {
 }
 
 export default function EmployeeDashboard() {
+  const userName = localStorage.getItem("name") || "User";
   const [today] = useState(
     new Date().toLocaleDateString("en-US", {
       weekday: "long",
@@ -178,6 +243,124 @@ export default function EmployeeDashboard() {
       day: "numeric",
     }),
   )
+
+  const [stats, setStats] = useState(DEFAULT_STATS)
+  const [growthScore, setGrowthScore] = useState(86)
+  const [skills, setSkills] = useState(DEFAULT_SKILLS)
+  const [competencyData, setCompetencyData] = useState(DEFAULT_COMPETENCY_DATA)
+  const [trainingProgress, setTrainingProgress] = useState(DEFAULT_TRAINING_PROGRESS)
+  const [notifications, setNotifications] = useState(DEFAULT_NOTIFICATIONS)
+  const [activity, setActivity] = useState(DEFAULT_ACTIVITY)
+  const [heatmapSkills, setHeatmapSkills] = useState(DEFAULT_HEATMAP_SKILLS)
+  const [heatmapData, setHeatmapData] = useState(DEFAULT_HEATMAP_DATA)
+
+  useEffect(() => {
+
+    // Each section fetches independently and falls back to its own default
+    // data on failure, so one missing/broken endpoint never blanks out the
+    // rest of the dashboard.
+
+    getDashboardStats()
+      .then((data) => {
+        if (Array.isArray(data?.stats) && data.stats.length > 0) {
+          const merged = data.stats.map((s) => ({
+            ...s,
+            ...(STAT_ICON_MAP[s.label] || {
+              icon: FiAward,
+              accent: "text-blue-600",
+              ring: "ring-blue-500/15",
+              bg: "bg-blue-50",
+            }),
+          }))
+          setStats(merged)
+        }
+        if (typeof data?.growthScore === "number") {
+          setGrowthScore(data.growthScore)
+        }
+      })
+      .catch((error) => {
+        console.log("Dashboard stats unavailable, using defaults:", error)
+      })
+
+    getSkillsOverview()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          // Real backend field names for EmployeeSkillResponseDTO aren't
+          // confirmed yet, so we defensively check common variants here.
+          // This guarantees the chart never breaks/crashes even if the
+          // exact field names differ from what's guessed below — worst
+          // case a row shows a generic label until confirmed.
+          const mapped = data.map((s) => ({
+            name: s.skillName ?? s.name ?? s.skill ?? "Skill",
+            level: Number(s.proficiencyLevel ?? s.level ?? s.score ?? s.proficiency ?? 0),
+          }))
+          setSkills(mapped)
+        }
+      })
+      .catch((error) => {
+        console.log("Skills overview unavailable, using defaults:", error)
+      })
+
+    getCompetencyAnalytics()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setCompetencyData(data)
+        }
+      })
+      .catch((error) => {
+        console.log("Competency analytics unavailable, using defaults:", error)
+      })
+
+    getTrainingProgress()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setTrainingProgress(data)
+        }
+      })
+      .catch((error) => {
+        console.log("Training progress unavailable, using defaults:", error)
+      })
+
+    getNotifications()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped = data.map((n) => ({
+            ...n,
+            icon: NOTIFICATION_ICON_MAP[n.iconKey] || FiBell,
+          }))
+          setNotifications(mapped)
+        }
+      })
+      .catch((error) => {
+        console.log("Notifications unavailable, using defaults:", error)
+      })
+
+    getRecentActivity()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped = data.map((a) => ({
+            ...a,
+            icon: ACTIVITY_ICON_MAP[a.iconKey] || FiEdit3,
+          }))
+          setActivity(mapped)
+        }
+      })
+      .catch((error) => {
+        console.log("Recent activity unavailable, using defaults:", error)
+      })
+
+    getSkillGapHeatmap()
+      .then((data) => {
+        if (Array.isArray(data?.skills) && Array.isArray(data?.employees) && data.skills.length > 0) {
+          setHeatmapSkills(data.skills)
+          setHeatmapData(data.employees)
+        }
+      })
+      .catch((error) => {
+        console.log("Skill gap heatmap unavailable, using defaults:", error)
+      })
+
+  }, [])
 
   return (
     <DashboardLayout>
@@ -191,7 +374,7 @@ export default function EmployeeDashboard() {
             <div>
               <p className="text-sm font-medium text-blue-600">{today}</p>
               <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                Welcome back, Sneha
+                Welcome back, {userName}
               </h1>
               <p className="mt-2 max-w-xl text-pretty text-sm leading-relaxed text-slate-600">
                 Every skill you sharpen closes a gap in your team. Keep learning,
@@ -201,7 +384,7 @@ export default function EmployeeDashboard() {
             <div className="flex items-center gap-3 rounded-2xl bg-blue-600 px-5 py-4 text-white shadow-lg shadow-blue-600/25">
               <FiTrendingUp className="h-8 w-8" />
               <div>
-                <p className="text-2xl font-bold leading-none">86%</p>
+                <p className="text-2xl font-bold leading-none">{growthScore}%</p>
                 <p className="mt-1 text-xs text-blue-100">Growth score</p>
               </div>
             </div>
@@ -210,7 +393,7 @@ export default function EmployeeDashboard() {
 
         {/* 2. Statistics Cards */}
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {STATS.map(({ label, value, delta, icon: Icon, accent, ring, bg }) => (
+          {stats.map(({ label, value, delta, icon: Icon, accent, ring, bg }) => (
             <div
               key={label}
               className={`${cardClass} group p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-blue-900/15`}
@@ -238,10 +421,10 @@ export default function EmployeeDashboard() {
           <div className={`${cardClass} p-6`}>
             <div className="mb-5 flex items-center gap-2">
               <FiAward className="h-5 w-5 text-blue-600" />
-              <h2 className="text-lg font-bold text-slate-900">Skills Overview</h2>
+             <h2 className="text-lg font-bold text-slate-900 dark:text-white">Skills Overview</h2>
             </div>
             <div className="flex flex-col gap-5">
-              {SKILLS.map((s) => (
+              {skills.map((s) => (
                 <SkillBar key={s.name} name={s.name} level={s.level} />
               ))}
             </div>
@@ -257,7 +440,7 @@ export default function EmployeeDashboard() {
             </div>
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={COMPETENCY_DATA} outerRadius="72%">
+                <RadarChart data={competencyData} outerRadius="72%">
                   <PolarGrid stroke="#cbd5e1" />
                   <PolarAngleAxis
                     dataKey="area"
@@ -300,7 +483,7 @@ export default function EmployeeDashboard() {
           </div>
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={TRAINING_PROGRESS} barCategoryGap="30%">
+              <BarChart data={trainingProgress} barCategoryGap="30%">
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                 <XAxis
                   dataKey="month"
@@ -329,6 +512,72 @@ export default function EmployeeDashboard() {
           </div>
         </section>
 
+        {/* NEW: Skill Gap Heatmap */}
+        <section className={`${cardClass} p-6`}>
+          <div className="mb-5 flex items-center gap-2">
+            <FiGrid className="h-5 w-5 text-blue-600" />
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+              Skill Gap Heatmap
+            </h2>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[600px] border-separate border-spacing-1">
+              <thead>
+                <tr>
+                  <th className="p-2 text-left text-xs font-semibold text-slate-500 dark:text-slate-400">
+                    Employee
+                  </th>
+                  {heatmapSkills.map((skillName) => (
+                    <th
+                      key={skillName}
+                      className="p-2 text-center text-xs font-semibold text-slate-500 dark:text-slate-400"
+                    >
+                      {skillName}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {heatmapData.map((row) => (
+                  <tr key={row.employee}>
+                    <td className="whitespace-nowrap p-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+                      {row.employee}
+                    </td>
+                    {row.values.map((value, colIndex) => (
+                      <td key={colIndex} className="p-1">
+                        <div
+                          className={`flex h-10 w-full min-w-[56px] items-center justify-center rounded-lg text-xs font-semibold transition-transform duration-150 hover:scale-105 ${getHeatmapColor(value)} ${getHeatmapTextColor(value)}`}
+                          title={`${row.employee} — ${heatmapSkills[colIndex]}: ${value}%`}
+                        >
+                          {value}%
+                        </div>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Legend */}
+          <div className="mt-5 flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+            <span className="font-medium">Legend:</span>
+            <div className="flex items-center gap-1.5">
+              <span className="h-3 w-3 rounded bg-red-500" /> Critical gap (&lt;40%)
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="h-3 w-3 rounded bg-amber-400" /> Needs training (40-59%)
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="h-3 w-3 rounded bg-lime-400" /> Developing (60-79%)
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="h-3 w-3 rounded bg-emerald-500" /> Proficient (80%+)
+            </div>
+          </div>
+        </section>
+
         {/* 5 & 6. Notifications + Recent Activity */}
         <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Notifications */}
@@ -338,10 +587,10 @@ export default function EmployeeDashboard() {
               <h2 className="text-lg font-bold text-slate-900">Notifications</h2>
             </div>
             <ul className="flex flex-col gap-2">
-              {NOTIFICATIONS.map((n, i) => (
+              {notifications.map((n, i) => (
                 <li
                   key={i}
-                  className="group flex items-start gap-3 rounded-2xl border border-transparent p-3 transition-all duration-200 hover:border-slate-200 hover:bg-white/70"
+                  className="group flex items-start gap-3 rounded-2xl border border-transparent p-3 transition-all duration-200 hover:border-slate-200 hover:bg-white/70 dark:hover:bg-slate-700"
                 >
                   <span
                     className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${n.accent}`}
@@ -349,10 +598,10 @@ export default function EmployeeDashboard() {
                     <n.icon className="h-4.5 w-4.5" />
                   </span>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-slate-800">
+                    <p className="text-sm font-medium text-slate-800 dark:text-white">
                       {n.title}
                     </p>
-                    <p className="mt-0.5 text-xs text-slate-400">{n.meta}</p>
+                    <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">{n.meta}</p>
                   </div>
                 </li>
               ))}
@@ -366,15 +615,15 @@ export default function EmployeeDashboard() {
               <h2 className="text-lg font-bold text-slate-900">Recent Activity</h2>
             </div>
             <ol className="relative flex flex-col gap-1 border-l border-slate-200 pl-4">
-              {ACTIVITY.map((a, i) => (
+              {activity.map((a, i) => (
                 <li key={i} className="group relative pb-4 last:pb-0">
                   <span
                     className={`absolute -left-[1.55rem] flex h-8 w-8 items-center justify-center rounded-xl ${a.accent} ring-4 ring-white/70`}
                   >
                     <a.icon className="h-4 w-4" />
                   </span>
-                  <div className="rounded-2xl p-2 transition-colors duration-200 group-hover:bg-white/70">
-                    <p className="text-sm font-medium text-slate-800">
+                  <div className="rounded-2xl p-2 transition-colors duration-200 group-hover:bg-white/70 dark:hover:bg-slate-700">
+                    <p className="text-sm font-medium text-slate-800 dark:text-white">
                       {a.title}
                     </p>
                     <p className="mt-0.5 text-xs text-slate-400">{a.meta}</p>
