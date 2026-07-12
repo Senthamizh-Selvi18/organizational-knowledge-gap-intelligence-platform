@@ -26,13 +26,16 @@ public class GapAnalysisServiceImpl implements GapAnalysisService {
     private final EmployeeRepository employeeRepository;
     private final RoleRepository roleRepository;
     private final EmployeeSkillRepository employeeSkillRepository;
+    private final NotificationService notificationService;
 
     public GapAnalysisServiceImpl(EmployeeRepository employeeRepository,
                                    RoleRepository roleRepository,
-                                   EmployeeSkillRepository employeeSkillRepository) {
+                                   EmployeeSkillRepository employeeSkillRepository,
+                                   NotificationService notificationService) {
         this.employeeRepository = employeeRepository;
         this.roleRepository = roleRepository;
         this.employeeSkillRepository = employeeSkillRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -43,7 +46,9 @@ public class GapAnalysisServiceImpl implements GapAnalysisService {
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new RoleNotFoundException("Role not found with id: " + roleId));
 
-        return buildGapAnalysis(employee, role);
+        GapAnalysisResponseDTO result = buildGapAnalysis(employee, role);
+        notificationService.notifyGapAnalysisCompleted(employee, role.getRoleName());
+        return result;
     }
 
     @Override
@@ -57,9 +62,16 @@ public class GapAnalysisServiceImpl implements GapAnalysisService {
             return Collections.emptyList();
         }
 
-        return assignedRoles.stream()
+        List<GapAnalysisResponseDTO> results = assignedRoles.stream()
                 .map(role -> buildGapAnalysis(employee, role))
                 .collect(Collectors.toList());
+
+        String roleNames = assignedRoles.stream()
+                .map(Role::getRoleName)
+                .collect(Collectors.joining(", "));
+        notificationService.notifyGapAnalysisCompleted(employee, roleNames);
+
+        return results;
     }
 
     private GapAnalysisResponseDTO buildGapAnalysis(Employee employee, Role role) {

@@ -22,14 +22,17 @@ public class ProfileService {
     private final UserRepository userRepository;
     private final EmployeeRepository employeeRepository;
     private final PasswordEncoder passwordEncoder;
+    private final NotificationService notificationService;
 
     public ProfileService(UserRepository userRepository,
                           EmployeeRepository employeeRepository,
-                          PasswordEncoder passwordEncoder) {
+                          PasswordEncoder passwordEncoder,
+                          NotificationService notificationService) {
 
         this.userRepository = userRepository;
         this.employeeRepository = employeeRepository;
         this.passwordEncoder = passwordEncoder;
+        this.notificationService = notificationService;
     }
     public ProfileResponseDTO getProfile(Long userId) {
 
@@ -138,6 +141,8 @@ public class ProfileService {
         }
 
         employeeRepository.save(employee);
+
+        notificationService.notifyProfileUpdated(user);
 
         return getProfile(userId);
     }
