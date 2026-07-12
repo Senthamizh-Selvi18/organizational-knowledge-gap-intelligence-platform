@@ -12,10 +12,7 @@ import {
   FiX,
 } from "react-icons/fi";
 
-
-
 export default function Sidebar({ open, onClose }) {
-
   const navigate = useNavigate();
 
   const role = localStorage.getItem("role")?.toLowerCase();
@@ -32,20 +29,79 @@ export default function Sidebar({ open, onClose }) {
           : "/dashboard",
     },
 
-    { label: "Profile", icon: FiUser, to: "/dashboard/profile" },
-    { label: "Skills", icon: FiCpu, to: "/dashboard/skills" },
-    { label: "Competencies", icon: FiBarChart2, to: "/dashboard/competencies" },
+    {
+      label: "Profile",
+      icon: FiUser,
+      to: "/dashboard/profile",
+    },
+
+    ...(role === "admin"
+      ? [
+          {
+            label: "Skills",
+            icon: FiCpu,
+            to: "/dashboard/skills",
+          },
+        ]
+      : []),
+    ...(role === "admin" || role === "hr"
+      ? [
+          {
+            label: "Employee Skills",
+            icon: FiCpu,
+            to: "/dashboard/employee-skills",
+          },
+        ]
+      : []),
+
+    {
+      label: "Gap Analysis",
+      icon: FiBarChart2,
+      to: "/dashboard/gap-analysis",
+    },
+    {
+      label: "AI Recommendation",
+      icon: FiCpu,
+      to: "/dashboard/recommendation",
+    },
+
+    {
+      label: "Competencies",
+      icon: FiBarChart2,
+      to: "/dashboard/competencies",
+    },
 
     ...(role === "admin" || role === "hr"
-      ? [{ label: "Employees", icon: FiUsers, to: "/dashboard/employees" }]
+      ? [
+          {
+            label: "Employees",
+            icon: FiUsers,
+            to: "/dashboard/employees",
+          },
+        ]
       : []),
 
     ...(role === "admin"
-      ? [{ label: "Role Management", icon: FiShield, to: "/dashboard/roles" }]
+      ? [
+          {
+            label: "Role Management",
+            icon: FiShield,
+            to: "/dashboard/roles",
+          },
+        ]
       : []),
 
-    { label: "Notifications", icon: FiBell, to: "/dashboard/notifications" },
-    { label: "Settings", icon: FiSettings, to: "/dashboard/settings" },
+    {
+      label: "Notifications",
+      icon: FiBell,
+      to: "/dashboard/notifications",
+    },
+
+    {
+      label: "Settings",
+      icon: FiSettings,
+      to: "/dashboard/settings",
+    },
   ];
 
   const handleLogout = () => {
@@ -64,23 +120,36 @@ export default function Sidebar({ open, onClose }) {
       />
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-slate-200 bg-white shadow-xl transition-transform duration-300 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col
+border-r border-slate-200
+bg-white
+dark:bg-slate-900
+dark:border-slate-700
+shadow-xl
+transition-transform duration-300
+lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex h-14 items-center justify-between border-b px-4">
+        <div className="flex h-14 items-center justify-between border-b border-slate-200 dark:border-slate-700 px-4">
           <div className="flex items-center gap-3">
             <img
               src="/logo.png"
               alt="logo"
               className="h-8 w-8 rounded-lg"
             />
+
             <div>
-              <p className="font-bold">KnowGap</p>
+              <p className="font-bold text-slate-900 dark:text-white">
+                KnowGap
+              </p>
             </div>
           </div>
 
-          <button onClick={onClose}>
+          <button
+            onClick={onClose}
+            className="text-slate-700 dark:text-white"
+          >
             <FiX />
           </button>
         </div>
@@ -95,7 +164,7 @@ export default function Sidebar({ open, onClose }) {
                   className={({ isActive }) =>
                     isActive
                       ? "flex items-center gap-3 rounded-xl bg-blue-600 text-white px-3 py-2"
-                      : "flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-blue-50"
+                      : "flex items-center gap-3 rounded-xl px-3 py-2 text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800"
                   }
                 >
                   <Icon />
@@ -109,7 +178,7 @@ export default function Sidebar({ open, onClose }) {
         <div className="border-t p-3">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3"
+            className="flex items-center gap-3 text-slate-700 dark:text-white"
           >
             <FiLogOut />
             Logout

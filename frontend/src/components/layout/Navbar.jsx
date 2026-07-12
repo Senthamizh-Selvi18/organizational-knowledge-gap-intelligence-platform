@@ -14,10 +14,19 @@ import {
 } from "react-icons/fi"
 
 export default function Navbar({ onMenuClick }) {
-  const [darkMode, setDarkMode] = useState(false)
+ const [darkMode, setDarkMode] = useState(
+  document.documentElement.classList.contains("dark")
+);
+
+useEffect(() => {
+  document.documentElement.classList.toggle("dark", darkMode);
+}, [darkMode]);
   const [menuOpen, setMenuOpen] = useState(false)
   const dropdownRef = useRef(null)
   const navigate = useNavigate()
+
+  const userName = localStorage.getItem("name") || "User";
+const role = localStorage.getItem("role") || "";
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -30,21 +39,21 @@ export default function Navbar({ onMenuClick }) {
   }, [])
 
   return (
-    <header className="sticky top-0 z-20 border-b border-white/60 bg-white/70 backdrop-blur-xl">
+   <header className="sticky top-0 z-20 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 backdrop-blur-xl dark:bg-slate-900 dark:border-slate-700">
       <div className="flex h-16 items-center gap-3 px-4 sm:gap-4 sm:px-6">
         {/* Mobile menu toggle */}
         <button
           type="button"
           onClick={onMenuClick}
           aria-label="Open sidebar"
-          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 lg:hidden"
+          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-slate-600 dark:text-slate-300 transition-colors hover:bg-slate-100 hover:text-slate-900 lg:hidden"
         >
           <FiMenu className="h-5 w-5" />
         </button>
 
         {/* Project name (hidden on small) */}
         <div className="hidden min-w-0 items-center gap-2 md:flex">
-          <span className="truncate text-sm font-semibold tracking-tight text-slate-800">
+          <span className="truncate text-sm font-semibold tracking-tight text-slate-800 dark:text-white">
             Organizational Knowledge Gap Intelligence Platform
           </span>
         </div>
@@ -55,7 +64,7 @@ export default function Navbar({ onMenuClick }) {
           <input
             type="search"
             placeholder="Search skills, employees, competencies…"
-            className="w-full rounded-xl border border-slate-200 bg-white/70 py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 shadow-sm outline-none transition-all duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/15"
+            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/70 py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 shadow-sm outline-none transition-all duration-200 focus:border-blue-500 focus:bg-white dark:bg-slate-800 focus:ring-4 focus:ring-blue-500/15"
           />
         </div>
 
@@ -103,13 +112,14 @@ export default function Navbar({ onMenuClick }) {
               className="flex items-center gap-2.5 rounded-xl py-1.5 pl-1.5 pr-2 transition-colors hover:bg-slate-100"
             >
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white shadow-sm">
-                S
+                {userName.charAt(0).toUpperCase()}
               </span>
               <span className="hidden text-left leading-tight sm:block">
-                <span className="block text-sm font-semibold text-slate-800">
-                  Sneha
-                </span>
-                <span className="block text-xs text-slate-500">Employee</span>
+
+                <span className="block text-sm font-semibold text-slate-800 dark:text-white">
+                  {userName}
+                  </span>
+                <span className="block text-xs text-slate-500">{role}</span>
               </span>
               <FiChevronDown
                 className={`hidden h-4 w-4 text-slate-400 transition-transform duration-200 sm:block ${
@@ -121,22 +131,27 @@ export default function Navbar({ onMenuClick }) {
             {/* Dropdown menu */}
             <div
               role="menu"
-              className={`absolute right-0 mt-2 w-56 origin-top-right overflow-hidden rounded-2xl border border-white/60 bg-white/80 shadow-2xl shadow-blue-900/10 backdrop-blur-xl transition-all duration-200 ${
+              className={`absolute right-0 mt-2 w-56 origin-top-right overflow-hidden rounded-2xl border border-white/60 bg-white dark:bg-slate-800/80 shadow-2xl shadow-blue-900/10 backdrop-blur-xl transition-all duration-200 ${
                 menuOpen
                   ? "scale-100 opacity-100"
                   : "pointer-events-none scale-95 opacity-0"
               }`}
             >
               <div className="border-b border-slate-100 px-4 py-3">
-                <p className="text-sm font-semibold text-slate-800">Sneha</p>
-                <p className="text-xs text-slate-500">Employee</p>
+                <p className="text-sm font-semibold text-slate-800 dark:text-white">
+                  {userName}
+                </p>
+
+                <p className="text-xs text-slate-500">
+                  {role}
+                </p>
               </div>
               <div className="p-1.5">
                 <Link
                   to="/dashboard/profile"
                   role="menuitem"
                   onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 transition-colors hover:bg-blue-50 hover:text-blue-700"
                 >
                   <FiUser className="h-4.5 w-4.5" />
                   My Profile
@@ -145,7 +160,7 @@ export default function Navbar({ onMenuClick }) {
                   to="/dashboard/settings"
                   role="menuitem"
                   onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 transition-colors hover:bg-blue-50 hover:text-blue-700"
                 >
                   <FiSettings className="h-4.5 w-4.5" />
                   Settings
@@ -157,7 +172,7 @@ export default function Navbar({ onMenuClick }) {
                     setMenuOpen(false)
                     navigate("/login")
                   }}
-                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-red-50 hover:text-red-600"
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 transition-colors hover:bg-red-50 hover:text-red-600"
                 >
                   <FiLogOut className="h-4.5 w-4.5" />
                   Logout

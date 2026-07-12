@@ -60,7 +60,14 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             return;
         }
 
-        User user = userRepository.findByEmail(email).orElseGet(() -> {
+        User user = userRepository.findByEmail(email).map(existingUser -> {
+            // Keep the profile name in sync with Google on every login
+            if (name != null && !name.isBlank() && !name.equals(existingUser.getName())) {
+                existingUser.setName(name);
+                userRepository.save(existingUser);
+            }
+            return existingUser;
+        }).orElseGet(() -> {
             Role role = roleRepository.findByRoleName(defaultRoleName)
                     .orElseThrow(() -> new RuntimeException(
                             "Default role '" + defaultRoleName + "' not found. Seed it before enabling OAuth2 login."));
@@ -75,7 +82,15 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         });
 
         String token = jwtService.generateToken(user.getEmail());
-        response.sendRedirect(redirectUri + "?token=" + token);
+
+        String roleName = user.getRoles().stream()
+                .findFirst()
+                .map(Role::getRoleName)
+                .orElse(defaultRoleName);
+
+       response.sendRedirect(redirectUri + "?token=" + token + "&role=" + roleName
+        + "&userId=" + user.getId()
+        + "&name=" + java.net.URLEncoder.encode(user.getName(), java.nio.charset.StandardCharsets.UTF_8));
     }
 
     private String generateRandomPassword() {

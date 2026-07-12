@@ -24,20 +24,21 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final OtpService otpService;
 
     public AuthService(UserRepository userRepository,
                        RoleRepository roleRepository,
                        PasswordEncoder passwordEncoder,
                        JwtService jwtService,
-                       AuthenticationManager authenticationManager) {
+                       AuthenticationManager authenticationManager,
+                       OtpService otpService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
+        this.otpService = otpService;
     }
-
-    // register() and login() will be added next
 
    public AuthResponse register(RegisterRequest request) {
 
@@ -66,7 +67,8 @@ return new AuthResponse(
         token,
         roleName,
         user.getId(),
-        user.getName()
+        user.getName(),
+        !user.isFirstLoginCompleted()
 );
 }
 
@@ -103,7 +105,31 @@ return new AuthResponse(
         token,
         role,
         user.getId(),
-        user.getName()
+        user.getName(),
+        !user.isFirstLoginCompleted()
 );
+    }
+
+    public void sendFirstLoginOtp(Long userId, String phone) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setPhone(phone);
+        userRepository.save(user);
+
+        otpService.generateAndSendOtp(userId, phone);
+    }
+
+    public boolean verifyFirstLoginOtp(Long userId, String otp) {
+        boolean verified = otpService.verifyOtp(userId, otp);
+
+        if (verified) {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            user.setFirstLoginCompleted(true);
+            userRepository.save(user);
+        }
+
+        return verified;
     }
 }
