@@ -117,7 +117,7 @@ export default function ChatBox() {
     // ever affect its position. top-16 = below navbar (h-16),
     // lg:left-64 = right of sidebar (w-64), matching your existing
     // DashboardLayout constants exactly.
-    <div className="flex h-full w-full overflow-hidden">
+    <div className="flex h-[calc(100vh-64px)] w-full overflow-hidden">
      <div className="flex h-full w-full overflow-hidden bg-panel">
         {/* Contacts panel */}
         <div className="flex w-72 flex-none flex-col border-r border-line">
