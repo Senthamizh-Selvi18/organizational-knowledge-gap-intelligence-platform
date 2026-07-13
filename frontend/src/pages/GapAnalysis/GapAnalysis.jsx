@@ -43,49 +43,46 @@ const employeeOptions = employees.map((employee) => ({
   employee,
 }));
 
-  const filterEmployeeOption = (option, inputValue) => {
-    return option.data.searchText
-      .toLowerCase()
-      .includes(inputValue.toLowerCase());
-  };
+const filterEmployeeOption = (option, inputValue) => {
+  return option.data.searchText
+    .toLowerCase()
+    .includes(inputValue.toLowerCase());
+};
 
-  const handleRefresh = async () => {
+const handleRefresh = async () => {
   setSelectedEmployee("");
-
   setGapData([]);
-
   setMessage("");
-
   setError("");
 
   await loadData();
 };
 
-  const CustomOption = (props) => {
-    const employee = props.data.employee;
+const CustomOption = (props) => {
+  const employee = props.data.employee;
 
-    return (
-      <components.Option {...props}>
-        <div className="py-1">
+  return (
+    <components.Option {...props}>
+      <div className="py-1">
         <p className="font-semibold text-slate-800">
-  {employee.user?.name}
-</p>
+          {employee.user?.name}
+        </p>
 
-          <p className="text-sm text-sub">
-            {employee.employeeCode}
-          </p>
+        <p className="text-sm text-sub">
+          {employee.employeeCode}
+        </p>
 
-          <p className="text-xs text-primary">
-            {employee.designation}
-          </p>
+        <p className="text-xs text-primary">
+          {employee.designation}
+        </p>
 
-          <p className="text-xs text-sub">
-            {employee.department}
-          </p>
-        </div>
-      </components.Option>
-    );
-  };
+        <p className="text-xs text-sub">
+          {employee.department}
+        </p>
+      </div>
+    </components.Option>
+  );
+};
 
   const loadData = useCallback(async () => {
     try {

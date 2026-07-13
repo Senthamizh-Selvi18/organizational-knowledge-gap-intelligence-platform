@@ -14,6 +14,7 @@ import {
 } from "react-icons/fi"
 import { FcGoogle } from "react-icons/fc"
 import { register, getRegisterableRoles } from "../../services/authService";
+import { toast } from "../../components/ui/Toast.jsx";
 
 function getPasswordStrength(password) {
   let score = 0
@@ -67,7 +68,7 @@ export default function RegisterPage() {
     })
     .catch((error) => {
       console.error("Failed to load roles:", error);
-      alert("Failed to load roles. Please refresh the page.");
+      toast.error("Failed to load roles. Please refresh the page.");
     })
     .finally(() => setRolesLoading(false));
 }, []);
@@ -81,23 +82,23 @@ export default function RegisterPage() {
     e.preventDefault();
 
     if (!fullName.trim()) {
-      alert("Please enter your full name.");
+      toast.warning("Please enter your full name.");
       return;
     }
     if (!email.trim()) {
-      alert("Please enter your email address.");
+      toast.warning("Please enter your email address.");
       return;
     }
     if (!password) {
-      alert("Please enter a password.");
+      toast.warning("Please enter a password.");
       return;
     }
     if (password !== confirmPassword) {
-      alert("Passwords do not match.");
+      toast.error("Passwords do not match.");
       return;
     }
     if (!role) {
-      alert("Please select a role.");
+      toast.warning("Please select a role.");
       return;
     }
 
@@ -109,7 +110,7 @@ export default function RegisterPage() {
         roleId: Number(role),
       });
 
-      alert("Registration successful!");
+      toast.success("Registration successful!");
       navigate("/login");
     } catch (err) {
       const message =
@@ -118,7 +119,7 @@ export default function RegisterPage() {
           ? err.response.data
           : null) ||
         err.message;
-      alert(message || "Registration failed. Please try again.");
+      toast.error(message || "Registration failed. Please try again.");
     }
   };
 
