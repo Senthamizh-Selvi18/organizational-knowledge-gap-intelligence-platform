@@ -32,10 +32,10 @@ export default function DashboardLayout({ children }) {
           open={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
         />
-      <div className="flex h-screen flex-1 flex-col lg:ml-64">
+      <main className="flex-1 overflow-y-auto"></main>
   <Navbar onMenuClick={() => setSidebarOpen(true)} />
 
-  <main className="flex-1 overflow-hidden">
+  <main className="flex-1 overflow-y-auto">
     {children}
   </main>
 </div>
