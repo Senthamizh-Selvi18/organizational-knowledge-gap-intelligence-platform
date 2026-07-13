@@ -29,17 +29,18 @@ export default function EmployeeSkillManagement() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const employeeOptions = employees.map((employee) => ({
+ const employeeOptions = employees.map((employee) => ({
   value: employee.id,
-  label: `${employee.name} (${employee.employeeCode})`,
+  label: `${employee.user?.name} (${employee.employeeCode})`,
   searchText: `
-      ${employee.name}
+      ${employee.user?.name}
       ${employee.employeeCode}
       ${employee.department}
       ${employee.designation}
     `,
   employee,
 }));
+
 const filterEmployeeOption = (option, inputValue) => {
   return option.data.searchText
     .toLowerCase()
@@ -53,7 +54,7 @@ const CustomOption = (props) => {
     <components.Option {...props}>
       <div className="py-1">
       <p className="font-semibold text-slate-800">
-  {employee.name}
+   {employee.user?.name}
 </p>
         <p className="text-sm text-sub">
           {employee.employeeCode}

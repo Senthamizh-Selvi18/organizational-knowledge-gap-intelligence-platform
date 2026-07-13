@@ -1033,7 +1033,7 @@ return (
 
                 <p className="mt-2 rounded-xl bg-slate-100 p-3 font-semibold">
 
-                  {selectedEmployee.name}
+                  {selectedEmployee.user?.name}
 
                 </p>
 
@@ -1655,7 +1655,7 @@ className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-gree
 
               <p className="mt-2 text-center text-lg font-semibold text-slate-800">
 
-                {selectedEmployee.name}
+                {selectedEmployee.user?.name}
 
               </p>
 

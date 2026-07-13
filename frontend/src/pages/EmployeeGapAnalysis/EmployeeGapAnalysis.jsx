@@ -6,7 +6,10 @@ import {
   FiBarChart2,
   FiCheckCircle,
 } from "react-icons/fi";
-
+import {
+  getGapAnalysis,
+  getMyGapAnalysis,
+} from "../../services/GapAnalysisService";
 export default function EmployeeGapAnalysis() {
 
   const [loading, setLoading] = useState(true);
@@ -30,34 +33,8 @@ export default function EmployeeGapAnalysis() {
       setMessage("");
 
       // Dummy Data (Replace with Backend API later)
-      const response = [
-        {
-          employeeId: 3,
-          employeeName: "Chandu",
-          roleName: "Employee",
-
-          totalRequiredSkills: 5,
-
-          matchedSkillCount: 3,
-
-          missingSkillCount: 2,
-
-          gapPercentage: 40,
-
-          matchedSkills: [
-            { id: 1, skillName: "Java" },
-            { id: 2, skillName: "SQL" },
-            { id: 3, skillName: "Git" },
-          ],
-
-          missingSkills: [
-            { id: 4, skillName: "React" },
-            { id: 5, skillName: "Docker" },
-          ],
-        },
-      ];
-
-      setGapData(response);
+      const response = await getMyGapAnalysis();
+setGapData([response.data]);
 
     } catch (err) {
 

@@ -31,12 +31,11 @@ export default function GapAnalysis() {
 
   // Backend Gap Analysis Data
   const [gapData, setGapData] = useState([]);
-
-  const employeeOptions = employees.map((employee) => ({
+const employeeOptions = employees.map((employee) => ({
   value: employee.id,
-  label: `${employee.name} (${employee.employeeCode})`,
+  label: `${employee.user?.name} (${employee.employeeCode})`,
   searchText: `
-      ${employee.name}
+      ${employee.user?.name}
       ${employee.employeeCode}
       ${employee.department}
       ${employee.designation}
@@ -69,7 +68,7 @@ export default function GapAnalysis() {
       <components.Option {...props}>
         <div className="py-1">
         <p className="font-semibold text-slate-800">
-  {employee.name}
+  {employee.user?.name}
 </p>
 
           <p className="text-sm text-sub">
