@@ -1,11 +1,15 @@
 package com.organizational.knowledge_gap_platform.controller;
 
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.organizational.knowledge_gap_platform.dto.GapAnalysisResponseDTO;
 import com.organizational.knowledge_gap_platform.service.GapAnalysisService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/gap-analysis")
@@ -30,5 +34,9 @@ public class GapAnalysisController {
             @PathVariable Long employeeId) {
 
         return ResponseEntity.ok(gapAnalysisService.analyzeGapForEmployee(employeeId));
+    }
+    @GetMapping("/me")
+    public ResponseEntity<GapAnalysisResponseDTO> getMyGapAnalysis() {
+        return ResponseEntity.ok(gapAnalysisService.analyzeMyGap());
     }
 }
