@@ -12,6 +12,10 @@ import com.organizational.knowledge_gap_platform.repository.EmployeeRepository;
 import com.organizational.knowledge_gap_platform.repository.EmployeeSkillRepository;
 import com.organizational.knowledge_gap_platform.repository.RoleRepository;
 import org.springframework.stereotype.Service;
+import com.organizational.knowledge_gap_platform.entity.User;
+import com.organizational.knowledge_gap_platform.repository.UserRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -22,20 +26,24 @@ import java.util.stream.Collectors;
 
 @Service
 public class GapAnalysisServiceImpl implements GapAnalysisService {
-
+    private final UserRepository userRepository;
     private final EmployeeRepository employeeRepository;
     private final RoleRepository roleRepository;
     private final EmployeeSkillRepository employeeSkillRepository;
     private final NotificationService notificationService;
 
-    public GapAnalysisServiceImpl(EmployeeRepository employeeRepository,
-                                   RoleRepository roleRepository,
-                                   EmployeeSkillRepository employeeSkillRepository,
-                                   NotificationService notificationService) {
+    public GapAnalysisServiceImpl(
+            EmployeeRepository employeeRepository,
+            RoleRepository roleRepository,
+            EmployeeSkillRepository employeeSkillRepository,
+            NotificationService notificationService,
+            UserRepository userRepository) {
+
         this.employeeRepository = employeeRepository;
         this.roleRepository = roleRepository;
         this.employeeSkillRepository = employeeSkillRepository;
         this.notificationService = notificationService;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -119,5 +127,40 @@ public class GapAnalysisServiceImpl implements GapAnalysisService {
                 matchedDtos,
                 missingDtos
         );
+    }
+    @Override
+    public GapAnalysisResponseDTO analyzeMyGap() {
+
+        Authentication authentication = SecurityContextHolder
+                .getContext()
+                .getAuthentication();
+
+        String email = authentication.getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found"));
+
+        Employee employee = employeeRepository.findByUser(user)
+                .orElseThrow(() ->
+                        new EmployeeNotFoundException(
+                                "Employee not found"));
+
+        Set<Role> assignedRoles = employee.getUser().getRoles();
+
+        if (assignedRoles == null || assignedRoles.isEmpty()) {
+            throw new RuntimeException("No role assigned to employee.");
+        }
+
+        Role role = assignedRoles.iterator().next();
+
+        GapAnalysisResponseDTO result = buildGapAnalysis(employee, role);
+
+        notificationService.notifyGapAnalysisCompleted(
+                employee,
+                role.getRoleName()
+        );
+
+        return result;
     }
 }

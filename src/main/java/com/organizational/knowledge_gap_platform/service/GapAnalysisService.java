@@ -7,5 +7,8 @@ import java.util.List;
 public interface GapAnalysisService {
 
     GapAnalysisResponseDTO analyzeGap(Long employeeId, Long roleId);
+
     List<GapAnalysisResponseDTO> analyzeGapForEmployee(Long employeeId);
+
+    GapAnalysisResponseDTO analyzeMyGap();
 }

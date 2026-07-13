@@ -39,4 +39,5 @@ public class GapAnalysisController {
     public ResponseEntity<GapAnalysisResponseDTO> getMyGapAnalysis() {
         return ResponseEntity.ok(gapAnalysisService.analyzeMyGap());
     }
+
 }
