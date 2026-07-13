@@ -30,6 +30,7 @@ import {
   FiGrid,
 } from "react-icons/fi"
 import DashboardLayout from "../../components/layout/DashboardLayout.jsx"
+import EmployeeGapAnalysis from "../EmployeeGapAnalysis/EmployeeGapAnalysis";
 import {
   getDashboardStats,
   getSkillsOverview,
@@ -53,18 +54,18 @@ const DEFAULT_STATS = [
     value: 42,
     delta: "+3 this month",
     icon: FiAward,
-    accent: "text-blue-600",
-    ring: "ring-blue-500/15",
-    bg: "bg-blue-50",
+    accent: "text-primary",
+    ring: "ring-primary/15",
+    bg: "bg-primary-tint",
   },
   {
     label: "Competencies",
     value: 18,
     delta: "+2 this month",
     icon: FiTarget,
-    accent: "text-sky-600",
-    ring: "ring-sky-500/15",
-    bg: "bg-sky-50",
+    accent: "text-primary",
+    ring: "ring-primary/15",
+    bg: "bg-primary-tint",
   },
   {
     label: "Completed Trainings",
@@ -89,8 +90,8 @@ const DEFAULT_STATS = [
 // Icon/color metadata cannot come from a JSON API, so real stats data is
 // merged into this shape by label when it arrives (see mergeStats below).
 const STAT_ICON_MAP = {
-  "Total Skills": { icon: FiAward, accent: "text-blue-600", ring: "ring-blue-500/15", bg: "bg-blue-50" },
-  "Competencies": { icon: FiTarget, accent: "text-sky-600", ring: "ring-sky-500/15", bg: "bg-sky-50" },
+  "Total Skills": { icon: FiAward, accent: "text-primary", ring: "ring-primary/15", bg: "bg-primary-tint" },
+  "Competencies": { icon: FiTarget, accent: "text-primary", ring: "ring-primary/15", bg: "bg-primary-tint" },
   "Completed Trainings": { icon: FiCheckCircle, accent: "text-emerald-600", ring: "ring-emerald-500/15", bg: "bg-emerald-50" },
   "Pending Programs": { icon: FiClock, accent: "text-amber-600", ring: "ring-amber-500/15", bg: "bg-amber-50" },
 }
@@ -124,7 +125,7 @@ const DEFAULT_TRAINING_PROGRESS = [
 const DEFAULT_NOTIFICATIONS = [
   {
     icon: FiBell,
-    accent: "text-blue-600 bg-blue-50",
+    accent: "text-primary bg-primary-tint",
     title: "Q3 Skills Assessment is now open",
     meta: "Announcement · 2h ago",
   },
@@ -142,7 +143,7 @@ const DEFAULT_NOTIFICATIONS = [
   },
   {
     icon: FiBell,
-    accent: "text-sky-600 bg-sky-50",
+    accent: "text-primary bg-primary-tint",
     title: "New mentorship program launching next week",
     meta: "Announcement · 2 days ago",
   },
@@ -157,7 +158,7 @@ const NOTIFICATION_ICON_MAP = {
 const DEFAULT_ACTIVITY = [
   {
     icon: FiEdit3,
-    accent: "text-blue-600 bg-blue-50",
+    accent: "text-primary bg-primary-tint",
     title: "Updated your professional profile",
     meta: "Profile · Today, 9:24 AM",
   },
@@ -169,13 +170,13 @@ const DEFAULT_ACTIVITY = [
   },
   {
     icon: FiBarChart2,
-    accent: "text-sky-600 bg-sky-50",
+    accent: "text-primary bg-primary-tint",
     title: "Finished Communication skill assessment",
     meta: "Assessment · 2 days ago",
   },
   {
     icon: FiEdit3,
-    accent: "text-indigo-600 bg-indigo-50",
+    accent: "text-primary bg-indigo-50",
     title: "Added 'Kubernetes' to your skills",
     meta: "Profile · 3 days ago",
   },
@@ -209,23 +210,23 @@ function getHeatmapColor(value) {
 }
 
 function getHeatmapTextColor(value) {
-  if (value >= 60) return "text-slate-900"
+  if (value >= 60) return "text-text"
   return "text-white"
 }
 
 const cardClass =
-  "rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-2xl shadow-blue-900/10 backdrop-blur-xl"
+  "rounded-3xl border border-line bg-panel shadow-2xl shadow-blue-900/10 backdrop-blur-xl"
 
 function SkillBar({ name, level }) {
   return (
     <div>
       <div className="mb-1.5 flex items-center justify-between text-sm">
-       <span className="font-medium text-slate-700 dark:text-slate-200">{name}</span>
-        <span className="font-semibold text-slate-500 dark:text-slate-400">{level}%</span>
+       <span className="font-medium text-text">{name}</span>
+        <span className="font-semibold text-sub dark:text-mute">{level}%</span>
       </div>
-     <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+     <div className="h-2 w-full overflow-hidden rounded-full bg-line">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-blue-500 to-sky-500 transition-all duration-700 ease-out"
+          className="h-full rounded-full bg-gradient-to-r from-primary to-sky-500 transition-all duration-700 ease-out"
           style={{ width: `${level}%` }}
         />
       </div>
@@ -267,9 +268,9 @@ export default function EmployeeDashboard() {
             ...s,
             ...(STAT_ICON_MAP[s.label] || {
               icon: FiAward,
-              accent: "text-blue-600",
-              ring: "ring-blue-500/15",
-              bg: "bg-blue-50",
+              accent: "text-primary",
+              ring: "ring-primary/15",
+              bg: "bg-primary-tint",
             }),
           }))
           setStats(merged)
@@ -369,23 +370,23 @@ export default function EmployeeDashboard() {
         <section
           className={`${cardClass} relative overflow-hidden p-6 sm:p-8`}
         >
-          <div className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full bg-blue-400/20 blur-3xl" />
+          <div className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full bg-primary/20 blur-3xl" />
           <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-medium text-blue-600">{today}</p>
-              <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+              <p className="text-sm font-medium text-primary">{today}</p>
+              <h1 className="mt-1 text-2xl font-bold tracking-tight text-text sm:text-3xl">
                 Welcome back, {userName}
               </h1>
-              <p className="mt-2 max-w-xl text-pretty text-sm leading-relaxed text-slate-600">
+              <p className="mt-2 max-w-xl text-pretty text-sm leading-relaxed text-sub">
                 Every skill you sharpen closes a gap in your team. Keep learning,
                 keep growing — you&apos;re on a strong streak this quarter.
               </p>
             </div>
-            <div className="flex items-center gap-3 rounded-2xl bg-blue-600 px-5 py-4 text-white shadow-lg shadow-blue-600/25">
+            <div className="flex items-center gap-3 rounded-2xl bg-primary px-5 py-4 text-white shadow-lg shadow-blue-600/25">
               <FiTrendingUp className="h-8 w-8" />
               <div>
                 <p className="text-2xl font-bold leading-none">{growthScore}%</p>
-                <p className="mt-1 text-xs text-blue-100">Growth score</p>
+                <p className="mt-1 text-xs text-primary-tint">Growth score</p>
               </div>
             </div>
           </div>
@@ -404,24 +405,25 @@ export default function EmployeeDashboard() {
                 >
                   <Icon className="h-5 w-5" />
                 </span>
-                <FiArrowUpRight className="h-4 w-4 text-slate-300 transition-colors group-hover:text-blue-500" />
+                <FiArrowUpRight className="h-4 w-4 text-sub transition-colors group-hover:text-primary" />
               </div>
-              <p className="mt-4 text-3xl font-bold tracking-tight text-slate-900">
+              <p className="mt-4 text-3xl font-bold tracking-tight text-text">
                 {value}
               </p>
-              <p className="mt-1 text-sm font-medium text-slate-500">{label}</p>
+              <p className="mt-1 text-sm font-medium text-sub">{label}</p>
               <p className={`mt-2 text-xs font-medium ${accent}`}>{delta}</p>
             </div>
           ))}
         </section>
-
+        {/* My Gap Analysis */}
+          <EmployeeGapAnalysis />
         {/* 3 & 4. Skills Overview + Competency Analytics */}
         <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Skills Overview */}
           <div className={`${cardClass} p-6`}>
             <div className="mb-5 flex items-center gap-2">
-              <FiAward className="h-5 w-5 text-blue-600" />
-             <h2 className="text-lg font-bold text-slate-900 dark:text-white">Skills Overview</h2>
+              <FiAward className="h-5 w-5 text-primary" />
+             <h2 className="text-lg font-bold text-text">Skills Overview</h2>
             </div>
             <div className="flex flex-col gap-5">
               {skills.map((s) => (
@@ -433,8 +435,8 @@ export default function EmployeeDashboard() {
           {/* Competency Analytics */}
           <div className={`${cardClass} p-6`}>
             <div className="mb-2 flex items-center gap-2">
-              <FiTarget className="h-5 w-5 text-blue-600" />
-              <h2 className="text-lg font-bold text-slate-900">
+              <FiTarget className="h-5 w-5 text-primary" />
+              <h2 className="text-lg font-bold text-text">
                 Competency Analytics
               </h2>
             </div>
@@ -476,8 +478,8 @@ export default function EmployeeDashboard() {
         {/* Training progress bar chart */}
         <section className={`${cardClass} p-6`}>
           <div className="mb-4 flex items-center gap-2">
-            <FiBarChart2 className="h-5 w-5 text-blue-600" />
-            <h2 className="text-lg font-bold text-slate-900">
+            <FiBarChart2 className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-bold text-text">
               Training Completed (Last 6 Months)
             </h2>
           </div>
@@ -515,8 +517,8 @@ export default function EmployeeDashboard() {
         {/* NEW: Skill Gap Heatmap */}
         <section className={`${cardClass} p-6`}>
           <div className="mb-5 flex items-center gap-2">
-            <FiGrid className="h-5 w-5 text-blue-600" />
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+            <FiGrid className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-bold text-text">
               Skill Gap Heatmap
             </h2>
           </div>
@@ -525,13 +527,13 @@ export default function EmployeeDashboard() {
             <table className="w-full min-w-[600px] border-separate border-spacing-1">
               <thead>
                 <tr>
-                  <th className="p-2 text-left text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  <th className="p-2 text-left text-xs font-semibold text-sub dark:text-mute">
                     Employee
                   </th>
                   {heatmapSkills.map((skillName) => (
                     <th
                       key={skillName}
-                      className="p-2 text-center text-xs font-semibold text-slate-500 dark:text-slate-400"
+                      className="p-2 text-center text-xs font-semibold text-sub dark:text-mute"
                     >
                       {skillName}
                     </th>
@@ -541,7 +543,7 @@ export default function EmployeeDashboard() {
               <tbody>
                 {heatmapData.map((row) => (
                   <tr key={row.employee}>
-                    <td className="whitespace-nowrap p-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+                    <td className="whitespace-nowrap p-2 text-sm font-medium text-text">
                       {row.employee}
                     </td>
                     {row.values.map((value, colIndex) => (
@@ -561,7 +563,7 @@ export default function EmployeeDashboard() {
           </div>
 
           {/* Legend */}
-          <div className="mt-5 flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+          <div className="mt-5 flex flex-wrap items-center gap-4 text-xs text-sub dark:text-mute">
             <span className="font-medium">Legend:</span>
             <div className="flex items-center gap-1.5">
               <span className="h-3 w-3 rounded bg-red-500" /> Critical gap (&lt;40%)
@@ -583,14 +585,14 @@ export default function EmployeeDashboard() {
           {/* Notifications */}
           <div className={`${cardClass} p-6`}>
             <div className="mb-5 flex items-center gap-2">
-              <FiBell className="h-5 w-5 text-blue-600" />
-              <h2 className="text-lg font-bold text-slate-900">Notifications</h2>
+              <FiBell className="h-5 w-5 text-primary" />
+              <h2 className="text-lg font-bold text-text">Notifications</h2>
             </div>
             <ul className="flex flex-col gap-2">
               {notifications.map((n, i) => (
                 <li
                   key={i}
-                  className="group flex items-start gap-3 rounded-2xl border border-transparent p-3 transition-all duration-200 hover:border-slate-200 hover:bg-white/70 dark:hover:bg-slate-700"
+                  className="group flex items-start gap-3 rounded-2xl border border-transparent p-3 transition-all duration-200 hover:border-line hover:bg-panel/70 dark:hover:bg-line"
                 >
                   <span
                     className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${n.accent}`}
@@ -598,10 +600,10 @@ export default function EmployeeDashboard() {
                     <n.icon className="h-4.5 w-4.5" />
                   </span>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-slate-800 dark:text-white">
+                    <p className="text-sm font-medium text-text">
                       {n.title}
                     </p>
-                    <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">{n.meta}</p>
+                    <p className="mt-0.5 text-xs text-mute dark:text-sub">{n.meta}</p>
                   </div>
                 </li>
               ))}
@@ -611,10 +613,10 @@ export default function EmployeeDashboard() {
           {/* Recent Activity */}
           <div className={`${cardClass} p-6`}>
             <div className="mb-5 flex items-center gap-2">
-              <FiActivity className="h-5 w-5 text-blue-600" />
-              <h2 className="text-lg font-bold text-slate-900">Recent Activity</h2>
+              <FiActivity className="h-5 w-5 text-primary" />
+              <h2 className="text-lg font-bold text-text">Recent Activity</h2>
             </div>
-            <ol className="relative flex flex-col gap-1 border-l border-slate-200 pl-4">
+            <ol className="relative flex flex-col gap-1 border-l border-line pl-4">
               {activity.map((a, i) => (
                 <li key={i} className="group relative pb-4 last:pb-0">
                   <span
@@ -622,11 +624,11 @@ export default function EmployeeDashboard() {
                   >
                     <a.icon className="h-4 w-4" />
                   </span>
-                  <div className="rounded-2xl p-2 transition-colors duration-200 group-hover:bg-white/70 dark:hover:bg-slate-700">
-                    <p className="text-sm font-medium text-slate-800 dark:text-white">
+                  <div className="rounded-2xl p-2 transition-colors duration-200 group-hover:bg-panel/70 dark:hover:bg-line">
+                    <p className="text-sm font-medium text-text">
                       {a.title}
                     </p>
-                    <p className="mt-0.5 text-xs text-slate-400">{a.meta}</p>
+                    <p className="mt-0.5 text-xs text-mute">{a.meta}</p>
                   </div>
                 </li>
               ))}

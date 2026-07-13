@@ -59,11 +59,11 @@ useEffect(()=>{
       <div className="space-y-6">
 
         <div>
-          <h1 className="text-3xl font-bold text-slate-800 dark:text-white">
+          <h1 className="text-3xl font-bold text-text">
             AI Recommendation
           </h1>
 
-          <p className="text-slate-500 mt-2">
+          <p className="text-sub mt-2">
             Personalized learning recommendations based on skill gaps
           </p>
         </div>
@@ -84,7 +84,7 @@ useEffect(()=>{
 
         {!notOnboarded && (
 
-        <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-xl p-6">
+        <div className="bg-panel rounded-3xl shadow-xl p-6">
 
           <h2 className="text-xl font-bold mb-5">
             AI Recommendations
@@ -95,12 +95,12 @@ useEffect(()=>{
 
             {loading ? (
 
-              <p className="text-slate-400">Loading recommendations...</p>
+              <p className="text-mute">Loading recommendations...</p>
 
             ) : recommendations.length === 0 ? (
 
               !error && (
-                <p className="text-slate-400">
+                <p className="text-mute">
                   No recommendations available right now.
                 </p>
               )
@@ -111,7 +111,7 @@ useEffect(()=>{
 
                 <div
                   key={index}
-                  className="bg-blue-50 px-4 py-3 rounded-xl"
+                  className="bg-primary-tint px-4 py-3 rounded-xl"
                 >
                   ✓ {item}
                 </div>
@@ -132,7 +132,7 @@ useEffect(()=>{
 
         {!notOnboarded && (
 
-        <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-xl p-6">
+        <div className="bg-panel rounded-3xl shadow-xl p-6">
 
           <h2 className="text-xl font-bold mb-5">
             Learning Roadmap
@@ -143,12 +143,12 @@ useEffect(()=>{
 
             {loading ? (
 
-              <p className="text-slate-400">Loading roadmap...</p>
+              <p className="text-mute">Loading roadmap...</p>
 
             ) : roadmap.length === 0 ? (
 
               !error && (
-                <p className="text-slate-400">
+                <p className="text-mute">
                   No roadmap available right now.
                 </p>
               )
