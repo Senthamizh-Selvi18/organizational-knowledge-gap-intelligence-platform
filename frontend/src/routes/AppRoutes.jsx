@@ -18,6 +18,7 @@ import GapAnalysis from "../pages/GapAnalysis/GapAnalysis";
 import EmployeeManagement from "../pages/EmployeeManagement/EmployeeManagement";
 import ChatBox from "../pages/Chat/ChatBox";
 import DashboardLayout from "../components/layout/DashboardLayout";
+import Settings from "../pages/Settings/Settings";
 function AppRoutes() {
   return (
     <Routes>
@@ -130,6 +131,14 @@ function AppRoutes() {
       <DashboardLayout>
         <ChatBox />
       </DashboardLayout>
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/dashboard/settings"
+  element={
+    <ProtectedRoute>
+      <Settings />
     </ProtectedRoute>
   }
 />
