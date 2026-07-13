@@ -1,5 +1,6 @@
-@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Erode:ital,wght@0,400;0,500;0,600;0,700;0,800;1,600&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -39,7 +40,29 @@
   --shadow-hero: 0 18px 40px -22px rgba(109,74,235,.3);
 }
 
+:root {
+  --kg-radius: 10px;
+  --kg-herobg: #FFFFFF;
+  --kg-heroline: #E9E1F6;
+  --kg-heroshadow: 0 18px 40px -22px rgba(109,74,235,.3);
+  --kg-heroblob1-op: .5;
+  --kg-heroblob2-op: .4;
+  --kg-herosub: #5B5478;
+  --kg-scoreshadow: rgba(88,64,199,.5);
+  --kg-scorebg: #5B3FE0;
+  --kg-cardshadow: 0 4px 16px -10px rgba(109,74,235,.18);
+}
+
 .dark {
+  --kg-herobg: #1E1733;
+  --kg-heroline: #332A50;
+  --kg-heroshadow: 0 18px 40px -22px rgba(0,0,0,.55);
+  --kg-heroblob1-op: .45;
+  --kg-heroblob2-op: .3;
+  --kg-herosub: #A79EC7;
+  --kg-scoreshadow: rgba(0,0,0,.55);
+  --kg-scorebg: #6D4AEB;
+  --kg-cardshadow: 0 4px 16px -10px rgba(0,0,0,.4);
   --color-bg: #150F24;
   --color-panel: #1E1733;
   --color-line: #332A50;

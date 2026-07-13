@@ -12,6 +12,7 @@ import {
 import { FcGoogle } from "react-icons/fc"
 import { login, sendOtp, verifyOtp } from "../../services/authService";
 import { useNavigate } from "react-router-dom";
+import { toast } from "../../components/ui/Toast.jsx";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -68,14 +69,14 @@ const handleSubmit = async (e) => {
       return;
     }
 
-    alert("Login Successful!");
+    toast.success("Login Successful!");
     proceedToDashboard(data.role);
 
   } catch (error) {
     console.error(error);
     const message =
       error.response?.data?.message || "Login failed. Please try again.";
-    alert(message);
+    toast.error(message);
   }
 };
 
@@ -83,7 +84,7 @@ const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!/^[6-9]\d{9}$/.test(phone)) {
-      alert("Please enter a valid 10-digit mobile number.");
+      toast.warning("Please enter a valid 10-digit mobile number.");
       return;
     }
 
@@ -92,12 +93,12 @@ const handleSubmit = async (e) => {
       await sendOtp(userId, phone);
       setOtpSent(true);
       setResendCooldown(60);
-      alert("OTP sent to your mobile number.");
+      toast.success("OTP sent to your mobile number.");
     } catch (error) {
       console.error(error);
       const message =
         error.response?.data?.message || "Failed to send OTP. Please try again.";
-      alert(message);
+      toast.error(message);
     } finally {
       setOtpLoading(false);
     }
@@ -107,7 +108,7 @@ const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (otp.length !== 6) {
-      alert("Please enter the 6-digit OTP.");
+      toast.warning("Please enter the 6-digit OTP.");
       return;
     }
 
@@ -116,16 +117,16 @@ const handleSubmit = async (e) => {
       const data = await verifyOtp(userId, otp);
 
       if (data.verified) {
-        alert("Verification successful! Login complete.");
+        toast.success("Verification successful! Login complete.");
         proceedToDashboard(pendingRole);
       } else {
-        alert("Invalid OTP. Please try again.");
+        toast.error("Invalid OTP. Please try again.");
       }
     } catch (error) {
       console.error(error);
       const message =
         error.response?.data?.message || "OTP verification failed. Please try again.";
-      alert(message);
+      toast.error(message);
     } finally {
       setOtpLoading(false);
     }

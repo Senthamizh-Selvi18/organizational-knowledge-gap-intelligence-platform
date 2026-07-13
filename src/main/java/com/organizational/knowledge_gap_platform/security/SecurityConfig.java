@@ -3,14 +3,13 @@ package com.organizational.knowledge_gap_platform.security;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.config.Customizer;
-
 
 @Configuration
 @EnableWebSecurity
@@ -21,7 +20,6 @@ public class SecurityConfig {
     private final AuthenticationProvider authenticationProvider;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
     private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
-
 
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
@@ -34,7 +32,6 @@ public class SecurityConfig {
         this.oAuth2LoginSuccessHandler = oAuth2LoginSuccessHandler;
         this.oAuth2LoginFailureHandler = oAuth2LoginFailureHandler;
     }
-
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http)
@@ -66,6 +63,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/skills/**")
                         .hasRole("ADMIN")
 
+                        // Added to restrict Employee Management APIs to Admin only
+                        .requestMatchers("/api/employees/**")
+                        .hasRole("ADMIN")
+
                         .requestMatchers("/api/users/**")
                         .authenticated()
 
@@ -87,7 +88,6 @@ public class SecurityConfig {
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
                 );
-
 
         return http.build();
     }
