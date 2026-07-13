@@ -15,6 +15,7 @@ import {
 } from "react-icons/fi";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import { changePassword } from "../../services/profileService";
+import { toast } from "../../components/ui/Toast.jsx";
 
 
 const initialProfile = {
@@ -105,7 +106,7 @@ export default function Profile() {
               }
           );
 
-            alert("Profile updated successfully!");
+            toast.success("Profile updated successfully!");
 
             setIsEditing(false);
 
@@ -113,7 +114,7 @@ export default function Profile() {
 
           } catch (error) {
             console.error(error);
-            alert("Failed to update profile.");
+            toast.error("Failed to update profile.");
           }
         };
              const handleChangePassword = async () => {
@@ -123,7 +124,7 @@ export default function Profile() {
         !passwordData.newPassword ||
         !passwordData.confirmPassword
     ) {
-        alert("Please fill all the fields.");
+        toast.warning("Please fill all the fields.");
         return;
     }
 
@@ -131,7 +132,7 @@ export default function Profile() {
         passwordData.newPassword !==
         passwordData.confirmPassword
     ) {
-        alert("New Password and Confirm Password must match.");
+        toast.warning("New Password and Confirm Password must match.");
         return;
     }
 
@@ -142,7 +143,7 @@ export default function Profile() {
             passwordData
         );
 
-        alert("Password changed successfully.");
+        toast.success("Password changed successfully.");
 
         setPasswordData({
             currentPassword: "",
@@ -154,7 +155,7 @@ export default function Profile() {
 
     } catch (error) {
 
-        alert(
+        toast.error(
             error.response?.data?.message ||
             "Failed to change password."
         );

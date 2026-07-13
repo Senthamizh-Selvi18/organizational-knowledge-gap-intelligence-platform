@@ -13,12 +13,12 @@ import EmployeeSkillManagement from "../pages/EmployeeSkillManagement/EmployeeSk
 import Recommendation from "../pages/recommendation/Recommendation";
 import OAuth2RedirectPage from "../pages/OAuth2Redirect/OAuth2Redirect";
 import ProtectedRoute from "./ProtectedRoute";
-import EmployeeGapAnalysis from "../pages/EmployeeGapAnalysis/EmployeeGapAnalysis";
 import GapAnalysis from "../pages/GapAnalysis/GapAnalysis";
 import EmployeeManagement from "../pages/EmployeeManagement/EmployeeManagement";
 import ChatBox from "../pages/Chat/ChatBox";
 import DashboardLayout from "../components/layout/DashboardLayout";
 import Settings from "../pages/Settings/Settings";
+
 function AppRoutes() {
   return (
     <Routes>
@@ -27,7 +27,6 @@ function AppRoutes() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
-
       <Route
         path="/dashboard"
         element={
@@ -36,7 +35,6 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/employee-dashboard"
         element={
@@ -45,23 +43,6 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
-      <Route
-  path="/employee-dashboard/gap-analysis"
-  element={
-    <ProtectedRoute allowedRoles={["Employee", "Intern"]}>
-      <EmployeeGapAnalysis />
-    </ProtectedRoute>
-  }
-/>
-    <Route
-    path="/dashboard/employees"
-    element={
-        <ProtectedRoute allowedRoles={["Admin"]}>
-            <EmployeeManagement />
-        </ProtectedRoute>
-    }
-/>
       <Route
         path="/dashboard/profile"
         element={
@@ -70,7 +51,6 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/dashboard/role-skills"
         element={
@@ -79,7 +59,6 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/dashboard/roles"
         element={
@@ -88,7 +67,6 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/dashboard/skills"
         element={
@@ -97,7 +75,6 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/dashboard/employee-skills"
         element={
@@ -106,7 +83,6 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/dashboard/recommendation"
         element={
@@ -123,26 +99,32 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
       <Route
-  path="/dashboard/chat"
-  element={
-    <ProtectedRoute>
-      <DashboardLayout>
-        <ChatBox />
-      </DashboardLayout>
-    </ProtectedRoute>
-  }
-/>
-<Route
-  path="/dashboard/settings"
-  element={
-    <ProtectedRoute>
-      <Settings />
-    </ProtectedRoute>
-  }
-/>
-
+        path="/dashboard/chat"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <ChatBox />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/settings"
+        element={
+          <ProtectedRoute>
+            <Settings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/employees"
+        element={
+          <ProtectedRoute allowedRoles={["Admin"]}>
+            <EmployeeManagement />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/oauth2/redirect"
         element={<OAuth2RedirectPage />}
