@@ -33,16 +33,16 @@ export default function GapAnalysis() {
   const [gapData, setGapData] = useState([]);
 
   const employeeOptions = employees.map((employee) => ({
-    value: employee.id,
-    label: `${employee.user?.name} (${employee.employeeCode})`,
-    searchText: `
-      ${employee.user?.name}
+  value: employee.id,
+  label: `${employee.name} (${employee.employeeCode})`,
+  searchText: `
+      ${employee.name}
       ${employee.employeeCode}
       ${employee.department}
       ${employee.designation}
     `,
-    employee,
-  }));
+  employee,
+}));
 
   const filterEmployeeOption = (option, inputValue) => {
     return option.data.searchText
@@ -69,7 +69,7 @@ export default function GapAnalysis() {
       <components.Option {...props}>
         <div className="py-1">
           <p className="font-semibold text-slate-800">
-            {employee.user?.name}
+            {employee.name}
           </p>
 
           <p className="text-sm text-slate-500">

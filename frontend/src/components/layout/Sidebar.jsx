@@ -53,12 +53,16 @@ export default function Sidebar({ open, onClose }) {
           },
         ]
       : []),
-
+       ...(role === "admin" || role === "hr"
+        ?[
     {
       label: "Gap Analysis",
       icon: FiBarChart2,
       to: "/dashboard/gap-analysis",
     },
+  ]
+  :
+  []),
     {
       label: "AI Recommendation",
       icon: FiCpu,

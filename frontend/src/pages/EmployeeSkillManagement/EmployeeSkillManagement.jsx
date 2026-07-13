@@ -31,16 +31,13 @@ export default function EmployeeSkillManagement() {
 
   const employeeOptions = employees.map((employee) => ({
   value: employee.id,
-
-  label: `${employee.user?.name} (${employee.employeeCode})`,
-
+  label: `${employee.name} (${employee.employeeCode})`,
   searchText: `
-    ${employee.user?.name}
-    ${employee.employeeCode}
-    ${employee.department}
-    ${employee.designation}
-  `,
-
+      ${employee.name}
+      ${employee.employeeCode}
+      ${employee.department}
+      ${employee.designation}
+    `,
   employee,
 }));
 const filterEmployeeOption = (option, inputValue) => {
@@ -56,7 +53,7 @@ const CustomOption = (props) => {
     <components.Option {...props}>
       <div className="py-1">
         <p className="font-semibold text-slate-800">
-          {employee.user?.name}
+          {employee.name}
         </p>
 
         <p className="text-sm text-slate-500">
