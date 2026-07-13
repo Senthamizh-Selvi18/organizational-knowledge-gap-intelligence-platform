@@ -8,6 +8,8 @@ import {
 } from "../../services/roleService";
 import { Navigate } from "react-router-dom";
 import DashboardLayout from "../../components/layout/DashboardLayout";
+import { toast } from "../../components/ui/Toast.jsx";
+import { confirmDialog } from "../../components/ui/ConfirmDialog.jsx";
 import {
   FiUsers,
   FiUserCheck,
@@ -71,7 +73,7 @@ const activities = [...roles]
 
 const handleAddRole = async () => {
   if (!newRole.trim()) {
-    alert("Enter a role name");
+    toast.warning("Enter a role name");
     return;
   }
 
@@ -80,14 +82,14 @@ const handleAddRole = async () => {
       roleName: newRole,
     });
 
-    alert("Role added successfully");
+    toast.success("Role added successfully");
 
     setNewRole("");
     setShowModal(false);
 
     loadRoles();
   } catch (err) {
-    alert(err.response?.data || "Failed to add role");
+    toast.error(err.response?.data || "Failed to add role");
   }
 };
 
@@ -307,16 +309,21 @@ onChange={(e)=>setStatus(e.target.value)}
 
             <button
               onClick={async () => {
-                if (!window.confirm("Delete this role?")) return;
+                const ok = await confirmDialog("Delete this role? This can't be undone.", {
+                  confirmLabel: "Delete",
+                  danger: true,
+                });
+                if (!ok) return;
 
                 try {
                   await deleteRole(item.id);
                   loadRoles();
+                  toast.success("Role deleted");
                 } catch {
-                  alert("Unable to delete role");
+                  toast.error("Unable to delete role");
                 }
               }}
-              className="text-red-600 hover:text-red-800"
+              className="text-rust hover:text-rust"
             >
               <FiTrash2 />
             </button>
@@ -401,14 +408,14 @@ onChange={(e)=>setStatus(e.target.value)}
         roleName: newRole,
       });
 
-      alert("Role added successfully");
+      toast.success("Role added successfully");
 
       setNewRole("");
       setShowModal(false);
 
       loadRoles();
     } catch (err) {
-      alert(
+      toast.error(
         err.response?.data || "Unable to add role"
       );
     }
