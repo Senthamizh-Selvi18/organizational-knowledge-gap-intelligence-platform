@@ -33,16 +33,16 @@ export default function GapAnalysis() {
   const [gapData, setGapData] = useState([]);
 
   const employeeOptions = employees.map((employee) => ({
-    value: employee.id,
-    label: `${employee.user?.name} (${employee.employeeCode})`,
-    searchText: `
-      ${employee.user?.name}
+  value: employee.id,
+  label: `${employee.name} (${employee.employeeCode})`,
+  searchText: `
+      ${employee.name}
       ${employee.employeeCode}
       ${employee.department}
       ${employee.designation}
     `,
-    employee,
-  }));
+  employee,
+}));
 
   const filterEmployeeOption = (option, inputValue) => {
     return option.data.searchText
@@ -68,19 +68,19 @@ export default function GapAnalysis() {
     return (
       <components.Option {...props}>
         <div className="py-1">
-          <p className="font-semibold text-slate-800">
-            {employee.user?.name}
-          </p>
+        <p className="font-semibold text-slate-800">
+  {employee.name}
+</p>
 
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-sub">
             {employee.employeeCode}
           </p>
 
-          <p className="text-xs text-blue-600">
+          <p className="text-xs text-primary">
             {employee.designation}
           </p>
 
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-sub">
             {employee.department}
           </p>
         </div>
@@ -188,14 +188,14 @@ export default function GapAnalysis() {
 
         {/* Header */}
 
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between rounded-3xl bg-gradient-to-r from-blue-600 to-indigo-600 p-8 text-white shadow-lg">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between rounded-3xl bg-gradient-to-r from-primary to-primary-dark p-8 text-white shadow-lg">
 
           <div>
             <h1 className="text-4xl font-bold">
               Gap Analysis
             </h1>
 
-            <p className="mt-2 text-blue-100 text-lg">
+            <p className="mt-2 text-primary-tint text-lg">
               Analyze employee skill gaps and identify missing competencies.
             </p>
           </div>
@@ -208,12 +208,12 @@ export default function GapAnalysis() {
 
           {/* Employees */}
 
-          <div className="rounded-3xl bg-white p-6 shadow-lg">
+          <div className="rounded-3xl bg-panel p-6 shadow-lg">
 
             <div className="flex items-center justify-between">
 
               <div>
-                <p className="text-sm uppercase text-gray-500">
+                <p className="text-sm uppercase text-sub">
                   Employees
                 </p>
 
@@ -222,8 +222,8 @@ export default function GapAnalysis() {
                 </h2>
               </div>
 
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-                <FiUsers className="text-3xl text-blue-600" />
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-tint">
+                <FiUsers className="text-3xl text-primary" />
               </div>
 
             </div>
@@ -232,22 +232,22 @@ export default function GapAnalysis() {
 
           {/* Required Skills */}
 
-          <div className="rounded-3xl bg-white p-6 shadow-lg">
+          <div className="rounded-3xl bg-panel p-6 shadow-lg">
 
             <div className="flex items-center justify-between">
 
               <div>
-                <p className="text-sm uppercase text-gray-500">
+                <p className="text-sm uppercase text-sub">
                   Required Skills
                 </p>
 
-                <h2 className="mt-2 text-4xl font-bold text-blue-600">
+                <h2 className="mt-2 text-4xl font-bold text-primary">
                   {totalRequiredSkills}
                 </h2>
               </div>
 
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-                <FiCpu className="text-3xl text-blue-600" />
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-tint">
+                <FiCpu className="text-3xl text-primary" />
               </div>
 
             </div>
@@ -256,12 +256,12 @@ export default function GapAnalysis() {
 
           {/* Missing Skills */}
 
-          <div className="rounded-3xl bg-white p-6 shadow-lg">
+          <div className="rounded-3xl bg-panel p-6 shadow-lg">
 
             <div className="flex items-center justify-between">
 
               <div>
-                <p className="text-sm uppercase text-gray-500">
+                <p className="text-sm uppercase text-sub">
                   Missing Skills
                 </p>
 
@@ -280,12 +280,12 @@ export default function GapAnalysis() {
 
           {/* Gap Percentage */}
 
-          <div className="rounded-3xl bg-white p-6 shadow-lg">
+          <div className="rounded-3xl bg-panel p-6 shadow-lg">
 
             <div className="flex items-center justify-between">
 
               <div>
-                <p className="text-sm uppercase text-gray-500">
+                <p className="text-sm uppercase text-sub">
                   Gap %
                 </p>
 
@@ -305,7 +305,7 @@ export default function GapAnalysis() {
         </div>
 
         {/* Employee Selection */}
-<div className="rounded-3xl bg-white p-6 shadow-lg">
+<div className="rounded-3xl bg-panel p-6 shadow-lg">
 
   <div className="mb-5 flex items-center justify-between">
 
@@ -315,7 +315,7 @@ export default function GapAnalysis() {
 
     <button
   onClick={handleRefresh}
-  className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-white"
+  className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-white"
 >
   <FiRefreshCw />
   Refresh
@@ -347,12 +347,12 @@ export default function GapAnalysis() {
   />
 
   {currentGap && (
-    <div className="mt-5 rounded-xl bg-slate-50 p-4">
-      <p className="font-semibold text-slate-800">
+    <div className="mt-5 rounded-xl bg-bg p-4">
+      <p className="font-semibold text-text">
         Employee : {employeeName}
       </p>
 
-      <p className="mt-1 text-slate-600">
+      <p className="mt-1 text-sub">
         Role : {roleName}
       </p>
     </div>
@@ -362,21 +362,21 @@ export default function GapAnalysis() {
 
 {/* Gap Progress */}
 
-<div className="rounded-3xl bg-white p-6 shadow-lg">
+<div className="rounded-3xl bg-panel p-6 shadow-lg">
 
   <div className="mb-6">
 
-    <h2 className="text-2xl font-bold text-slate-800">
+    <h2 className="text-2xl font-bold text-text">
       Overall Skill Gap
     </h2>
 
-    <p className="mt-1 text-sm text-slate-500">
+    <p className="mt-1 text-sm text-sub">
       Percentage of missing skills for the selected employee.
     </p>
 
   </div>
 
-  <div className="w-full rounded-full bg-slate-200 h-5 overflow-hidden">
+  <div className="w-full rounded-full bg-line h-5 overflow-hidden">
 
     <div
       className="h-5 rounded-full bg-gradient-to-r from-red-500 to-orange-500 transition-all duration-500"
@@ -399,7 +399,7 @@ export default function GapAnalysis() {
 
   </div>
 
-  <div className="mt-2 flex justify-between text-sm text-slate-500">
+  <div className="mt-2 flex justify-between text-sm text-sub">
 
     <span>
       Required Skills : {totalRequiredSkills}
@@ -418,21 +418,21 @@ export default function GapAnalysis() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
   {/* Matched Skills */}
-<div className="rounded-3xl bg-white shadow-lg p-6">
+<div className="rounded-3xl bg-panel shadow-lg p-6">
 
-  <h2 className="mb-5 text-xl font-bold text-slate-800">
+  <h2 className="mb-5 text-xl font-bold text-text">
     Matched Skills
   </h2>
 
   {!currentGap ? (
 
-    <p className="text-slate-400">
+    <p className="text-mute">
       Select an employee.
     </p>
 
   ) : matchedSkills.length === 0 ? (
 
-    <p className="text-slate-400">
+    <p className="text-mute">
       No matched skills found.
     </p>
 
@@ -459,9 +459,9 @@ export default function GapAnalysis() {
 
   {/* Required Skills */}
 
-  <div className="rounded-3xl bg-white shadow-lg p-6">
+  <div className="rounded-3xl bg-panel shadow-lg p-6">
 
-    <h2 className="mb-5 text-xl font-bold text-slate-800">
+    <h2 className="mb-5 text-xl font-bold text-text">
       Required Skills
     </h2>
 
@@ -469,11 +469,11 @@ export default function GapAnalysis() {
 
       <div className="text-center">
 
-        <p className="text-5xl font-bold text-blue-600">
+        <p className="text-5xl font-bold text-primary">
           {totalRequiredSkills}
         </p>
 
-        <p className="mt-3 text-slate-500">
+        <p className="mt-3 text-sub">
           Total Required Skills
         </p>
 
@@ -485,9 +485,9 @@ export default function GapAnalysis() {
 
   {/* Missing Skills */}
 
-  <div className="rounded-3xl bg-white shadow-lg p-6">
+  <div className="rounded-3xl bg-panel shadow-lg p-6">
 
-    <h2 className="mb-5 text-xl font-bold text-slate-800">
+    <h2 className="mb-5 text-xl font-bold text-text">
       Missing Skills
     </h2>
 
@@ -525,9 +525,9 @@ export default function GapAnalysis() {
 </div>
         {/* Summary Card */}
 
-        <div className="rounded-3xl bg-white p-6 shadow-lg">
+        <div className="rounded-3xl bg-panel p-6 shadow-lg">
 
-  <h2 className="text-2xl font-bold text-slate-800 mb-4">
+  <h2 className="text-2xl font-bold text-text mb-4">
     Gap Analysis Summary
   </h2>
 
@@ -539,19 +539,19 @@ export default function GapAnalysis() {
         {matchedSkillCount}
       </h3>
 
-      <p className="mt-2 text-slate-600">
+      <p className="mt-2 text-sub">
         Matched Skills
       </p>
 
     </div>
 
-    <div className="rounded-2xl bg-blue-50 p-5 text-center">
+    <div className="rounded-2xl bg-primary-tint p-5 text-center">
 
-      <h3 className="text-4xl font-bold text-blue-600">
+      <h3 className="text-4xl font-bold text-primary">
         {totalRequiredSkills}
       </h3>
 
-      <p className="mt-2 text-slate-600">
+      <p className="mt-2 text-sub">
         Required Skills
       </p>
 
@@ -563,7 +563,7 @@ export default function GapAnalysis() {
         {missingSkillCount}
       </h3>
 
-      <p className="mt-2 text-slate-600">
+      <p className="mt-2 text-sub">
         Missing Skills
       </p>
 
@@ -611,14 +611,14 @@ export default function GapAnalysis() {
 
 {/* Analysis Table */}
 
-<div className="overflow-hidden rounded-3xl bg-white shadow-lg">
+<div className="overflow-hidden rounded-3xl bg-panel shadow-lg">
 
   <div className="border-b p-6">
-    <h2 className="text-2xl font-bold text-slate-800">
+    <h2 className="text-2xl font-bold text-text">
       Gap Analysis Details
     </h2>
 
-    <p className="mt-2 text-slate-500">
+    <p className="mt-2 text-sub">
       Comparison between employee skills and required skills.
     </p>
   </div>
@@ -627,7 +627,7 @@ export default function GapAnalysis() {
 
     <table className="min-w-full">
 
-      <thead className="bg-slate-100">
+      <thead className="bg-bg">
 
         <tr>
           <th className="px-6 py-4 text-left text-sm font-semibold uppercase">
@@ -657,7 +657,7 @@ export default function GapAnalysis() {
 
             <td
               colSpan={4}
-              className="py-12 text-center text-slate-400"
+              className="py-12 text-center text-mute"
             >
               Select an employee to view gap analysis.
             </td>
@@ -672,7 +672,7 @@ export default function GapAnalysis() {
 
               <tr
                 key={`matched-${skill.id}`}
-                className="border-b hover:bg-slate-50"
+                className="border-b hover:bg-bg"
               >
 
                 <td className="px-6 py-4 font-semibold">
@@ -701,7 +701,7 @@ export default function GapAnalysis() {
 
               <tr
                 key={`missing-${skill.id}`}
-                className="border-b hover:bg-slate-50"
+                className="border-b hover:bg-bg"
               >
 
                 <td className="px-6 py-4 font-semibold">

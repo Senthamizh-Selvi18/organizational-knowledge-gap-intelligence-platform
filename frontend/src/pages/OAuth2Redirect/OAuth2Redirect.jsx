@@ -32,8 +32,8 @@ export default function OAuth2RedirectPage() {
   }, [searchParams, navigate]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-100">
-      <p className="text-sm text-slate-500">Signing you in...</p>
+    <div className="flex min-h-screen items-center justify-center bg-bg">
+      <p className="text-sm text-sub">Signing you in...</p>
     </div>
   );
 }

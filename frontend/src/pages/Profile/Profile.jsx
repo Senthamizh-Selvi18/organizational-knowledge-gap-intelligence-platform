@@ -167,7 +167,7 @@ export default function Profile() {
 
         {/* Header */}
 
-        <div className="rounded-3xl bg-white/70 backdrop-blur-xl shadow-xl p-8 border border-white">
+        <div className="rounded-3xl bg-panel/70 backdrop-blur-xl shadow-xl p-8 border border-white">
 
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
 
@@ -194,7 +194,7 @@ export default function Profile() {
                   }
                 />
               ) : (
-                <h1 className="text-3xl font-bold text-slate-800">
+                <h1 className="text-3xl font-bold text-text">
                   {profile.name}
                 </h1>
               )}
@@ -212,7 +212,7 @@ export default function Profile() {
                   }
                 />
               ) : (
-                <p className="text-slate-500">
+                <p className="text-sub">
                   {profile.designation}
                 </p>
               )}
@@ -232,7 +232,7 @@ export default function Profile() {
                       }
                     />
                   ) : (
-                    <span className="px-4 py-1 rounded-full bg-blue-100 text-blue-700 text-sm">
+                    <span className="px-4 py-1 rounded-full bg-primary-tint text-primary-dark text-sm">
                       {profile.department}
                     </span>
                   )}
@@ -257,7 +257,7 @@ export default function Profile() {
                     setIsEditing(true);
                   }
                 }}
-                className="flex items-center gap-2 bg-blue-600 text-white px-5 py-3 rounded-xl hover:bg-blue-700 transition"
+                className="flex items-center gap-2 bg-primary text-text px-5 py-3 rounded-xl hover:bg-primary-dark transition"
               >
                 <FiEdit />
                 {isEditing ? "Save Profile" : "Edit Profile"}
@@ -265,7 +265,7 @@ export default function Profile() {
 
               <button
               onClick={() => setShowPasswordModal(true)}
-              className="flex items-center gap-2 border border-slate-300 px-5 py-3 rounded-xl hover:bg-slate-100 transition"
+              className="flex items-center gap-2 border border-line px-5 py-3 rounded-xl hover:bg-bg transition"
               >
               <FiLock />
               Change Password
@@ -281,7 +281,7 @@ export default function Profile() {
 
 <div className="grid lg:grid-cols-2 gap-6">
 
-  <div className="bg-white rounded-3xl shadow-xl p-6">
+  <div className="bg-panel rounded-3xl shadow-xl p-6">
 
     <h2 className="text-xl font-bold mb-6">
       Profile Information
@@ -297,13 +297,13 @@ export default function Profile() {
 
       <div className="flex items-start gap-4">
 
-  <div className="p-3 rounded-xl bg-blue-100 text-blue-600">
+  <div className="p-3 rounded-xl bg-primary-tint text-primary">
     <FiPhone />
   </div>
 
   <div className="flex-1">
 
-    <p className="text-sm text-slate-500">
+    <p className="text-sm text-sub">
       Phone
     </p>
 
@@ -320,7 +320,7 @@ export default function Profile() {
         }
       />
     ) : (
-      <p className="font-semibold text-slate-800">
+      <p className="font-semibold text-text">
         {profile.phoneNumber}
       </p>
     )}
@@ -331,13 +331,13 @@ export default function Profile() {
 
       <div className="flex items-start gap-4">
 
-  <div className="p-3 rounded-xl bg-blue-100 text-blue-600">
+  <div className="p-3 rounded-xl bg-primary-tint text-primary">
     <FiMapPin />
   </div>
 
   <div className="flex-1">
 
-    <p className="text-sm text-slate-500">
+    <p className="text-sm text-sub">
       Location
     </p>
 
@@ -354,7 +354,7 @@ export default function Profile() {
         }
       />
     ) : (
-      <p className="font-semibold text-slate-800">
+      <p className="font-semibold text-text">
         {profile.location}
       </p>
     )}
@@ -371,13 +371,13 @@ export default function Profile() {
 
       <div className="flex items-start gap-4">
 
-  <div className="p-3 rounded-xl bg-blue-100 text-blue-600">
+  <div className="p-3 rounded-xl bg-primary-tint text-primary">
     <FiBriefcase />
   </div>
 
   <div className="flex-1">
 
-    <p className="text-sm text-slate-500">
+    <p className="text-sm text-sub">
       Experience
     </p>
 
@@ -394,7 +394,7 @@ export default function Profile() {
         }
       />
     ) : (
-      <p className="font-semibold text-slate-800">
+      <p className="font-semibold text-text">
         {profile.experience}
       </p>
     )}
@@ -405,13 +405,13 @@ export default function Profile() {
 
       <div className="flex items-start gap-4">
 
-  <div className="p-3 rounded-xl bg-blue-100 text-blue-600">
+  <div className="p-3 rounded-xl bg-primary-tint text-primary">
     <FiUsers />
   </div>
 
   <div className="flex-1">
 
-    <p className="text-sm text-slate-500">
+    <p className="text-sm text-sub">
       Reporting Manager
     </p>
 
@@ -428,7 +428,7 @@ export default function Profile() {
         }
       />
     ) : (
-      <p className="font-semibold text-slate-800">
+      <p className="font-semibold text-text">
         {profile.manager}
       </p>
     )}
@@ -442,7 +442,7 @@ export default function Profile() {
   </div>
                     {/* Skills */}
 
-          <div className="bg-white rounded-3xl shadow-xl p-6">
+          <div className="bg-panel rounded-3xl shadow-xl p-6">
 
             <h2 className="text-xl font-bold mb-6">
               Skills
@@ -455,20 +455,20 @@ export default function Profile() {
 
                   <div className="flex justify-between mb-2">
 
-                    <span className="font-medium text-slate-700">
+                    <span className="font-medium text-text">
                       {skill.name}
                     </span>
 
-                    <span className="text-blue-600 font-semibold">
+                    <span className="text-primary font-semibold">
                       {skill.level}%
                     </span>
 
                   </div>
 
-                  <div className="w-full h-3 rounded-full bg-slate-200">
+                  <div className="w-full h-3 rounded-full bg-line">
 
                     <div
-                      className="h-3 rounded-full bg-gradient-to-r from-blue-500 to-sky-500"
+                      className="h-3 rounded-full bg-gradient-to-r from-primary to-sky-500"
                       style={{ width: `${skill.level}%` }}
                     />
 
@@ -489,7 +489,7 @@ export default function Profile() {
 
           {/* Competencies */}
 
-          <div className="bg-white rounded-3xl shadow-xl p-6">
+          <div className="bg-panel rounded-3xl shadow-xl p-6">
 
             <h2 className="text-xl font-bold mb-6">
               Competencies
@@ -501,14 +501,14 @@ export default function Profile() {
 
                 <div
                   key={item.name}
-                  className="flex items-center justify-between rounded-xl bg-slate-100 px-4 py-3"
+                  className="flex items-center justify-between rounded-xl bg-bg px-4 py-3"
                 >
 
                   <span className="font-medium">
                     {item.name}
                   </span>
 
-                  <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-700">
+                  <span className="rounded-full bg-primary-tint px-3 py-1 text-sm font-semibold text-primary-dark">
                     {item.level}
                   </span>
 
@@ -522,7 +522,7 @@ export default function Profile() {
 
           {/* Recent Activity */}
 
-          <div className="bg-white rounded-3xl shadow-xl p-6">
+          <div className="bg-panel rounded-3xl shadow-xl p-6">
 
             <h2 className="text-xl font-bold mb-6">
               Recent Activity
@@ -534,12 +534,12 @@ export default function Profile() {
 
                 <li
                   key={index}
-                  className="flex items-center gap-3 rounded-xl bg-slate-100 px-4 py-3"
+                  className="flex items-center gap-3 rounded-xl bg-bg px-4 py-3"
                 >
 
-                  <div className="w-3 h-3 rounded-full bg-blue-600"></div>
+                  <div className="w-3 h-3 rounded-full bg-primary"></div>
 
-                  <span className="text-slate-700">
+                  <span className="text-text">
                     {activity}
                   </span>
 
@@ -558,7 +558,7 @@ export default function Profile() {
 
               <div className="fixed inset-0 bg-black/40 flex justify-center items-center">
 
-              <div className="bg-white rounded-xl p-6 w-96">
+              <div className="bg-panel rounded-xl p-6 w-96">
 
               <h2 className="text-xl font-bold mb-5">
               Change Password
@@ -643,7 +643,7 @@ export default function Profile() {
 
               <button
               onClick={handleChangePassword}
-              className="px-4 py-2 rounded-lg bg-blue-600 text-white"
+              className="px-4 py-2 rounded-lg bg-primary text-white"
               >
               Update
               </button>
@@ -663,17 +663,17 @@ function Info({ icon, title, value }) {
   return (
     <div className="flex items-start gap-4">
 
-      <div className="p-3 rounded-xl bg-blue-100 text-blue-600">
+      <div className="p-3 rounded-xl bg-primary-tint text-primary">
         {icon}
       </div>
 
       <div>
 
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-sub">
           {title}
         </p>
 
-        <p className="font-semibold text-slate-800">
+        <p className="font-semibold text-text">
           {value}
         </p>
 
