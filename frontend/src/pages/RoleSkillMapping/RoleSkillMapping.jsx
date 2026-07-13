@@ -112,18 +112,18 @@ export default function RoleSkillMapping() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3">
-            <FiShield className="text-blue-600" />
+            <FiShield className="text-primary" />
             Role Skill Mapping
           </h1>
-          <p className="text-slate-500">
+          <p className="text-sub">
             Define the required skills for each role in the organization.
           </p>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-xl p-6 space-y-6">
+        <div className="bg-panel rounded-3xl shadow-xl p-6 space-y-6">
           {/* Role dropdown */}
           <div>
-            <label className="block text-sm font-medium text-slate-600 mb-2">
+            <label className="block text-sm font-medium text-sub mb-2">
               Select Role
             </label>
             <select
@@ -143,14 +143,14 @@ export default function RoleSkillMapping() {
           {/* Multi-select skills */}
           {selectedRoleId && (
             <div>
-              <label className="block text-sm font-medium text-slate-600 mb-2">
+              <label className="block text-sm font-medium text-sub mb-2">
                 Required Skills
               </label>
 
               {loadingMapping ? (
-                <p className="text-slate-400 text-sm">Loading current mapping...</p>
+                <p className="text-mute text-sm">Loading current mapping...</p>
               ) : skills.length === 0 ? (
-                <p className="text-slate-400 text-sm">
+                <p className="text-mute text-sm">
                   No skills available yet. Ask an admin to add skills first.
                 </p>
               ) : (
@@ -162,8 +162,8 @@ export default function RoleSkillMapping() {
                         key={skill.id}
                         className={`flex items-center gap-2 border rounded-xl px-4 py-3 cursor-pointer transition-colors ${
                           checked
-                            ? "border-blue-600 bg-blue-50"
-                            : "border-slate-200 hover:bg-slate-50"
+                            ? "border-primary bg-primary-tint"
+                            : "border-line hover:bg-bg"
                         }`}
                       >
                         <input
@@ -202,7 +202,7 @@ export default function RoleSkillMapping() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="bg-blue-600 text-white px-6 py-3 rounded-xl flex items-center gap-2 hover:bg-blue-700 disabled:opacity-60"
+              className="bg-primary text-text px-6 py-3 rounded-xl flex items-center gap-2 hover:bg-primary-dark disabled:opacity-60"
             >
               <FiSave />
               {saving

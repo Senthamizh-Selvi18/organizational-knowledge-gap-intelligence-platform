@@ -17,10 +17,10 @@ import {
 
 function StatCard({ title, value, icon: Icon, color }) {
   return (
-    <div className="bg-white rounded-3xl shadow-xl p-6">
+    <div className="bg-panel rounded-3xl shadow-xl p-6">
       <div className="flex justify-between items-center">
         <div>
-          <p className="text-slate-500 text-sm">{title}</p>
+          <p className="text-sub text-sm">{title}</p>
           <h2 className="text-3xl font-bold mt-2">{value}</h2>
         </div>
 
@@ -147,14 +147,14 @@ export default function SkillManagement() {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold">Skill Management</h1>
-            <p className="text-slate-500">
+            <p className="text-sub">
               Manage the catalog of skills used for competency tracking across the organization.
             </p>
           </div>
 
           <button
             onClick={openAddModal}
-            className="bg-blue-600 text-white px-5 py-3 rounded-xl flex items-center gap-2 hover:bg-blue-700"
+            className="bg-primary text-text px-5 py-3 rounded-xl flex items-center gap-2 hover:bg-primary-dark"
           >
             <FiPlus />
             Add Skill
@@ -167,7 +167,7 @@ export default function SkillManagement() {
             title="Total Skills"
             value={skills.length}
             icon={FiCpu}
-            color="bg-blue-600"
+            color="bg-primary"
           />
           <StatCard
             title="Matching Search"
@@ -178,9 +178,9 @@ export default function SkillManagement() {
         </div>
 
         {/* Search */}
-        <div className="bg-white rounded-3xl shadow-xl p-6">
+        <div className="bg-panel rounded-3xl shadow-xl p-6">
           <div className="relative flex-1">
-            <FiSearch className="absolute left-4 top-4 text-slate-400" />
+            <FiSearch className="absolute left-4 top-4 text-mute" />
             <input
               type="text"
               placeholder="Search Skill..."
@@ -202,10 +202,10 @@ export default function SkillManagement() {
         )}
 
         {/* Skills Table */}
-        <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+        <div className="bg-panel rounded-3xl shadow-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-slate-100">
+              <thead className="bg-bg">
                 <tr>
                   <th className="p-4 text-left">Skill ID</th>
                   <th className="p-4 text-left">Skill Name</th>
@@ -216,19 +216,19 @@ export default function SkillManagement() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={3} className="p-8 text-center text-slate-400">
+                    <td colSpan={3} className="p-8 text-center text-mute">
                       Loading skills...
                     </td>
                   </tr>
                 ) : filteredSkills.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="p-8 text-center text-slate-400">
+                    <td colSpan={3} className="p-8 text-center text-mute">
                       No skills found.
                     </td>
                   </tr>
                 ) : (
                   filteredSkills.map((item) => (
-                    <tr key={item.id} className="border-b hover:bg-slate-50">
+                    <tr key={item.id} className="border-b hover:bg-bg">
                       <td className="p-4">{item.id}</td>
                       <td className="p-4 font-semibold">{item.skillName}</td>
                       <td className="p-4">
@@ -262,7 +262,7 @@ export default function SkillManagement() {
       {/* Add / Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-2xl w-96">
+          <div className="bg-panel p-6 rounded-2xl w-96">
             <h2 className="text-xl font-bold mb-5">
               {editingSkill ? "Edit Skill" : "Add New Skill"}
             </h2>
@@ -296,7 +296,7 @@ export default function SkillManagement() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                className="bg-primary text-text px-4 py-2 rounded-lg hover:bg-primary-dark disabled:opacity-50"
               >
                 {saving ? "Saving..." : "Save"}
               </button>
@@ -308,9 +308,9 @@ export default function SkillManagement() {
       {/* Delete Confirm Modal */}
       {deleteTarget && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-2xl w-96">
+          <div className="bg-panel p-6 rounded-2xl w-96">
             <h2 className="text-xl font-bold mb-3">Delete this skill?</h2>
-            <p className="text-slate-500">
+            <p className="text-sub">
               "{deleteTarget.skillName}" will be permanently removed. This can't be undone.
             </p>
 

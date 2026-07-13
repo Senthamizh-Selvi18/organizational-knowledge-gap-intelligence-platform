@@ -23,10 +23,10 @@ import {
 
 function StatCard({ title, value, icon: Icon, color }) {
   return (
-    <div className="bg-white rounded-3xl shadow-xl p-6">
+    <div className="bg-panel rounded-3xl shadow-xl p-6">
       <div className="flex justify-between items-center">
         <div>
-          <p className="text-slate-500 text-sm">{title}</p>
+          <p className="text-sub text-sm">{title}</p>
           <h2 className="text-3xl font-bold mt-2">{value}</h2>
         </div>
 
@@ -112,7 +112,7 @@ useEffect(() => {
               Role Management
             </h1>
 
-            <p className="text-slate-500">
+            <p className="text-sub">
               Manage user roles and permissions across the organization.
             </p>
 
@@ -120,7 +120,7 @@ useEffect(() => {
 
           <button
   onClick={() => setShowModal(true)}
-  className="bg-blue-600 text-white px-5 py-3 rounded-xl flex items-center gap-2 hover:bg-blue-700"
+  className="bg-primary text-text px-5 py-3 rounded-xl flex items-center gap-2 hover:bg-primary-dark"
 >
 
             <FiPlus />
@@ -139,7 +139,7 @@ useEffect(() => {
             title="Total Roles"
             value="8"
             icon={FiShield}
-            color="bg-blue-600"
+            color="bg-primary"
           />
 
           <StatCard
@@ -167,13 +167,13 @@ useEffect(() => {
 
         {/* Search */}
 
-        <div className="bg-white rounded-3xl shadow-xl p-6">
+        <div className="bg-panel rounded-3xl shadow-xl p-6">
 
           <div className="flex flex-col md:flex-row gap-4">
 
             <div className="relative flex-1">
 
-              <FiSearch className="absolute left-4 top-4 text-slate-400"/>
+              <FiSearch className="absolute left-4 top-4 text-mute"/>
 
               <input
                 type="text"
@@ -201,13 +201,13 @@ onChange={(e)=>setStatus(e.target.value)}
         </div>
                 {/* Roles Table */}
 
-        <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+        <div className="bg-panel rounded-3xl shadow-xl overflow-hidden">
 
           <div className="overflow-x-auto">
 
             <table className="w-full">
 
-              <thead className="bg-slate-100">
+              <thead className="bg-bg">
 
                 <tr>
 
@@ -229,7 +229,7 @@ onChange={(e)=>setStatus(e.target.value)}
       item.roleName.toLowerCase().includes(search.toLowerCase())
     )
     .map((item) => (
-      <tr key={item.id} className="border-b hover:bg-slate-50">
+      <tr key={item.id} className="border-b hover:bg-bg">
 
         <td className="p-4">{item.id}</td>
 
@@ -280,7 +280,7 @@ onChange={(e)=>setStatus(e.target.value)}
                 setSelectedRole(response.data);
                 setShowViewModal(true);
               }}
-              className="text-blue-600 hover:text-blue-800"
+              className="text-primary hover:text-primary-dark"
             >
               <FiEye />
             </button>
@@ -336,7 +336,7 @@ onChange={(e)=>setStatus(e.target.value)}
 
         {/* Recent Activity */}
 
-        <div className="bg-white rounded-3xl shadow-xl p-6">
+        <div className="bg-panel rounded-3xl shadow-xl p-6">
 
           <h2 className="text-xl font-bold mb-5">
             Recent Activity
@@ -347,13 +347,13 @@ onChange={(e)=>setStatus(e.target.value)}
          {activities.map((activity, index) => (
   <div
     key={index}
-    className="flex items-center gap-3 bg-slate-100 rounded-xl p-4"
+    className="flex items-center gap-3 bg-bg rounded-xl p-4"
   >
-    <div className="w-3 h-3 rounded-full bg-blue-600"></div>
+    <div className="w-3 h-3 rounded-full bg-primary"></div>
 
     <div>
       <p>{activity.message}</p>
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-sub">
         {new Date(activity.date).toLocaleString()}
       </p>
     </div>
@@ -371,7 +371,7 @@ onChange={(e)=>setStatus(e.target.value)}
       {showModal && (
   <div className="fixed inset-0 bg-black/40 flex justify-center items-center">
 
-    <div className="bg-white p-6 rounded-2xl w-96">
+    <div className="bg-panel p-6 rounded-2xl w-96">
 
       <h2 className="text-xl font-bold mb-5">
         Add New Role
@@ -413,7 +413,7 @@ onChange={(e)=>setStatus(e.target.value)}
       );
     }
   }}
-  className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+  className="bg-primary text-white px-4 py-2 rounded-lg"
 >
   Save
 </button>
@@ -429,7 +429,7 @@ onChange={(e)=>setStatus(e.target.value)}
 
     {showViewModal && selectedRole && (
   <div className="fixed inset-0 bg-black/40 flex justify-center items-center">
-    <div className="bg-white p-6 rounded-xl w-[500px]">
+    <div className="bg-panel p-6 rounded-xl w-[500px]">
       <h2 className="text-xl font-bold mb-4">
         {selectedRole.roleName}
       </h2>
@@ -445,7 +445,7 @@ onChange={(e)=>setStatus(e.target.value)}
             className="border-b py-2"
           >
             <div>{user.name}</div>
-            <div className="text-gray-500 text-sm">
+            <div className="text-sub text-sm">
               {user.email}
             </div>
           </div>
@@ -454,7 +454,7 @@ onChange={(e)=>setStatus(e.target.value)}
 
       <button
         onClick={() => setShowViewModal(false)}
-        className="mt-5 bg-blue-600 text-white px-4 py-2 rounded"
+        className="mt-5 bg-primary text-white px-4 py-2 rounded"
       >
         Close
       </button>

@@ -54,11 +54,11 @@ const internCount = users.filter(
 
         <div>
 
-          <h1 className="text-3xl font-bold text-slate-800 dark:text-white">
+          <h1 className="text-3xl font-bold text-text">
             Dashboard
           </h1>
 
-          <p className="text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sub dark:text-mute mt-1">
             Welcome to Organizational Knowledge Gap Intelligence Platform
           </p>
 
@@ -72,33 +72,33 @@ const internCount = users.filter(
  
       {isOfficial && (
 <div className="grid gap-6 md:grid-cols-3 mb-8">
-        <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-lg">
+        <div className="rounded-2xl bg-panel p-6 shadow-lg">
 
-          <p className="text-slate-500 dark:text-slate-300 text-sm">
+          <p className="text-sub text-sm">
             Total Users
           </p>
 
-          <h2 className="mt-3 text-4xl font-bold text-slate-800 dark:text-white">
+          <h2 className="mt-3 text-4xl font-bold text-text">
             {users.length}
           </h2>
 
         </div>
 
-        <div className="rounded-2xl bg-white p-6 shadow-lg">
+        <div className="rounded-2xl bg-panel p-6 shadow-lg">
 
-          <p className="text-slate-500 dark:text-slate-300 text-sm">
+          <p className="text-sub text-sm">
             Employees
           </p>
 
-          <h2 className="mt-3 text-4xl font-bold text-blue-600">
+          <h2 className="mt-3 text-4xl font-bold text-primary">
             {employeeCount}
           </h2>
 
         </div>
 
-        <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-lg">
+        <div className="rounded-2xl bg-panel p-6 shadow-lg">
 
-          <p className="text-slate-500 dark:text-slate-300 text-sm">
+          <p className="text-sub text-sm">
             Interns
           </p>
 
@@ -112,9 +112,9 @@ const internCount = users.filter(
       )}
 
       {/* Users Table */}
-<div className="rounded-2xl bg-white dark:bg-slate-800 shadow-lg p-6">
+<div className="rounded-2xl bg-panel shadow-lg p-6">
       
-      <h2 className="text-2xl font-bold mb-6 text-slate-800 dark:text-white">
+      <h2 className="text-2xl font-bold mb-6 text-text">
         
           Registered Users
         </h2>
@@ -125,7 +125,7 @@ const internCount = users.filter(
 
             <thead>
 
-              <tr className="border-b bg-slate-50 dark:bg-slate-700">
+              <tr className="border-b bg-bg dark:bg-line">
 
                 <th className="px-4 py-3 text-left font-semibold">
                   #
@@ -157,10 +157,10 @@ const internCount = users.filter(
 
                 <tr
                   key={user.id}
-                  className="border-b hover:bg-slate-50"
+                  className="border-b hover:bg-bg"
                 >
 
-                 <td className="px-4 py-4 text-slate-700 dark:text-slate-200">
+                 <td className="px-4 py-4 text-text">
                     {index + 1}
                   </td>
 
@@ -168,11 +168,11 @@ const internCount = users.filter(
                     {user.name}
                   </td>
 
-                  <td className="px-4 py-4 text-slate-700 dark:text-slate-200">
+                  <td className="px-4 py-4 text-text">
                     {user.email}
                   </td>
 
-                  <td className="px-4 py-4 text-slate-700 dark:text-slate-200">
+                  <td className="px-4 py-4 text-text">
 
                     <span
                       className={`rounded-full px-3 py-1 text-sm font-semibold
@@ -180,9 +180,9 @@ const internCount = users.filter(
                         user.role === "Admin"
                           ? "bg-red-100 text-red-700"
                           : user.role === "Manager"
-                          ? "bg-purple-100 text-purple-700"
+                          ? "bg-primary-tint text-primary-dark"
                           : user.role === "Employee"
-                          ? "bg-blue-100 text-blue-700"
+                          ? "bg-primary-tint text-primary-dark"
                           : "bg-green-100 text-green-700"
                       }`}
                     >
