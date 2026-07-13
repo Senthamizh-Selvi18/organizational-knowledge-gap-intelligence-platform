@@ -16,7 +16,8 @@ import ProtectedRoute from "./ProtectedRoute";
 import EmployeeGapAnalysis from "../pages/EmployeeGapAnalysis/EmployeeGapAnalysis";
 import GapAnalysis from "../pages/GapAnalysis/GapAnalysis";
 import EmployeeManagement from "../pages/EmployeeManagement/EmployeeManagement";
-
+import ChatBox from "../pages/Chat/ChatBox";
+import DashboardLayout from "../components/layout/DashboardLayout";
 function AppRoutes() {
   return (
     <Routes>
@@ -121,6 +122,17 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      <Route
+  path="/dashboard/chat"
+  element={
+    <ProtectedRoute>
+      <DashboardLayout>
+        <ChatBox />
+      </DashboardLayout>
+    </ProtectedRoute>
+  }
+/>
 
       <Route
         path="/oauth2/redirect"

@@ -10,6 +10,7 @@ import {
   FiSettings,
   FiLogOut,
   FiX,
+  FiMessageCircle,
 } from "react-icons/fi";
 
 export default function Sidebar({ open, onClose }) {
@@ -33,6 +34,12 @@ export default function Sidebar({ open, onClose }) {
       label: "Profile",
       icon: FiUser,
       to: "/dashboard/profile",
+    },
+
+    {
+      label: "Chat",
+      icon: FiMessageCircle,
+      to: "/dashboard/chat",
     },
 
     ...(role === "admin"
@@ -118,47 +125,55 @@ export default function Sidebar({ open, onClose }) {
     <>
       <div
         onClick={onClose}
-        className={`fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
+        className={`fixed inset-0 z-30 bg-text/40 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
           open ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       />
 
       <aside
         className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col
-border-r border-slate-200
-bg-white
-dark:bg-slate-900
-dark:border-slate-700
+border-r border-line
+bg-panel
 shadow-xl
 transition-transform duration-300
 lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex h-14 items-center justify-between border-b border-slate-200 dark:border-slate-700 px-4">
-          <div className="flex items-center gap-3">
-            <img
-              src="/logo.png"
-              alt="logo"
-              className="h-8 w-8 rounded-lg"
-            />
-
+        <div className="flex h-16 items-center justify-between border-b border-line px-4">
+          <div className="flex items-center gap-2.5">
+            <div className="relative h-[30px] w-[30px] flex-none rounded-[9px] bg-gradient-to-br from-grad1 to-grad2">
+              <div
+                className="absolute inset-0 rounded-[9px]"
+                style={{
+                  background:
+                    "radial-gradient(circle at 30% 25%, rgba(255,255,255,.5), transparent 60%)",
+                }}
+              />
+            </div>
             <div>
-              <p className="font-bold text-slate-900 dark:text-white">
+              <p className="font-serif text-[19px] font-bold leading-none tracking-tight text-text">
                 KnowGap
+              </p>
+              <p className="mt-1 font-mono text-[9px] uppercase tracking-[.08em] text-mute">
+                Skill Intelligence
               </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="text-slate-700 dark:text-white"
+            aria-label="Close sidebar"
+            className="rounded-lg p-1.5 text-sub hover:bg-primary-tint hover:text-primary lg:hidden"
           >
             <FiX />
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-2 py-3">
+        <nav className="flex-1 overflow-y-auto px-3 py-4">
+          <p className="mb-2 px-2 font-mono text-[9.5px] font-medium uppercase tracking-[.1em] text-mute">
+            Menu
+          </p>
           <ul className="space-y-1">
             {menuItems.map(({ label, icon: Icon, to }) => (
               <li key={label}>
@@ -167,11 +182,11 @@ lg:translate-x-0 ${
                   onClick={onClose}
                   className={({ isActive }) =>
                     isActive
-                      ? "flex items-center gap-3 rounded-xl bg-blue-600 text-white px-3 py-2"
-                      : "flex items-center gap-3 rounded-xl px-3 py-2 text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800"
+                      ? "active flex items-center gap-3 rounded-lg bg-primary-tint px-3 py-2.5 text-sm font-semibold text-primary"
+                      : "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sub transition-colors hover:bg-primary-tint hover:text-primary"
                   }
                 >
-                  <Icon />
+                  <Icon className="h-[17px] w-[17px] flex-none opacity-80" />
                   {label}
                 </NavLink>
               </li>
@@ -179,12 +194,12 @@ lg:translate-x-0 ${
           </ul>
         </nav>
 
-        <div className="border-t p-3">
+        <div className="border-t border-line p-3">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 text-slate-700 dark:text-white"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sub transition-colors hover:bg-rust-tint hover:text-rust"
           >
-            <FiLogOut />
+            <FiLogOut className="h-[17px] w-[17px]" />
             Logout
           </button>
         </div>
