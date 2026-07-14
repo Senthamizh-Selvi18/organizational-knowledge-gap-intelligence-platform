@@ -10,11 +10,10 @@ import {
   FiSettings,
   FiLogOut,
   FiMenu,
+  FiMessageCircle,
 } from "react-icons/fi"
+import { getUnreadCount } from "../../services/chatService"
 
-// Route -> breadcrumb text, mirroring the .crumb "Dashboard / organizational
-// overview" pattern from the reference file, driven by the real router
-// location instead of being hardcoded to one page.
 const CRUMBS = [
   { match: /^\/dashboard\/profile/, title: "Profile", sub: "your account" },
   { match: /^\/dashboard\/skills/, title: "Skills", sub: "skill catalogue" },
@@ -25,6 +24,7 @@ const CRUMBS = [
   { match: /^\/dashboard\/roles/, title: "Role Management", sub: "access & permissions" },
   { match: /^\/dashboard\/competencies/, title: "Competencies", sub: "role skill mapping" },
   { match: /^\/dashboard\/notifications/, title: "Notifications", sub: "recent activity" },
+  { match: /^\/dashboard\/chat/, title: "Messages", sub: "team conversations" },
   { match: /^\/dashboard\/settings/, title: "Settings", sub: "preferences" },
   { match: /^\/employee-dashboard/, title: "Dashboard", sub: "your overview" },
   { match: /^\/dashboard/, title: "Dashboard", sub: "organizational overview" },
@@ -49,7 +49,6 @@ useEffect(() => {
   localStorage.setItem("theme", darkMode ? "dark" : "light");
 }, [darkMode]);
 
-// Keep in sync when the theme is changed elsewhere (e.g. the Settings page)
 useEffect(() => {
   const syncFromStorage = () => {
     setDarkMode(document.documentElement.classList.contains("dark"));
@@ -60,10 +59,33 @@ useEffect(() => {
   const [menuOpen, setMenuOpen] = useState(false)
   const dropdownRef = useRef(null)
   const navigate = useNavigate()
+  const location = useLocation()
   const crumb = useCrumb()
 
   const userName = localStorage.getItem("name") || "User";
 const role = localStorage.getItem("role") || "";
+
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchUnread = async () => {
+      try {
+        const count = await getUnreadCount();
+        if (!cancelled) setUnreadCount(count);
+      } catch (e) {
+        // silent — chat badge shouldn't break the navbar
+      }
+    };
+
+    fetchUnread();
+    const id = setInterval(fetchUnread, 6000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [location.pathname]);
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -77,7 +99,6 @@ const role = localStorage.getItem("role") || "";
 
   return (
     <div className="px-4 pt-5 sm:px-8">
-      {/* .topbar — literal port of the reference topbar */}
       <div className="kg-topbar">
         <div className="flex items-center gap-2">
           <button
@@ -100,6 +121,21 @@ const role = localStorage.getItem("role") || "";
             <input type="search" placeholder="Search skills, employees, competencies…" />
           </label>
 
+          <button
+            type="button"
+            onClick={() => navigate("/dashboard/chat")}
+            aria-label="Messages"
+            title="Messages"
+            className="kg-iconbtn kg-bell relative"
+          >
+            <FiMessageCircle width="15" height="15" />
+            {unreadCount > 0 && (
+              <span className="pulse-dot absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rust px-1 text-[10px] font-bold text-white">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </button>
+
           <button type="button" aria-label="Notifications" className="kg-iconbtn kg-bell">
             <FiBell width="15" height="15" />
           </button>
@@ -119,7 +155,6 @@ const role = localStorage.getItem("role") || "";
             )}
           </button>
 
-          {/* Profile — kg-profile trigger, dropdown content stays functional */}
           <div className="relative" ref={dropdownRef}>
             <button
               type="button"

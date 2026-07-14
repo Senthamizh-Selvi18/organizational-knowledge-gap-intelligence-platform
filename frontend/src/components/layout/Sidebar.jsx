@@ -10,6 +10,7 @@ import {
   FiSettings,
   FiLogOut,
   FiX,
+  FiMessageCircle,
 } from "react-icons/fi";
 
 export default function Sidebar({ open, onClose }) {
@@ -34,6 +35,11 @@ export default function Sidebar({ open, onClose }) {
       label: "Profile",
       icon: FiUser,
       to: "/dashboard/profile",
+    },
+    {
+      label: "Chat",
+      icon: FiMessageCircle,
+      to: "/dashboard/chat",
     },
     {
   label: "Gap Analysis",
