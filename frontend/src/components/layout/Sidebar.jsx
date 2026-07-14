@@ -10,6 +10,7 @@ import {
   FiSettings,
   FiLogOut,
   FiBookOpen,
+  FiMessageCircle,
   FiX,
 } from "react-icons/fi";
 
@@ -22,7 +23,7 @@ export default function Sidebar({ open, onClose }) {
 
   // Same menu items / role logic as before, just grouped into the
   // "Overview" / "Manage" sections from the reference layout.
- const overviewItems = [
+const overviewItems = [
   {
     label: "Dashboard",
     icon: FiHome,
@@ -40,6 +41,11 @@ export default function Sidebar({ open, onClose }) {
     label: "Course Catalog",
     icon: FiBookOpen,
     to: "/dashboard/course-catalog",
+  },
+  {
+    label: "Chat",
+    icon: FiMessageCircle,
+    to: "/dashboard/chat",
   },
   {
     label: "Gap Analysis",

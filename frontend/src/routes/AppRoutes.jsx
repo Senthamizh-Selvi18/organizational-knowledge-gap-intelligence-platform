@@ -19,7 +19,7 @@ import GapAnalysis from "../pages/GapAnalysis/GapAnalysis";
 import CourseCatalog from "../pages/CourseCatalog/CourseCatalog";
 import EmployeeGapAnalysis from "../pages/EmployeeGapAnalysis/EmployeeGapAnalysis";
 import EmployeeManagement from "../pages/EmployeeManagement/EmployeeManagement";
-// import ChatBox from "../pages/Chat/ChatBox";
+import ChatBox from "../pages/Chat/ChatBox";
 import DashboardLayout from "../components/layout/DashboardLayout";
 import Settings from "../pages/Settings/Settings";
 
@@ -69,6 +69,16 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Profile />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Chat */}
+      <Route
+        path="/dashboard/chat"
+        element={
+          <ProtectedRoute>
+            <ChatBox />
           </ProtectedRoute>
         }
       />
@@ -147,7 +157,9 @@ function AppRoutes() {
       <Route
         path="/dashboard/course-catalog"
         element={
-          <ProtectedRoute allowedRoles={["admin", "hr", "manager", "employee"]}>
+          <ProtectedRoute
+            allowedRoles={["admin", "hr", "manager", "employee", "intern"]}
+          >
             <CourseCatalog />
           </ProtectedRoute>
         }

@@ -17,9 +17,13 @@ public class OAuth2LoginFailureHandler implements AuthenticationFailureHandler {
     private String failureRedirectUri;
 
     @Override
-    public void onAuthenticationFailure(HttpServletRequest request,
-                                         HttpServletResponse response,
-                                         AuthenticationException exception) throws IOException, ServletException {
-        response.sendRedirect(failureRedirectUri);
-    }
+public void onAuthenticationFailure(HttpServletRequest request,
+                                     HttpServletResponse response,
+                                     AuthenticationException exception) throws IOException, ServletException {
+
+    System.out.println("OAUTH2 LOGIN FAILED");
+    exception.printStackTrace();
+
+    response.sendRedirect(failureRedirectUri);
+}
 }
