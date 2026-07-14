@@ -31,62 +31,58 @@ export default function GapAnalysis() {
 
   // Backend Gap Analysis Data
   const [gapData, setGapData] = useState([]);
-
-  const employeeOptions = employees.map((employee) => ({
-    value: employee.id,
-    label: `${employee.user?.name} (${employee.employeeCode})`,
-    searchText: `
-      ${employee.user?.name}
+const employeeOptions = employees.map((employee) => ({
+  value: employee.id,
+  label: `${employee.name} (${employee.employeeCode})`,
+  searchText: `
+      ${employee.name}
       ${employee.employeeCode}
       ${employee.department}
       ${employee.designation}
     `,
-    employee,
-  }));
+  employee,
+}));
 
-  const filterEmployeeOption = (option, inputValue) => {
-    return option.data.searchText
-      .toLowerCase()
-      .includes(inputValue.toLowerCase());
-  };
+const filterEmployeeOption = (option, inputValue) => {
+  return option.data.searchText
+    .toLowerCase()
+    .includes(inputValue.toLowerCase());
+};
 
-  const handleRefresh = async () => {
+const handleRefresh = async () => {
   setSelectedEmployee("");
-
   setGapData([]);
-
   setMessage("");
-
   setError("");
 
   await loadData();
 };
 
-  const CustomOption = (props) => {
-    const employee = props.data.employee;
+const CustomOption = (props) => {
+  const employee = props.data.employee;
 
-    return (
-      <components.Option {...props}>
-        <div className="py-1">
-          <p className="font-semibold text-text">
-            {employee.user?.name}
-          </p>
+  return (
+    <components.Option {...props}>
+      <div className="py-1">
+        <p className="font-semibold text-slate-800">
+          {employee.name}
+        </p>
 
-          <p className="text-sm text-sub">
-            {employee.employeeCode}
-          </p>
+        <p className="text-sm text-sub">
+          {employee.employeeCode}
+        </p>
 
-          <p className="text-xs text-primary">
-            {employee.designation}
-          </p>
+        <p className="text-xs text-primary">
+          {employee.designation}
+        </p>
 
-          <p className="text-xs text-sub">
-            {employee.department}
-          </p>
-        </div>
-      </components.Option>
-    );
-  };
+        <p className="text-xs text-sub">
+          {employee.department}
+        </p>
+      </div>
+    </components.Option>
+  );
+};
 
   const loadData = useCallback(async () => {
     try {
