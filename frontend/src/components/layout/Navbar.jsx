@@ -37,13 +37,26 @@ function useCrumb() {
 }
 
 export default function Navbar({ onMenuClick }) {
- const [darkMode, setDarkMode] = useState(
-  document.documentElement.classList.contains("dark")
-);
+const [darkMode, setDarkMode] = useState(() => {
+  const storedTheme = localStorage.getItem("theme");
+  return storedTheme
+    ? storedTheme === "dark"
+    : document.documentElement.classList.contains("dark");
+});
 
 useEffect(() => {
   document.documentElement.classList.toggle("dark", darkMode);
+  localStorage.setItem("theme", darkMode ? "dark" : "light");
 }, [darkMode]);
+
+// Keep in sync when the theme is changed elsewhere (e.g. the Settings page)
+useEffect(() => {
+  const syncFromStorage = () => {
+    setDarkMode(document.documentElement.classList.contains("dark"));
+  };
+  window.addEventListener("themechange", syncFromStorage);
+  return () => window.removeEventListener("themechange", syncFromStorage);
+}, []);
   const [menuOpen, setMenuOpen] = useState(false)
   const dropdownRef = useRef(null)
   const navigate = useNavigate()
