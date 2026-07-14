@@ -1,5 +1,6 @@
 package com.organizational.knowledge_gap_platform.service;
 
+import com.organizational.knowledge_gap_platform.dto.DepartmentGapHeatmapDTO;
 import com.organizational.knowledge_gap_platform.dto.GapAnalysisResponseDTO;
 import com.organizational.knowledge_gap_platform.dto.GapHeatmapResponseDTO;
 import com.organizational.knowledge_gap_platform.dto.SkillDTO;
@@ -24,6 +25,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class GapAnalysisServiceImpl implements GapAnalysisService {
@@ -194,5 +198,54 @@ public class GapAnalysisServiceImpl implements GapAnalysisService {
                 })
                 .filter(java.util.Objects::nonNull)
                 .collect(Collectors.toList());
+    }
+    @Override
+    public List<DepartmentGapHeatmapDTO> getDepartmentHeatmap() {
+
+        List<Employee> employees = employeeRepository.findAll();
+
+        Map<String, List<Double>> departmentGapMap = new HashMap<>();
+
+        for (Employee employee : employees) {
+
+            Set<Role> roles = employee.getUser().getRoles();
+
+            if (roles == null || roles.isEmpty()) {
+                continue;
+            }
+
+            Role role = roles.iterator().next();
+
+            GapAnalysisResponseDTO gap =
+                    buildGapAnalysis(employee, role);
+
+            String department = employee.getDepartment();
+
+            departmentGapMap
+                    .computeIfAbsent(department, k -> new ArrayList<>())
+                    .add(gap.getGapPercentage());
+        }
+
+        List<DepartmentGapHeatmapDTO> result = new ArrayList<>();
+
+        for (Map.Entry<String, List<Double>> entry : departmentGapMap.entrySet()) {
+
+            double average =
+                    entry.getValue()
+                            .stream()
+                            .mapToDouble(Double::doubleValue)
+                            .average()
+                            .orElse(0);
+
+            result.add(
+                    new DepartmentGapHeatmapDTO(
+                            entry.getKey(),
+                            (long) entry.getValue().size(),
+                            Math.round(average * 100.0) / 100.0
+                    )
+            );
+        }
+
+        return result;
     }
 }

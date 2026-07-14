@@ -2,6 +2,7 @@ package com.organizational.knowledge_gap_platform.controller;
 
 import java.util.List;
 
+import com.organizational.knowledge_gap_platform.dto.DepartmentGapHeatmapDTO;
 import com.organizational.knowledge_gap_platform.dto.GapHeatmapResponseDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,5 +44,9 @@ public class GapAnalysisController {
     @GetMapping("/heatmap")
     public ResponseEntity<List<GapHeatmapResponseDTO>> getGapHeatmap() {
         return ResponseEntity.ok(gapAnalysisService.getGapHeatmap());
+    }
+    @GetMapping("/department-heatmap")
+    public ResponseEntity<List<DepartmentGapHeatmapDTO>> getDepartmentHeatmap() {
+        return ResponseEntity.ok(gapAnalysisService.getDepartmentHeatmap());
     }
 }

@@ -1,5 +1,6 @@
 package com.organizational.knowledge_gap_platform.service;
 
+import com.organizational.knowledge_gap_platform.dto.DepartmentGapHeatmapDTO;
 import com.organizational.knowledge_gap_platform.dto.GapAnalysisResponseDTO;
 import com.organizational.knowledge_gap_platform.dto.GapHeatmapResponseDTO;
 
@@ -13,4 +14,5 @@ public interface GapAnalysisService {
 
     GapAnalysisResponseDTO analyzeMyGap();
     List<GapHeatmapResponseDTO> getGapHeatmap();
+    List<DepartmentGapHeatmapDTO> getDepartmentHeatmap();
 }
