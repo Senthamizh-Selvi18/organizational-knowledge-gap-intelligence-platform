@@ -18,15 +18,24 @@ export const getDashboardStats = async () => {
 // employeeId comes from the JWT-derived localStorage "userId" (set at login,
 // per the existing auth pattern used across the app).
 export const getSkillsOverview = async () => {
-  const employeeId = localStorage.getItem("userId");
+  const userId = localStorage.getItem("userId");
 
-  if (!employeeId) {
-    // No logged-in employee id available — throw so the caller's .catch()
-    // falls back to the existing dummy data instead of hitting a broken URL.
-    throw new Error("No employeeId found in localStorage; cannot fetch skills overview.");
+  if (!userId) {
+    throw new Error("No userId found.");
   }
 
-  const response = await axios.get(`${API_BASE_URL}/employees/${employeeId}/skills`);
+  // Get employee details using userId
+  const employeeResponse = await axios.get(
+    `${API_BASE_URL}/employees/by-user/${userId}`
+  );
+
+  const employeeId = employeeResponse.data.employeeId;
+
+  // Fetch employee skills using employeeId
+  const response = await axios.get(
+    `${API_BASE_URL}/employees/${employeeId}/skills`
+  );
+
   return response.data;
 };
 

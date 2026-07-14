@@ -5,16 +5,17 @@ import ForgotPasswordPage from "../pages/ForgotPassword/ForgotPassword";
 import ResetPasswordPage from "../pages/ResetPassword/ResetPassword";
 import DashboardPage from "../pages/Dashboard/DashboardPage";
 import EmployeeDashboard from "../pages/EmployeeDashboard/EmployeeDashboard";
+import EmployeeGapAnalysis from "../pages/EmployeeGapAnalysis/EmployeeGapAnalysis";
 import Profile from "../pages/Profile/Profile";
 import RoleManagement from "../pages/RoleManagement/RoleManagement";
 import RoleSkillMapping from "../pages/RoleSkillMapping/RoleSkillMapping";
 import SkillManagement from "../pages/SkillManagement/SkillManagement";
 import EmployeeSkillManagement from "../pages/EmployeeSkillManagement/EmployeeSkillManagement";
+import EmployeeManagement from "../pages/EmployeeManagement/EmployeeManagement";
 import Recommendation from "../pages/recommendation/Recommendation";
 import OAuth2RedirectPage from "../pages/OAuth2Redirect/OAuth2Redirect";
 import ProtectedRoute from "./ProtectedRoute";
 import GapAnalysis from "../pages/GapAnalysis/GapAnalysis";
-import EmployeeManagement from "../pages/EmployeeManagement/EmployeeManagement";
 import ChatBox from "../pages/Chat/ChatBox";
 import DashboardLayout from "../components/layout/DashboardLayout";
 import Settings from "../pages/Settings/Settings";
@@ -27,6 +28,8 @@ function AppRoutes() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+      {/* Admin Dashboard */}
       <Route
         path="/dashboard"
         element={
@@ -35,6 +38,8 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      {/* Employee Dashboard */}
       <Route
         path="/employee-dashboard"
         element={
@@ -43,6 +48,18 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      {/* Employee Gap Analysis */}
+      <Route
+        path="/employee-dashboard/gap-analysis"
+        element={
+          <ProtectedRoute allowedRoles={["employee", "intern"]}>
+            <EmployeeGapAnalysis />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Profile */}
       <Route
         path="/dashboard/profile"
         element={
@@ -51,6 +68,8 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      {/* Role Skill Mapping */}
       <Route
         path="/dashboard/role-skills"
         element={
@@ -59,6 +78,18 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      {/* Employee Management */}
+      <Route
+        path="/dashboard/employees"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "hr"]}>
+            <EmployeeManagement />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Role Management */}
       <Route
         path="/dashboard/roles"
         element={
@@ -67,6 +98,8 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      {/* Skill Management */}
       <Route
         path="/dashboard/skills"
         element={
@@ -75,6 +108,8 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      {/* Employee Skill Management */}
       <Route
         path="/dashboard/employee-skills"
         element={
@@ -83,6 +118,8 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      {/* AI Recommendation */}
       <Route
         path="/dashboard/recommendation"
         element={
@@ -91,6 +128,8 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      {/* Admin Gap Analysis */}
       <Route
         path="/dashboard/gap-analysis"
         element={
@@ -99,6 +138,8 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      {/* Chat */}
       <Route
         path="/dashboard/chat"
         element={
@@ -109,6 +150,8 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      {/* Settings */}
       <Route
         path="/dashboard/settings"
         element={
@@ -117,14 +160,8 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/dashboard/employees"
-        element={
-          <ProtectedRoute allowedRoles={["Admin"]}>
-            <EmployeeManagement />
-          </ProtectedRoute>
-        }
-      />
+
+      {/* OAuth2 Redirect */}
       <Route
         path="/oauth2/redirect"
         element={<OAuth2RedirectPage />}
