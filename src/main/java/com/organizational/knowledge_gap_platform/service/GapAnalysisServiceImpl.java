@@ -1,6 +1,7 @@
 package com.organizational.knowledge_gap_platform.service;
 
 import com.organizational.knowledge_gap_platform.dto.GapAnalysisResponseDTO;
+import com.organizational.knowledge_gap_platform.dto.GapHeatmapResponseDTO;
 import com.organizational.knowledge_gap_platform.dto.SkillDTO;
 import com.organizational.knowledge_gap_platform.entity.Employee;
 import com.organizational.knowledge_gap_platform.entity.EmployeeSkill;
@@ -162,5 +163,36 @@ public class GapAnalysisServiceImpl implements GapAnalysisService {
         );
 
         return result;
+    }
+    @Override
+    public List<GapHeatmapResponseDTO> getGapHeatmap() {
+
+        List<Employee> employees = employeeRepository.findAll();
+
+        return employees.stream()
+                .map(employee -> {
+
+                    Set<Role> assignedRoles = employee.getUser().getRoles();
+
+                    if (assignedRoles == null || assignedRoles.isEmpty()) {
+                        return null;
+                    }
+
+                    // Use the first assigned role
+                    Role role = assignedRoles.iterator().next();
+
+                    GapAnalysisResponseDTO gap =
+                            buildGapAnalysis(employee, role);
+
+                    return new GapHeatmapResponseDTO(
+                            employee.getId(),
+                            employee.getUser().getName(),
+                            role.getRoleName(),
+                            gap.getGapPercentage()
+                    );
+
+                })
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toList());
     }
 }
