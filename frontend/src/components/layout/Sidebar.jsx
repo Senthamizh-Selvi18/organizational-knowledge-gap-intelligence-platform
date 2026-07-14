@@ -36,10 +36,13 @@ export default function Sidebar({ open, onClose }) {
       to: "/dashboard/profile",
     },
     {
-      label: "Gap Analysis",
-      icon: FiBarChart2,
-      to: "/dashboard/gap-analysis",
-    },
+  label: "Gap Analysis",
+  icon: FiBarChart2,
+  to:
+    role === "employee" || role === "intern"
+      ? "/employee-dashboard/gap-analysis"
+      : "/dashboard/gap-analysis",
+},
     {
       label: "AI Recommendation",
       icon: FiCpu,

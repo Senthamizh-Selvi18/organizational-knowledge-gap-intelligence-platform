@@ -124,47 +124,42 @@ export default function EmployeeManagement() {
   /* ===========================
         SEARCH
   ============================ */
+useEffect(() => {
+  const keyword = searchTerm.trim().toLowerCase();
 
-  useEffect(() => {
+  if (!keyword) {
+    setFilteredEmployees(employees);
+    return;
+  }
 
-    const keyword = searchTerm
-  .trim()
-  .replace(/\s+/g, " ")
-  .toLowerCase();
-    if (!keyword) {
+  const filtered = employees.filter((employee) => {
 
-      setFilteredEmployees(employees);
+    // Search by Employee Code
+   if (/^emp\d+$/i.test(keyword)) {
+    return employee.employeeCode
+        ?.toLowerCase()
+        .includes(keyword);
+}
 
-      return;
-
+    // Search by Experience (only numbers)
+    if (/^\d+$/.test(keyword)) {
+      return String(employee.experience) === keyword;
     }
 
-    const filtered = employees.filter((employee) => {
+    // Search all text fields
+    return (
+      employee.name?.toLowerCase().includes(keyword) ||
+      employee.email?.toLowerCase().includes(keyword) ||
+      employee.department?.toLowerCase().includes(keyword) ||
+      employee.designation?.toLowerCase().includes(keyword) ||
+      employee.manager?.toLowerCase().includes(keyword) ||
+      employee.role?.toLowerCase().includes(keyword)
+    );
+  });
 
-      return (
+  setFilteredEmployees(filtered);
 
-        employee.name?.toLowerCase().includes(keyword) ||
-
-        employee.employeeCode?.toLowerCase().includes(keyword) ||
-
-        employee.email?.toLowerCase().includes(keyword) ||
-
-        employee.department?.toLowerCase().includes(keyword) ||
-
-        employee.designation?.toLowerCase().includes(keyword) ||
-
-        employee.manager?.toLowerCase().includes(keyword) ||
-
-        employee.role?.toLowerCase().includes(keyword)
-
-      );
-
-    });
-
-    setFilteredEmployees(filtered);
-
-  }, [searchTerm, employees]);
-
+}, [searchTerm, employees]);
   /* ===========================
         REFRESH
   ============================ */
@@ -627,7 +622,7 @@ return (
   type="text"
   value={searchTerm}
   onChange={(e) => setSearchTerm(e.target.value.trimStart())}
-  placeholder="Search by Name, Email, Employee Code, Department, Designation, Manager or Role"
+  placeholder="Search by Name, Email, Employee Code, Department, Designation, Manager, Role or experience"
   className="w-full rounded-xl border border-slate-300 py-3 pl-12 pr-4 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
 />
 
@@ -874,7 +869,7 @@ return (
 
                         <h3 className="font-semibold text-slate-800">
 
-                          {employee.name}
+                          {employee.name || "-"}
 
                         </h3>
 
@@ -1033,7 +1028,7 @@ return (
 
                 <p className="mt-2 rounded-xl bg-slate-100 p-3 font-semibold">
 
-                  {selectedEmployee.user?.name}
+                  {selectedEmployee.name}
 
                 </p>
 
@@ -1655,7 +1650,7 @@ className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-gree
 
               <p className="mt-2 text-center text-lg font-semibold text-slate-800">
 
-                {selectedEmployee.user?.name}
+                {selectedEmployee.name}
 
               </p>
 

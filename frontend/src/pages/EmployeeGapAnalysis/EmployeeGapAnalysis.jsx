@@ -10,6 +10,7 @@ import {
   getGapAnalysis,
   getMyGapAnalysis,
 } from "../../services/GapAnalysisService";
+import DashboardLayout from "../../components/layout/DashboardLayout";
 export default function EmployeeGapAnalysis() {
 
   const [loading, setLoading] = useState(true);
@@ -79,7 +80,7 @@ setGapData([response.data]);
   const roleName =
     currentGap?.roleName || "";
     return (
-
+     <DashboardLayout>
     <div className="space-y-8">
 
       {/* Header */}
@@ -517,6 +518,7 @@ setGapData([response.data]);
 </div>
 
 </div>
+</DashboardLayout>
 
 );
 
