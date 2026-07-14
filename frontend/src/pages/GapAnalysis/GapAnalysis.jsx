@@ -8,6 +8,8 @@ import {
 } from "../../services/EmployeeSkillService";
 
 import { getGapAnalysis } from "../../services/GapAnalysisService";
+import { getDepartmentHeatmap } from "../../services/gapHeatmapService";
+import GapHeatmapChart from "../../components/GapHeatMap/GapHeatmapChart";
 
 import {
   FiUsers,
@@ -31,58 +33,63 @@ export default function GapAnalysis() {
 
   // Backend Gap Analysis Data
   const [gapData, setGapData] = useState([]);
-const employeeOptions = employees.map((employee) => ({
-  value: employee.id,
-  label: `${employee.name} (${employee.employeeCode})`,
-  searchText: `
+
+  // Heatmap Data
+  const [heatmapData, setHeatmapData] = useState([]);
+
+  const employeeOptions = employees.map((employee) => ({
+    value: employee.id,
+    label: `${employee.name} (${employee.employeeCode})`,
+    searchText: `
       ${employee.name}
       ${employee.employeeCode}
       ${employee.department}
       ${employee.designation}
     `,
-  employee,
-}));
+    employee,
+  }));
 
-const filterEmployeeOption = (option, inputValue) => {
-  return option.data.searchText
-    .toLowerCase()
-    .includes(inputValue.toLowerCase());
-};
+  const filterEmployeeOption = (option, inputValue) => {
+    return option.data.searchText
+      .toLowerCase()
+      .includes(inputValue.toLowerCase());
+  };
 
-const handleRefresh = async () => {
-  setSelectedEmployee("");
-  setGapData([]);
-  setMessage("");
-  setError("");
+  const handleRefresh = async () => {
+    setSelectedEmployee("");
+    setGapData([]);
+    setMessage("");
+    setError("");
 
-  await loadData();
-};
+    await loadData();
+    await loadHeatmap();
+  };
 
-const CustomOption = (props) => {
-  const employee = props.data.employee;
+  const CustomOption = (props) => {
+    const employee = props.data.employee;
 
-  return (
-    <components.Option {...props}>
-      <div className="py-1">
-        <p className="font-semibold text-slate-800">
-          {employee.name}
-        </p>
+    return (
+      <components.Option {...props}>
+        <div className="py-1">
+          <p className="font-semibold text-slate-800">
+            {employee.name}
+          </p>
 
-        <p className="text-sm text-sub">
-          {employee.employeeCode}
-        </p>
+          <p className="text-sm text-sub">
+            {employee.employeeCode}
+          </p>
 
-        <p className="text-xs text-primary">
-          {employee.designation}
-        </p>
+          <p className="text-xs text-primary">
+            {employee.designation}
+          </p>
 
-        <p className="text-xs text-sub">
-          {employee.department}
-        </p>
-      </div>
-    </components.Option>
-  );
-};
+          <p className="text-xs text-sub">
+            {employee.department}
+          </p>
+        </div>
+      </components.Option>
+    );
+  };
 
   const loadData = useCallback(async () => {
     try {
@@ -111,8 +118,23 @@ const CustomOption = (props) => {
     }
   }, []);
 
+  const loadHeatmap = async () => {
+  try {
+    const data = await getDepartmentHeatmap();
+
+    setHeatmapData(data);
+
+  } catch (err) {
+
+    console.error("Department Heatmap Error:", err);
+
+    setHeatmapData([]);
+
+  }
+};
   useEffect(() => {
     loadData();
+    loadHeatmap();
   }, [loadData]);
 
   const loadGapAnalysis = async (employeeId) => {
@@ -137,6 +159,7 @@ const CustomOption = (props) => {
       }
 
     } catch (err) {
+
       console.error("Gap Analysis Error:", err);
 
       setGapData([]);
@@ -150,34 +173,35 @@ const CustomOption = (props) => {
       setLoading(false);
     }
   };
-
   // Current Gap Analysis
   const currentGap =
-    gapData.length > 0 ? gapData[0] : null;
+  gapData.length > 0 ? gapData[0] : null;
 
-  const matchedSkills =
-    currentGap?.matchedSkills || [];
+const matchedSkills =
+  currentGap?.matchedSkills || [];
 
-  const missingSkills =
-    currentGap?.missingSkills || [];
+const missingSkills =
+  currentGap?.missingSkills || [];
 
-  const gapPercentage =
-    currentGap?.gapPercentage || 0;
+const gapPercentage =
+  currentGap?.gapPercentage || 0;
 
-  const matchedSkillCount =
-    currentGap?.matchedSkillCount || 0;
+const matchedSkillCount =
+  currentGap?.matchedSkillCount || 0;
 
-  const missingSkillCount =
-    currentGap?.missingSkillCount || 0;
+const missingSkillCount =
+  currentGap?.missingSkillCount || 0;
 
-  const totalRequiredSkills =
-    currentGap?.totalRequiredSkills || 0;
+const totalRequiredSkills =
+  currentGap?.totalRequiredSkills || 0;
 
-  const employeeName =
-    currentGap?.employeeName || "";
+const employeeName =
+  currentGap?.employeeName || "";
 
-  const roleName =
-    currentGap?.roleName || "";
+const roleName =
+  currentGap?.roleName || "";
+
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -356,58 +380,108 @@ const CustomOption = (props) => {
 
 </div>
 
-{/* Gap Progress */}
+{/* Overall Skill Gap */}
 
-<div className="rounded-3xl bg-panel p-6 shadow-lg">
+<div className="rounded-3xl bg-panel p-8 shadow-xl">
 
-  <div className="mb-6">
+  <div className="flex items-center justify-between">
 
-    <h2 className="text-2xl font-bold text-text">
-      Overall Skill Gap
-    </h2>
+    <div>
 
-    <p className="mt-1 text-sm text-sub">
-      Percentage of missing skills for the selected employee.
-    </p>
+      <h2 className="text-2xl font-bold text-text">
+        Overall Skill Gap
+      </h2>
 
-  </div>
+      <p className="mt-2 text-sub">
+        Current employee skill gap based on assigned role.
+      </p>
 
-  <div className="w-full rounded-full bg-line h-5 overflow-hidden">
+    </div>
 
     <div
-      className="h-5 rounded-full bg-gradient-to-r from-red-500 to-orange-500 transition-all duration-500"
-      style={{
-        width: `${gapPercentage}%`,
-      }}
-    />
+      className={`rounded-full px-5 py-2 font-semibold text-white
+      ${
+        gapPercentage <= 20
+          ? "bg-green-500"
+          : gapPercentage <= 40
+          ? "bg-yellow-500"
+          : gapPercentage <= 60
+          ? "bg-orange-500"
+          : "bg-red-500"
+      }`}
+    >
+      {gapPercentage <= 20
+        ? "Low Risk"
+        : gapPercentage <= 40
+        ? "Moderate"
+        : gapPercentage <= 60
+        ? "High Risk"
+        : "Critical"}
+    </div>
 
   </div>
 
-  <div className="mt-4 flex justify-between text-sm font-semibold">
+  <div className="mt-8">
 
-    <span className="text-green-600">
-      Matched Skills : {matchedSkillCount}
-    </span>
+    <div className="h-6 overflow-hidden rounded-full bg-line">
 
-    <span className="text-red-600">
-      Gap {gapPercentage.toFixed(1)}%
-    </span>
+      <div
+        className="h-6 rounded-full bg-gradient-to-r from-green-500 via-yellow-400 to-red-500 transition-all duration-700"
+        style={{
+          width: `${gapPercentage}%`,
+        }}
+      />
+
+    </div>
 
   </div>
 
-  <div className="mt-2 flex justify-between text-sm text-sub">
+  <div className="mt-8 grid grid-cols-3 gap-6 text-center">
 
-    <span>
-      Required Skills : {totalRequiredSkills}
-    </span>
+    <div>
 
-    <span>
-      Missing Skills : {missingSkillCount}
-    </span>
+      <p className="text-4xl font-bold text-green-600">
+        {matchedSkillCount}
+      </p>
+
+      <p className="mt-2 text-sub">
+        Matched
+      </p>
+
+    </div>
+
+    <div>
+
+      <p className="text-4xl font-bold text-primary">
+        {totalRequiredSkills}
+      </p>
+
+      <p className="mt-2 text-sub">
+        Required
+      </p>
+
+    </div>
+
+    <div>
+
+      <p className="text-4xl font-bold text-red-600">
+        {missingSkillCount}
+      </p>
+
+      <p className="mt-2 text-sub">
+        Missing
+      </p>
+
+    </div>
 
   </div>
 
 </div>
+{/* =======================================================
+    Department Knowledge Gap Heatmap
+======================================================= */}
+
+
 
         {/* Skills Grid */}
 
@@ -515,55 +589,6 @@ const CustomOption = (props) => {
       </div>
 
     )}
-
-  </div>
-
-</div>
-        {/* Summary Card */}
-
-        <div className="rounded-3xl bg-panel p-6 shadow-lg">
-
-  <h2 className="text-2xl font-bold text-text mb-4">
-    Gap Analysis Summary
-  </h2>
-
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-    <div className="rounded-2xl bg-green-50 p-5 text-center">
-
-      <h3 className="text-4xl font-bold text-green-600">
-        {matchedSkillCount}
-      </h3>
-
-      <p className="mt-2 text-sub">
-        Matched Skills
-      </p>
-
-    </div>
-
-    <div className="rounded-2xl bg-primary-tint p-5 text-center">
-
-      <h3 className="text-4xl font-bold text-primary">
-        {totalRequiredSkills}
-      </h3>
-
-      <p className="mt-2 text-sub">
-        Required Skills
-      </p>
-
-    </div>
-
-    <div className="rounded-2xl bg-red-50 p-5 text-center">
-
-      <h3 className="text-4xl font-bold text-red-600">
-        {missingSkillCount}
-      </h3>
-
-      <p className="mt-2 text-sub">
-        Missing Skills
-      </p>
-
-    </div>
 
   </div>
 
@@ -733,7 +758,7 @@ const CustomOption = (props) => {
   </div>
 
 </div>
-
+<GapHeatmapChart data={heatmapData} />
 </div>
 
 </DashboardLayout>

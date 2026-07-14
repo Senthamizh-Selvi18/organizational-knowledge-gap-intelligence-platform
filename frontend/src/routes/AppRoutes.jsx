@@ -16,9 +16,9 @@ import Recommendation from "../pages/recommendation/Recommendation";
 import OAuth2RedirectPage from "../pages/OAuth2Redirect/OAuth2Redirect";
 import ProtectedRoute from "./ProtectedRoute";
 import GapAnalysis from "../pages/GapAnalysis/GapAnalysis";
-import ChatBox from "../pages/Chat/ChatBox";
+
 import DashboardLayout from "../components/layout/DashboardLayout";
-import Settings from "../pages/Settings/Settings";
+
 
 function AppRoutes() {
   return (
@@ -139,27 +139,7 @@ function AppRoutes() {
         }
       />
 
-      {/* Chat */}
-      <Route
-        path="/dashboard/chat"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout>
-              <ChatBox />
-            </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Settings */}
-      <Route
-        path="/dashboard/settings"
-        element={
-          <ProtectedRoute>
-            <Settings />
-          </ProtectedRoute>
-        }
-      />
+      
 
       {/* OAuth2 Redirect */}
       <Route
