@@ -9,6 +9,7 @@ import {
   FiBell,
   FiSettings,
   FiLogOut,
+  FiBookOpen,
   FiX,
 } from "react-icons/fi";
 
@@ -35,6 +36,11 @@ export default function Sidebar({ open, onClose }) {
       icon: FiUser,
       to: "/dashboard/profile",
     },
+    {
+  label: "Course Catalog",
+  icon: FiBookOpen,
+  to: "/dashboard/course-catalog",
+},
     {
       label: "Gap Analysis",
       icon: FiBarChart2,
