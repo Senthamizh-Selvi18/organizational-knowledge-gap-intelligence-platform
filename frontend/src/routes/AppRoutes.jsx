@@ -17,8 +17,6 @@ import OAuth2RedirectPage from "../pages/OAuth2Redirect/OAuth2Redirect";
 import ProtectedRoute from "./ProtectedRoute";
 import GapAnalysis from "../pages/GapAnalysis/GapAnalysis";
 import CourseCatalog from "../pages/CourseCatalog/CourseCatalog";
-import EmployeeGapAnalysis from "../pages/EmployeeGapAnalysis/EmployeeGapAnalysis";
-import EmployeeManagement from "../pages/EmployeeManagement/EmployeeManagement";
 import ChatBox from "../pages/Chat/ChatBox";
 import DashboardLayout from "../components/layout/DashboardLayout";
 import Settings from "../pages/Settings/Settings";
@@ -158,7 +156,7 @@ function AppRoutes() {
         path="/dashboard/course-catalog"
         element={
           <ProtectedRoute
-            allowedRoles={["admin", "hr", "manager", "employee", "intern"]}
+            allowedRoles={["employee", "intern"]}
           >
             <CourseCatalog />
           </ProtectedRoute>

@@ -37,11 +37,18 @@ const overviewItems = [
     icon: FiUser,
     to: "/dashboard/profile",
   },
-  {
-    label: "Course Catalog",
-    icon: FiBookOpen,
-    to: "/dashboard/course-catalog",
-  },
+
+  // Show Course Catalog only for Employee & Intern
+  ...((role === "employee" || role === "intern")
+    ? [
+        {
+          label: "Course Catalog",
+          icon: FiBookOpen,
+          to: "/dashboard/course-catalog",
+        },
+      ]
+    : []),
+
   {
     label: "Chat",
     icon: FiMessageCircle,
