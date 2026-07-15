@@ -16,6 +16,7 @@ import Recommendation from "../pages/recommendation/Recommendation";
 import OAuth2RedirectPage from "../pages/OAuth2Redirect/OAuth2Redirect";
 import ProtectedRoute from "./ProtectedRoute";
 import GapAnalysis from "../pages/GapAnalysis/GapAnalysis";
+import CourseCatalog from "../pages/CourseCatalog/CourseCatalog";
 import ChatBox from "../pages/Chat/ChatBox";
 import DashboardLayout from "../components/layout/DashboardLayout";
 import Settings from "../pages/Settings/Settings";
@@ -24,6 +25,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/login" />} />
+
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -145,6 +147,18 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={["admin", "hr", "manager", "team lead"]}>
             <GapAnalysis />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Course Catalog */}
+      <Route
+        path="/dashboard/course-catalog"
+        element={
+          <ProtectedRoute
+            allowedRoles={["employee", "intern"]}
+          >
+            <CourseCatalog />
           </ProtectedRoute>
         }
       />

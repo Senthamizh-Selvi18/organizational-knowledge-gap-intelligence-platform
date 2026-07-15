@@ -9,8 +9,9 @@ import {
   FiBell,
   FiSettings,
   FiLogOut,
-  FiX,
+  FiBookOpen,
   FiMessageCircle,
+  FiX,
 } from "react-icons/fi";
 
 export default function Sidebar({ open, onClose }) {
@@ -22,45 +23,56 @@ export default function Sidebar({ open, onClose }) {
 
   // Same menu items / role logic as before, just grouped into the
   // "Overview" / "Manage" sections from the reference layout.
-  const overviewItems = [
-    {
-      label: "Dashboard",
-      icon: FiHome,
-      to:
-        role === "employee" || role === "intern"
-          ? "/employee-dashboard"
-          : "/dashboard",
-    },
-    {
-      label: "Profile",
-      icon: FiUser,
-      to: "/dashboard/profile",
-    },
-    {
-      label: "Chat",
-      icon: FiMessageCircle,
-      to: "/dashboard/chat",
-    },
-    {
-  label: "Gap Analysis",
-  icon: FiBarChart2,
-  to:
-    role === "employee" || role === "intern"
-      ? "/employee-dashboard/gap-analysis"
-      : "/dashboard/gap-analysis",
-},
-    {
-      label: "AI Recommendation",
-      icon: FiCpu,
-      to: "/dashboard/recommendation",
-    },
-    {
-      label: "Competencies",
-      icon: FiBarChart2,
-      to: "/dashboard/competencies",
-    },
-  ];
+const overviewItems = [
+  {
+    label: "Dashboard",
+    icon: FiHome,
+    to:
+      role === "employee" || role === "intern"
+        ? "/employee-dashboard"
+        : "/dashboard",
+  },
+  {
+    label: "Profile",
+    icon: FiUser,
+    to: "/dashboard/profile",
+  },
 
+  // Show Course Catalog only for Employee & Intern
+  ...((role === "employee" || role === "intern")
+    ? [
+        {
+          label: "Course Catalog",
+          icon: FiBookOpen,
+          to: "/dashboard/course-catalog",
+        },
+      ]
+    : []),
+
+  {
+    label: "Chat",
+    icon: FiMessageCircle,
+    to: "/dashboard/chat",
+  },
+  {
+    label: "Gap Analysis",
+    icon: FiBarChart2,
+    to:
+      role === "employee" || role === "intern"
+        ? "/employee-dashboard/gap-analysis"
+        : "/dashboard/gap-analysis",
+  },
+  {
+    label: "AI Recommendation",
+    icon: FiCpu,
+    to: "/dashboard/recommendation",
+  },
+  {
+    label: "Competencies",
+    icon: FiBarChart2,
+    to: "/dashboard/competencies",
+  },
+];
   const manageItems = [
     ...(role === "admin"
       ? [
