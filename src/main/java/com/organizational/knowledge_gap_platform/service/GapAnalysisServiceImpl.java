@@ -7,12 +7,14 @@ import com.organizational.knowledge_gap_platform.dto.SkillDTO;
 import com.organizational.knowledge_gap_platform.entity.Employee;
 import com.organizational.knowledge_gap_platform.entity.EmployeeSkill;
 import com.organizational.knowledge_gap_platform.entity.Role;
+import com.organizational.knowledge_gap_platform.entity.RoleSkillRequirement;
 import com.organizational.knowledge_gap_platform.entity.Skill;
 import com.organizational.knowledge_gap_platform.exception.EmployeeNotFoundException;
 import com.organizational.knowledge_gap_platform.exception.RoleNotFoundException;
 import com.organizational.knowledge_gap_platform.repository.EmployeeRepository;
 import com.organizational.knowledge_gap_platform.repository.EmployeeSkillRepository;
 import com.organizational.knowledge_gap_platform.repository.RoleRepository;
+import com.organizational.knowledge_gap_platform.repository.RoleSkillRequirementRepository;
 import org.springframework.stereotype.Service;
 import com.organizational.knowledge_gap_platform.entity.User;
 import com.organizational.knowledge_gap_platform.repository.UserRepository;
@@ -21,8 +23,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.ArrayList;
@@ -31,25 +35,31 @@ import java.util.Map;
 
 @Service
 public class GapAnalysisServiceImpl implements GapAnalysisService {
-    private final UserRepository userRepository;
-    private final EmployeeRepository employeeRepository;
-    private final RoleRepository roleRepository;
-    private final EmployeeSkillRepository employeeSkillRepository;
-    private final NotificationService notificationService;
+private static final int DEFAULT_REQUIRED_PROFICIENCY_LEVEL = 3;
 
-    public GapAnalysisServiceImpl(
-            EmployeeRepository employeeRepository,
-            RoleRepository roleRepository,
-            EmployeeSkillRepository employeeSkillRepository,
-            NotificationService notificationService,
-            UserRepository userRepository) {
+private final UserRepository userRepository;
+private final EmployeeRepository employeeRepository;
+private final RoleRepository roleRepository;
+private final EmployeeSkillRepository employeeSkillRepository;
+private final NotificationService notificationService;
+private final RoleSkillRequirementRepository roleSkillRequirementRepository;
 
-        this.employeeRepository = employeeRepository;
-        this.roleRepository = roleRepository;
-        this.employeeSkillRepository = employeeSkillRepository;
-        this.notificationService = notificationService;
-        this.userRepository = userRepository;
-    }
+public GapAnalysisServiceImpl(
+        EmployeeRepository employeeRepository,
+        RoleRepository roleRepository,
+        EmployeeSkillRepository employeeSkillRepository,
+        NotificationService notificationService,
+        UserRepository userRepository,
+        RoleSkillRequirementRepository roleSkillRequirementRepository) {
+
+    this.employeeRepository = employeeRepository;
+    this.roleRepository = roleRepository;
+    this.employeeSkillRepository = employeeSkillRepository;
+    this.notificationService = notificationService;
+    this.userRepository = userRepository;
+    this.roleSkillRequirementRepository = roleSkillRequirementRepository;
+}
+
 
     @Override
     public GapAnalysisResponseDTO analyzeGap(Long employeeId, Long roleId) {
@@ -96,6 +106,19 @@ public class GapAnalysisServiceImpl implements GapAnalysisService {
                 .map(EmployeeSkill::getSkill)
                 .collect(Collectors.toSet());
 
+        Map<Long, Integer> currentLevelBySkillId = employeeSkills.stream()
+                .collect(Collectors.toMap(
+                        es -> es.getSkill().getId(),
+                        es -> es.getProficiencyLevel() != null ? es.getProficiencyLevel() : 0,
+                        (existing, replacement) -> existing
+                ));
+
+        List<RoleSkillRequirement> requirements = roleSkillRequirementRepository.findByRole(role);
+        Map<Long, Integer> requiredLevelBySkillId = new HashMap<>();
+        for (RoleSkillRequirement requirement : requirements) {
+            requiredLevelBySkillId.put(requirement.getSkill().getId(), requirement.getRequiredProficiencyLevel());
+        }
+
         Set<Skill> matched = new HashSet<>(requiredSkills);
         matched.retainAll(possessedSkills);
 
@@ -111,12 +134,20 @@ public class GapAnalysisServiceImpl implements GapAnalysisService {
                 : Math.round((missingCount * 10000.0) / totalRequired) / 100.0;
 
         List<SkillDTO> matchedDtos = matched.stream()
-                .map(SkillDTO::fromEntity)
+                .map(skill -> SkillDTO.fromEntityWithRisk(
+                        skill,
+                        requiredLevelBySkillId.getOrDefault(skill.getId(), DEFAULT_REQUIRED_PROFICIENCY_LEVEL),
+                        currentLevelBySkillId.getOrDefault(skill.getId(), 0)
+                ))
                 .sorted(Comparator.comparing(SkillDTO::getSkillName))
                 .collect(Collectors.toList());
 
         List<SkillDTO> missingDtos = missing.stream()
-                .map(SkillDTO::fromEntity)
+                .map(skill -> SkillDTO.fromEntityWithRisk(
+                        skill,
+                        requiredLevelBySkillId.getOrDefault(skill.getId(), DEFAULT_REQUIRED_PROFICIENCY_LEVEL),
+                        0
+                ))
                 .sorted(Comparator.comparing(SkillDTO::getSkillName))
                 .collect(Collectors.toList());
 

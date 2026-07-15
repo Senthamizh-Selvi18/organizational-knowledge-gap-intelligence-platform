@@ -9,6 +9,7 @@ import EmployeeGapAnalysis from "../pages/EmployeeGapAnalysis/EmployeeGapAnalysi
 import Profile from "../pages/Profile/Profile";
 import RoleManagement from "../pages/RoleManagement/RoleManagement";
 import RoleSkillMapping from "../pages/RoleSkillMapping/RoleSkillMapping";
+import RoleSkillRequirements from "../pages/RoleSkillRequirements/RoleSkillRequirements";
 import SkillManagement from "../pages/SkillManagement/SkillManagement";
 import EmployeeSkillManagement from "../pages/EmployeeSkillManagement/EmployeeSkillManagement";
 import EmployeeManagement from "../pages/EmployeeManagement/EmployeeManagement";
@@ -87,6 +88,16 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <RoleSkillMapping />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Required Skill Levels (Risk Badges) */}
+      <Route
+        path="/dashboard/role-skill-requirements"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <RoleSkillRequirements />
           </ProtectedRoute>
         }
       />
