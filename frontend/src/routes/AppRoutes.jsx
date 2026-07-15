@@ -17,7 +17,8 @@ import OAuth2RedirectPage from "../pages/OAuth2Redirect/OAuth2Redirect";
 import ProtectedRoute from "./ProtectedRoute";
 import GapAnalysis from "../pages/GapAnalysis/GapAnalysis";
 import CompetencyFramework from "../pages/CompetencyFramework/CompetencyFramework";
-//import ChatBox from "../pages/Chat/ChatBox";
+import CourseCatalog from "../pages/CourseCatalog/CourseCatalog";
+import ChatBox from "../pages/Chat/ChatBox";
 import DashboardLayout from "../components/layout/DashboardLayout";
 import Settings from "../pages/Settings/Settings";
 
@@ -25,6 +26,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/login" />} />
+
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -66,6 +68,16 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Profile />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Chat */}
+      <Route
+        path="/dashboard/chat"
+        element={
+          <ProtectedRoute>
+            <ChatBox />
           </ProtectedRoute>
         }
       />
@@ -140,12 +152,23 @@ function AppRoutes() {
         }
       />
 
+<<<<<<< HEAD
       {/* Competency Framework */}
       <Route
         path="/dashboard/competencies"
         element={
           <ProtectedRoute allowedRoles={["admin"]}>
             <CompetencyFramework />
+=======
+      {/* Course Catalog */}
+      <Route
+        path="/dashboard/course-catalog"
+        element={
+          <ProtectedRoute
+            allowedRoles={["employee", "intern"]}
+          >
+            <CourseCatalog />
+>>>>>>> a6683df16dc71599705cbbdd1a3ea21d4a747fc8
           </ProtectedRoute>
         }
       />
