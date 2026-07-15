@@ -9,22 +9,22 @@ import com.organizational.knowledge_gap_platform.entity.Role;
 import com.organizational.knowledge_gap_platform.entity.User;
 import com.organizational.knowledge_gap_platform.repository.ChatMessageRepository;
 import com.organizational.knowledge_gap_platform.repository.UserRepository;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class ChatService {
 
     private final ChatMessageRepository chatMessageRepository;
     private final UserRepository userRepository;
-
-    private static final Set<String> HIGHER_ROLES =
-            Set.of("admin", "hr", "manager", "team lead");
 
     public ChatService(ChatMessageRepository chatMessageRepository,
                         UserRepository userRepository) {
@@ -32,133 +32,117 @@ public class ChatService {
         this.userRepository = userRepository;
     }
 
-    public User getCurrentUser() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+    /** Resolves the logged-in user from the JWT-authenticated security context. */
+    private User getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null || !auth.isAuthenticated()
+                || "anonymousUser".equals(auth.getName())) {
+            throw new RuntimeException(
+                "No authenticated user found in security context — the JWT filter may not be applied to /chat/** endpoints. Check SecurityConfig."
+            );
+        }
+
+        String email = auth.getName();
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Logged in user not found"));
+                .orElseThrow(() -> new RuntimeException("Authenticated user not found: " + email));
     }
 
-    private Set<String> normalizedRoles(User user) {
-        return user.getRoles().stream()
-                .map(Role::getRoleName)
-                .filter(r -> r != null)
-                .map(r -> r.trim().toLowerCase())
-                .collect(Collectors.toSet());
-    }
-
-    private boolean isHigherOfficial(Set<String> roles) {
-        return roles.stream().anyMatch(HIGHER_ROLES::contains);
-    }
-
-    private boolean canChat(Set<String> myRoles, Set<String> otherRoles) {
-        if (isHigherOfficial(myRoles)) {
-            return true;
-        }
-        if (myRoles.contains("employee")) {
-            return isHigherOfficial(otherRoles) || otherRoles.contains("employee");
-        }
-        if (myRoles.contains("intern")) {
-            return isHigherOfficial(otherRoles);
-        }
-        return false;
+    public ChatContactResponse getCurrentUserContact() {
+        return toContact(getCurrentUser());
     }
 
     public List<ChatContactResponse> getContacts() {
-        User currentUser = getCurrentUser();
-        Set<String> myRoles = normalizedRoles(currentUser);
-
+        User me = getCurrentUser();
         return userRepository.findAll().stream()
-                .filter(u -> !u.getId().equals(currentUser.getId()))
-                .filter(u -> canChat(myRoles, normalizedRoles(u)))
-                .map(u -> new ChatContactResponse(
-                        u.getId(),
-                        u.getName(),
-                        u.getEmail(),
-                        String.join(", ", normalizedRoles(u))))
+                .filter(u -> !u.getId().equals(me.getId()))
+                .map(this::toContact)
                 .collect(Collectors.toList());
     }
 
-    public ChatMessageResponse sendMessage(ChatSendRequest request) {
-        User sender = getCurrentUser();
-        User receiver = userRepository.findById(request.getReceiverId())
-                .orElseThrow(() -> new RuntimeException("Receiver not found"));
-
-        if (!canChat(normalizedRoles(sender), normalizedRoles(receiver))) {
-            throw new RuntimeException("You are not allowed to message this user");
-        }
-
-        ChatMessage message = new ChatMessage();
-        message.setSender(sender);
-        message.setReceiver(receiver);
-        message.setMessage(request.getMessage());
-
-        return toResponse(chatMessageRepository.save(message));
-    }
-
     public List<ChatMessageResponse> getConversation(Long otherUserId) {
-        User currentUser = getCurrentUser();
-
-        return chatMessageRepository
-                .findConversation(currentUser.getId(), otherUserId)
-                .stream()
+        User me = getCurrentUser();
+        return chatMessageRepository.findConversation(me.getId(), otherUserId).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
 
+    public ChatMessageResponse sendMessage(ChatSendRequest request) {
+        User me = getCurrentUser();
+        User receiver = userRepository.findById(request.getReceiverId())
+                .orElseThrow(() -> new RuntimeException("Receiver not found"));
+
+        ChatMessage message = new ChatMessage();
+        message.setSender(me);
+        message.setReceiver(receiver);
+        message.setMessage(request.getMessage());
+
+        ChatMessage saved = chatMessageRepository.save(message);
+        return toResponse(saved);
+    }
+
     public long getUnreadCount() {
-        User currentUser = getCurrentUser();
-        return chatMessageRepository.countByReceiver_IdAndIsReadFalse(currentUser.getId());
+        User me = getCurrentUser();
+        return chatMessageRepository.countByReceiver_IdAndIsReadFalse(me.getId());
     }
 
     public void markConversationAsRead(Long otherUserId) {
-        User currentUser = getCurrentUser();
-        chatMessageRepository.markAsRead(currentUser.getId(), otherUserId);
+        User me = getCurrentUser();
+        chatMessageRepository.markAsRead(me.getId(), otherUserId);
     }
 
-    // Returns one row per contact this user has EXCHANGED messages with,
-    // each with their last message + unread count, sorted by most recent
     public List<ChatConversationSummary> getConversationSummaries() {
-        User currentUser = getCurrentUser();
-        List<ChatContactResponse> contacts = getContacts();
+        User me = getCurrentUser();
+        List<User> others = userRepository.findAll().stream()
+                .filter(u -> !u.getId().equals(me.getId()))
+                .collect(Collectors.toList());
 
         List<ChatConversationSummary> summaries = new ArrayList<>();
+        for (User other : others) {
+            List<ChatMessage> conv = chatMessageRepository.findConversationDesc(me.getId(), other.getId());
+            if (conv.isEmpty()) continue;
 
-        for (ChatContactResponse contact : contacts) {
-            List<ChatMessage> recent = chatMessageRepository
-                    .findConversationDesc(currentUser.getId(), contact.getId());
+            ChatMessage last = conv.get(0);
+            long unread = chatMessageRepository.countByReceiver_IdAndSender_IdAndIsReadFalse(me.getId(), other.getId());
 
-            if (recent.isEmpty()) {
-                continue; // only show people you've actually messaged
-            }
-
-            ChatMessage last = recent.get(0);
-            long unread = chatMessageRepository
-                    .countByReceiver_IdAndSender_IdAndIsReadFalse(currentUser.getId(), contact.getId());
-
-            summaries.add(new ChatConversationSummary(
-                    contact.getId(),
-                    contact.getName(),
-                    contact.getRole(),
-                    last.getMessage(),
-                    last.getSentAt(),
-                    unread
-            ));
+            ChatConversationSummary summary = new ChatConversationSummary();
+            summary.setContactId(other.getId());
+            summary.setContactName(other.getName());
+            summary.setContactRole(getRoleName(other));
+            summary.setLastMessage(last.getMessage());
+            summary.setLastMessageAt(last.getSentAt());
+            summary.setUnreadCount(unread);
+            summaries.add(summary);
         }
 
-        summaries.sort((a, b) -> b.getLastMessageAt().compareTo(a.getLastMessageAt()));
+        summaries.sort(Comparator.comparing(ChatConversationSummary::getLastMessageAt).reversed());
         return summaries;
     }
 
+    private String getRoleName(User u) {
+        if (u.getRoles() == null || u.getRoles().isEmpty()) return "employee";
+        return u.getRoles().stream().map(Role::getRoleName).collect(Collectors.joining(", "));
+    }
+
+    private ChatContactResponse toContact(User u) {
+        ChatContactResponse c = new ChatContactResponse();
+        c.setId(u.getId());
+        c.setName(u.getName());
+        c.setEmail(u.getEmail());
+        c.setRole(getRoleName(u));
+        return c;
+    }
+
     private ChatMessageResponse toResponse(ChatMessage m) {
-        return new ChatMessageResponse(
-                m.getId(),
-                m.getSender().getId(),
-                m.getSender().getName(),
-                m.getReceiver().getId(),
-                m.getReceiver().getName(),
-                m.getMessage(),
-                m.getSentAt(),
-                m.getIsRead()
-        );
+        ChatMessageResponse r = new ChatMessageResponse();
+        r.setId(m.getId());
+        r.setSenderId(m.getSender().getId());
+        r.setSenderName(m.getSender().getName());
+        r.setReceiverId(m.getReceiver().getId());
+        r.setReceiverName(m.getReceiver().getName());
+        r.setMessage(m.getMessage());
+        r.setSentAt(m.getSentAt());
+        r.setRead(m.getIsRead());
+        return r;
     }
 }
