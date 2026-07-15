@@ -16,6 +16,7 @@ import Recommendation from "../pages/recommendation/Recommendation";
 import OAuth2RedirectPage from "../pages/OAuth2Redirect/OAuth2Redirect";
 import ProtectedRoute from "./ProtectedRoute";
 import GapAnalysis from "../pages/GapAnalysis/GapAnalysis";
+import CompetencyFramework from "../pages/CompetencyFramework/CompetencyFramework";
 //import ChatBox from "../pages/Chat/ChatBox";
 import DashboardLayout from "../components/layout/DashboardLayout";
 import Settings from "../pages/Settings/Settings";
@@ -139,7 +140,16 @@ function AppRoutes() {
         }
       />
 
-      
+      {/* Competency Framework */}
+      <Route
+        path="/dashboard/competencies"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <CompetencyFramework />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Settings */}
       <Route
         path="/dashboard/settings"
