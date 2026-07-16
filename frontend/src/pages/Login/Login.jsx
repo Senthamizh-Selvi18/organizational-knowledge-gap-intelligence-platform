@@ -6,7 +6,6 @@ import {
   FiEye,
   FiEyeOff,
   FiArrowRight,
-  FiPhone,
   FiShield,
 } from "react-icons/fi"
 import { FcGoogle } from "react-icons/fc"
@@ -23,9 +22,7 @@ export default function LoginPage() {
   const [step, setStep] = useState("login") // "login" | "otp"
   const [userId, setUserId] = useState(null)
   const [pendingRole, setPendingRole] = useState(null)
-  const [phone, setPhone] = useState("")
   const [otp, setOtp] = useState("")
-  const [otpSent, setOtpSent] = useState(false)
   const [otpLoading, setOtpLoading] = useState(false)
   const [resendCooldown, setResendCooldown] = useState(0)
 
@@ -66,6 +63,21 @@ const handleSubmit = async (e) => {
       setUserId(data.userId);
       setPendingRole(data.role);
       setStep("otp");
+
+      setOtpLoading(true);
+      try {
+        await sendOtp(data.userId);
+        setResendCooldown(60);
+        toast.success("OTP sent to your registered email.");
+      } catch (otpError) {
+        console.error(otpError);
+        const message =
+          otpError.response?.data?.message || "Failed to send OTP. Please try again.";
+        toast.error(message);
+      } finally {
+        setOtpLoading(false);
+      }
+
       return;
     }
 
@@ -80,24 +92,16 @@ const handleSubmit = async (e) => {
   }
 };
 
-  const handleSendOtp = async (e) => {
-    e.preventDefault();
-
-    if (!/^[6-9]\d{9}$/.test(phone)) {
-      toast.warning("Please enter a valid 10-digit mobile number.");
-      return;
-    }
-
+  const handleResendOtp = async () => {
     setOtpLoading(true);
     try {
-      await sendOtp(userId, phone);
-      setOtpSent(true);
+      await sendOtp(userId);
       setResendCooldown(60);
-      toast.success("OTP sent to your mobile number.");
+      toast.success("OTP resent to your registered email.");
     } catch (error) {
       console.error(error);
       const message =
-        error.response?.data?.message || "Failed to send OTP. Please try again.";
+        error.response?.data?.message || "Failed to resend OTP. Please try again.";
       toast.error(message);
     } finally {
       setOtpLoading(false);
@@ -340,89 +344,55 @@ const handleSubmit = async (e) => {
               <>
                 <div className="text-center lg:text-left">
                   <h2 className="text-2xl font-bold tracking-tight text-text">
-                    Verify Your Mobile Number
+                    Verify Your Email
                   </h2>
                   <p className="mt-1.5 text-sm text-sub">
-                    {otpSent
-                      ? "Enter the 6-digit OTP sent to your mobile number."
-                      : "This is your first login — please verify your mobile number via OTP."}
+                    {otpLoading
+                      ? "Sending OTP to your registered email..."
+                      : "This is your first login — enter the 6-digit OTP sent to your registered email."}
                   </p>
                 </div>
 
-                {!otpSent ? (
-                  <form onSubmit={handleSendOtp} className="mt-8 flex flex-col gap-5">
-                    <div>
-                      <label
-                        htmlFor="phone"
-                        className="mb-1.5 block text-sm font-medium text-text"
-                      >
-                        Mobile Number
-                      </label>
-                      <div className="group relative">
-                        <FiPhone className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-mute transition-colors group-focus-within:text-primary" />
-                        <input
-                          id="phone"
-                          type="tel"
-                          maxLength={10}
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                          placeholder="Enter 10-digit mobile number"
-                          className="w-full rounded-xl border border-line bg-panel/70 py-3 pl-11 pr-4 text-sm text-text placeholder-slate-400 shadow-sm outline-none transition-all duration-200 focus:border-primary focus:bg-panel focus:ring-4 focus:ring-primary/15"
-                        />
-                      </div>
+                <form onSubmit={handleVerifyOtp} className="mt-8 flex flex-col gap-5">
+                  <div>
+                    <label
+                      htmlFor="otp"
+                      className="mb-1.5 block text-sm font-medium text-text"
+                    >
+                      Enter OTP
+                    </label>
+                    <div className="group relative">
+                      <FiShield className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-mute transition-colors group-focus-within:text-primary" />
+                      <input
+                        id="otp"
+                        type="text"
+                        maxLength={6}
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                        placeholder="6-digit OTP"
+                        className="w-full rounded-xl border border-line bg-panel/70 py-3 pl-11 pr-4 text-sm tracking-widest text-text placeholder-slate-400 shadow-sm outline-none transition-all duration-200 focus:border-primary focus:bg-panel focus:ring-4 focus:ring-primary/15"
+                      />
                     </div>
+                  </div>
 
-                    <button
-                      type="submit"
-                      disabled={otpLoading}
-                      className="group mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-text shadow-lg shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary-dark hover:shadow-xl hover:shadow-blue-600/30 active:translate-y-0 focus:outline-none focus:ring-4 focus:ring-primary/30 disabled:opacity-60"
-                    >
-                      {otpLoading ? "Sending..." : "Send OTP"}
-                      <FiArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
-                    </button>
-                  </form>
-                ) : (
-                  <form onSubmit={handleVerifyOtp} className="mt-8 flex flex-col gap-5">
-                    <div>
-                      <label
-                        htmlFor="otp"
-                        className="mb-1.5 block text-sm font-medium text-text"
-                      >
-                        Enter OTP
-                      </label>
-                      <div className="group relative">
-                        <FiShield className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-mute transition-colors group-focus-within:text-primary" />
-                        <input
-                          id="otp"
-                          type="text"
-                          maxLength={6}
-                          value={otp}
-                          onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                          placeholder="6-digit OTP"
-                          className="w-full rounded-xl border border-line bg-panel/70 py-3 pl-11 pr-4 text-sm tracking-widest text-text placeholder-slate-400 shadow-sm outline-none transition-all duration-200 focus:border-primary focus:bg-panel focus:ring-4 focus:ring-primary/15"
-                        />
-                      </div>
-                    </div>
+                  <button
+                    type="submit"
+                    disabled={otpLoading}
+                    className="group mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-text shadow-lg shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary-dark hover:shadow-xl hover:shadow-blue-600/30 active:translate-y-0 focus:outline-none focus:ring-4 focus:ring-primary/30 disabled:opacity-60"
+                  >
+                    {otpLoading ? "Verifying..." : "Verify & Continue"}
+                    <FiArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+                  </button>
 
-                    <button
-                      type="submit"
-                      disabled={otpLoading}
-                      className="group mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-text shadow-lg shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary-dark hover:shadow-xl hover:shadow-blue-600/30 active:translate-y-0 focus:outline-none focus:ring-4 focus:ring-primary/30 disabled:opacity-60"
-                    >
-                      {otpLoading ? "Verifying..." : "Verify & Continue"}
-                      <FiArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={handleSendOtp}
-                      disabled={resendCooldown > 0 || otpLoading}
-                      className="text-sm font-medium text-primary transition-colors hover:text-primary-dark hover:underline disabled:cursor-not-allowed disabled:text-mute disabled:no-underline"
-                    >
-                      {resendCooldown > 0 ? `Resend OTP in ${resendCooldown}s` : "Resend OTP"}
-                    </button>
-                  </form>
-                )}
+                  <button
+                    type="button"
+                    onClick={handleResendOtp}
+                    disabled={resendCooldown > 0 || otpLoading}
+                    className="text-sm font-medium text-primary transition-colors hover:text-primary-dark hover:underline disabled:cursor-not-allowed disabled:text-mute disabled:no-underline"
+                  >
+                    {resendCooldown > 0 ? `Resend OTP in ${resendCooldown}s` : "Resend OTP"}
+                  </button>
+                </form>
               </>
             )}
           </div>

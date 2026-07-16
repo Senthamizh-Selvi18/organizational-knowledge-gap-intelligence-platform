@@ -21,6 +21,11 @@ public class ChatController {
         this.chatService = chatService;
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<ChatContactResponse> getMe() {
+        return ResponseEntity.ok(chatService.getCurrentUserContact());
+    }
+
     @GetMapping("/contacts")
     public ResponseEntity<List<ChatContactResponse>> getContacts() {
         return ResponseEntity.ok(chatService.getContacts());

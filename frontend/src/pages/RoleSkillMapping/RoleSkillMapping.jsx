@@ -7,9 +7,9 @@ import { getRoleSkills, assignSkillsToRole, updateRoleSkills } from "../../servi
 import { FiShield, FiSave, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
 
 export default function RoleSkillMapping() {
-  const role = localStorage.getItem("role");
+  const role = localStorage.getItem("role")?.toLowerCase();
 
-  if (role !== "ADMIN") {
+  if (role !== "admin") {
     return <Navigate to="/dashboard" replace />;
   }
 

@@ -64,7 +64,21 @@ export default function RegisterPage() {
   getRegisterableRoles()
     .then((data) => {
       console.log("Roles API:", data);
-      setRoles(data);
+
+      // De-duplicate roles that share the same name but differ in
+      // case (e.g. "Employee" vs "EMPLOYEE") or exist as separate DB
+      // rows, so only one option appears per distinct role name.
+      const seenNames = new Set();
+      const dedupedRoles = (data || []).filter((r) => {
+        const normalizedName = (r.roleName || "").trim().toLowerCase();
+        if (seenNames.has(normalizedName)) {
+          return false;
+        }
+        seenNames.add(normalizedName);
+        return true;
+      });
+
+      setRoles(dedupedRoles);
     })
     .catch((error) => {
       console.error("Failed to load roles:", error);
