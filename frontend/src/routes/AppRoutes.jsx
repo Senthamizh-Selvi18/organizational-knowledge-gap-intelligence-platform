@@ -23,6 +23,7 @@ import ChatBox from "../pages/Chat/ChatBox";
 import DashboardLayout from "../components/layout/DashboardLayout";
 import Settings from "../pages/Settings/Settings";
 import ExternalCourseManagement from "../pages/ExternalCourseManagement/ExternalCourseManagement";
+import InternalTrainingCatalog from "../pages/InternalTrainingCatalog/InternalTrainingCatalog";
 
 function AppRoutes() {
   return (
@@ -190,6 +191,16 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={["admin"]}>
             <ExternalCourseManagement />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Internal Training Catalog (view for everyone, CRUD gated to admin in-page) */}
+      <Route
+        path="/dashboard/internal-trainings"
+        element={
+          <ProtectedRoute>
+            <InternalTrainingCatalog />
           </ProtectedRoute>
         }
       />
