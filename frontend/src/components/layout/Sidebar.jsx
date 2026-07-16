@@ -72,6 +72,11 @@ const overviewItems = [
     icon: FiBarChart2,
     to: "/dashboard/competencies",
   },
+  {
+    label: "Internal Trainings",
+    icon: FiBookOpen,
+    to: "/dashboard/internal-trainings",
+  },
 ];
   const manageItems = [
     ...(role === "admin"

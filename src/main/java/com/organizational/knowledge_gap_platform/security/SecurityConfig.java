@@ -116,6 +116,15 @@ public class SecurityConfig {
                         .requestMatchers("/api/external-courses/**")
                         .hasRole("ADMIN")
 
+                        // Read-only access for all authenticated users: every role can
+                        // browse the Internal Training Catalog. Managing the catalog
+                        // (create/update/delete) stays Admin-only.
+                        .requestMatchers(HttpMethod.GET, "/api/internal-trainings/**")
+                        .authenticated()
+
+                        .requestMatchers("/api/internal-trainings/**")
+                        .hasRole("ADMIN")
+
                         .requestMatchers("/api/users/**")
                         .authenticated()
 
