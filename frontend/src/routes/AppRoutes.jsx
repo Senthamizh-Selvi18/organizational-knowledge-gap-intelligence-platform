@@ -164,23 +164,22 @@ function AppRoutes() {
         }
       />
 
-<<<<<<< HEAD
       {/* Competency Framework */}
       <Route
         path="/dashboard/competencies"
         element={
           <ProtectedRoute allowedRoles={["admin"]}>
             <CompetencyFramework />
-=======
+          </ProtectedRoute>
+        }
+      />
+
       {/* Course Catalog */}
       <Route
         path="/dashboard/course-catalog"
         element={
-          <ProtectedRoute
-            allowedRoles={["employee", "intern"]}
-          >
+          <ProtectedRoute allowedRoles={["employee", "intern"]}>
             <CourseCatalog />
->>>>>>> a6683df16dc71599705cbbdd1a3ea21d4a747fc8
           </ProtectedRoute>
         }
       />
