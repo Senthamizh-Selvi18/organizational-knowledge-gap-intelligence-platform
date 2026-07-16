@@ -17,6 +17,7 @@ import Recommendation from "../pages/recommendation/Recommendation";
 import OAuth2RedirectPage from "../pages/OAuth2Redirect/OAuth2Redirect";
 import ProtectedRoute from "./ProtectedRoute";
 import GapAnalysis from "../pages/GapAnalysis/GapAnalysis";
+import CompetencyFramework from "../pages/CompetencyFramework/CompetencyFramework";
 import CourseCatalog from "../pages/CourseCatalog/CourseCatalog";
 import ChatBox from "../pages/Chat/ChatBox";
 import DashboardLayout from "../components/layout/DashboardLayout";
@@ -163,6 +164,14 @@ function AppRoutes() {
         }
       />
 
+<<<<<<< HEAD
+      {/* Competency Framework */}
+      <Route
+        path="/dashboard/competencies"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <CompetencyFramework />
+=======
       {/* Course Catalog */}
       <Route
         path="/dashboard/course-catalog"
@@ -171,6 +180,7 @@ function AppRoutes() {
             allowedRoles={["employee", "intern"]}
           >
             <CourseCatalog />
+>>>>>>> a6683df16dc71599705cbbdd1a3ea21d4a747fc8
           </ProtectedRoute>
         }
       />
