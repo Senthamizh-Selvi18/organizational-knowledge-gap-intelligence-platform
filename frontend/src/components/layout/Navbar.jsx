@@ -12,7 +12,8 @@ import {
   FiMenu,
   FiMessageCircle,
 } from "react-icons/fi"
-import { getUnreadCount } from "../../services/chatService"
+import { getUnreadCount } from "../../services/chatservice"
+import { getUnreadCount as getUnreadNotifCount } from "../../services/notificationService"
 
 const CRUMBS = [
   { match: /^\/dashboard\/profile/, title: "Profile", sub: "your account" },
@@ -66,6 +67,27 @@ useEffect(() => {
 const role = localStorage.getItem("role") || "";
 
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchUnreadNotifs = async () => {
+      try {
+        const count = await getUnreadNotifCount();
+        if (!cancelled) setUnreadNotifCount(count);
+      } catch (e) {
+        // silent — bell badge shouldn't break the navbar
+      }
+    };
+
+    fetchUnreadNotifs();
+    const id = setInterval(fetchUnreadNotifs, 6000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [location.pathname]);
 
   useEffect(() => {
     let cancelled = false;
@@ -136,8 +158,19 @@ const role = localStorage.getItem("role") || "";
             )}
           </button>
 
-          <button type="button" aria-label="Notifications" className="kg-iconbtn kg-bell">
+          <button
+            type="button"
+            onClick={() => navigate("/dashboard/notifications")}
+            aria-label="Notifications"
+            title="Notifications"
+            className="kg-iconbtn kg-bell relative"
+          >
             <FiBell width="15" height="15" />
+            {unreadNotifCount > 0 && (
+              <span className="pulse-dot absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rust px-1 text-[10px] font-bold text-white">
+                {unreadNotifCount > 9 ? "9+" : unreadNotifCount}
+              </span>
+            )}
           </button>
 
           <button

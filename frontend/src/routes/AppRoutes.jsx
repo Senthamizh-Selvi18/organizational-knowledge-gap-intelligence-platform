@@ -9,6 +9,7 @@ import EmployeeGapAnalysis from "../pages/EmployeeGapAnalysis/EmployeeGapAnalysi
 import Profile from "../pages/Profile/Profile";
 import RoleManagement from "../pages/RoleManagement/RoleManagement";
 import RoleSkillMapping from "../pages/RoleSkillMapping/RoleSkillMapping";
+import RoleSkillRequirements from "../pages/RoleSkillRequirements/RoleSkillRequirements";
 import SkillManagement from "../pages/SkillManagement/SkillManagement";
 import EmployeeSkillManagement from "../pages/EmployeeSkillManagement/EmployeeSkillManagement";
 import EmployeeManagement from "../pages/EmployeeManagement/EmployeeManagement";
@@ -21,6 +22,9 @@ import CourseCatalog from "../pages/CourseCatalog/CourseCatalog";
 import ChatBox from "../pages/Chat/ChatBox";
 import DashboardLayout from "../components/layout/DashboardLayout";
 import Settings from "../pages/Settings/Settings";
+import ExternalCourseManagement from "../pages/ExternalCourseManagement/ExternalCourseManagement";
+import InternalTrainingCatalog from "../pages/InternalTrainingCatalog/InternalTrainingCatalog";
+import Notifications from "../pages/Notifications/Notifications";
 
 function AppRoutes() {
   return (
@@ -92,6 +96,16 @@ function AppRoutes() {
         }
       />
 
+      {/* Required Skill Levels (Risk Badges) */}
+      <Route
+        path="/dashboard/role-skill-requirements"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <RoleSkillRequirements />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Employee Management */}
       <Route
         path="/dashboard/employees"
@@ -152,23 +166,52 @@ function AppRoutes() {
         }
       />
 
-<<<<<<< HEAD
       {/* Competency Framework */}
       <Route
         path="/dashboard/competencies"
         element={
           <ProtectedRoute allowedRoles={["admin"]}>
             <CompetencyFramework />
-=======
+          </ProtectedRoute>
+        }
+      />
+
       {/* Course Catalog */}
       <Route
         path="/dashboard/course-catalog"
         element={
-          <ProtectedRoute
-            allowedRoles={["employee", "intern"]}
-          >
+          <ProtectedRoute allowedRoles={["employee", "intern"]}>
             <CourseCatalog />
->>>>>>> a6683df16dc71599705cbbdd1a3ea21d4a747fc8
+          </ProtectedRoute>
+        }
+      />
+
+      {/* External Course Management (Admin) */}
+      <Route
+        path="/dashboard/external-courses"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <ExternalCourseManagement />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Internal Training Catalog (view for everyone, CRUD gated to admin in-page) */}
+      <Route
+        path="/dashboard/internal-trainings"
+        element={
+          <ProtectedRoute>
+            <InternalTrainingCatalog />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Notifications */}
+      <Route
+        path="/dashboard/notifications"
+        element={
+          <ProtectedRoute>
+            <Notifications />
           </ProtectedRoute>
         }
       />
@@ -188,6 +231,9 @@ function AppRoutes() {
         path="/oauth2/redirect"
         element={<OAuth2RedirectPage />}
       />
+
+      {/* Catch-all: unmatched paths should never render a blank page */}
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }

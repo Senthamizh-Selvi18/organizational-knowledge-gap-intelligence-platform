@@ -67,10 +67,19 @@ const overviewItems = [
     icon: FiCpu,
     to: "/dashboard/recommendation",
   },
+  ...(role === "admin"
+    ? [
+        {
+          label: "Competencies",
+          icon: FiBarChart2,
+          to: "/dashboard/competencies",
+        },
+      ]
+    : []),
   {
-    label: "Competencies",
-    icon: FiBarChart2,
-    to: "/dashboard/competencies",
+    label: "Internal Trainings",
+    icon: FiBookOpen,
+    to: "/dashboard/internal-trainings",
   },
 ];
   const manageItems = [
@@ -103,6 +112,21 @@ const overviewItems = [
             label: "Role Management",
             icon: FiShield,
             to: "/dashboard/roles",
+          },
+          {
+            label: "Role Skill Mapping",
+            icon: FiShield,
+            to: "/dashboard/role-skills",
+          },
+          {
+            label: "Required Skill Levels",
+            icon: FiShield,
+            to: "/dashboard/role-skill-requirements",
+          },
+          {
+            label: "External Courses",
+            icon: FiBookOpen,
+            to: "/dashboard/external-courses",
           },
         ]
       : []),
