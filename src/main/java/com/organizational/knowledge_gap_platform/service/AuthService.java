@@ -110,14 +110,11 @@ return new AuthResponse(
 );
     }
 
-    public void sendFirstLoginOtp(Long userId, String phone) {
+    public void sendFirstLoginOtp(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        user.setPhone(phone);
-        userRepository.save(user);
-
-        otpService.generateAndSendOtp(userId, phone);
+        otpService.generateAndSendOtp(userId, user.getEmail());
     }
 
     public boolean verifyFirstLoginOtp(Long userId, String otp) {
