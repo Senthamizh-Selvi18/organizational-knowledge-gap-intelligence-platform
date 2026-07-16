@@ -5,15 +5,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.List;
-
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class RecommendationResponse {
+public class RecommendedCourseDto {
 
-    private List<String> recommendations;
-    private List<String> roadmap;
-    private List<MissingSkillCoursesDto> externalCourses;
+    private String title;
+    private String provider;
+    private String url;
+    private String difficulty;
+    private String duration;
+    private String description;
 }

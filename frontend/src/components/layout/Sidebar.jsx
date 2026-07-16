@@ -114,6 +114,11 @@ const overviewItems = [
             icon: FiShield,
             to: "/dashboard/role-skill-requirements",
           },
+          {
+            label: "External Courses",
+            icon: FiBookOpen,
+            to: "/dashboard/external-courses",
+          },
         ]
       : []),
     {

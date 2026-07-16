@@ -106,6 +106,16 @@ public class SecurityConfig {
                         .requestMatchers("/api/role-skill-requirements/**")
                         .hasRole("ADMIN")
 
+                        // Read-only access for all authenticated users: External Course
+                        // Links are surfaced on the employee Recommendation page, so any
+                        // logged-in role must be able to view them. Managing the catalog
+                        // (create/update/delete) stays Admin-only.
+                        .requestMatchers(HttpMethod.GET, "/api/external-courses/**")
+                        .authenticated()
+
+                        .requestMatchers("/api/external-courses/**")
+                        .hasRole("ADMIN")
+
                         .requestMatchers("/api/users/**")
                         .authenticated()
 

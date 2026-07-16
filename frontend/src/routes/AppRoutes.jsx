@@ -21,6 +21,7 @@ import CourseCatalog from "../pages/CourseCatalog/CourseCatalog";
 import ChatBox from "../pages/Chat/ChatBox";
 import DashboardLayout from "../components/layout/DashboardLayout";
 import Settings from "../pages/Settings/Settings";
+import ExternalCourseManagement from "../pages/ExternalCourseManagement/ExternalCourseManagement";
 
 function AppRoutes() {
   return (
@@ -170,6 +171,16 @@ function AppRoutes() {
             allowedRoles={["employee", "intern"]}
           >
             <CourseCatalog />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* External Course Management (Admin) */}
+      <Route
+        path="/dashboard/external-courses"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <ExternalCourseManagement />
           </ProtectedRoute>
         }
       />
