@@ -18,6 +18,32 @@ import {
   FiCheckCircle,
 } from "react-icons/fi";
 
+const RISK_STYLES = {
+  GREEN: "bg-green-100 text-green-700",
+  AMBER: "bg-amber-100 text-amber-700",
+  RED: "bg-red-100 text-red-700",
+};
+
+function RiskBadge({ skill }) {
+  if (!skill || !skill.riskLabel) {
+    return null;
+  }
+
+  const badgeClass =
+    RISK_STYLES[skill.riskColor] || "bg-slate-100 text-slate-700";
+
+  return (
+    <span
+      className={`ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${badgeClass}`}
+      title={`Required: ${skill.requiredLevel ?? "-"} | Current: ${
+        skill.currentLevel ?? "-"
+      } | Gap: ${skill.gap ?? "-"}`}
+    >
+      {skill.riskLabel}
+    </span>
+  );
+}
+
 export default function GapAnalysis() {
   const [employees, setEmployees] = useState([]);
   const [skills, setSkills] = useState([]);
@@ -440,9 +466,10 @@ const CustomOption = (props) => {
 
         <span
           key={skill.id}
-          className="rounded-full bg-green-100 px-4 py-2 text-sm font-medium text-green-700"
+          className="inline-flex items-center rounded-full bg-green-100 px-4 py-2 text-sm font-medium text-green-700"
         >
           {skill.skillName}
+          <RiskBadge skill={skill} />
         </span>
 
       ))}
@@ -505,9 +532,10 @@ const CustomOption = (props) => {
 
           <span
             key={skill.id}
-            className="rounded-full bg-red-100 px-4 py-2 text-sm font-medium text-red-700"
+            className="inline-flex items-center rounded-full bg-red-100 px-4 py-2 text-sm font-medium text-red-700"
           >
             {skill.skillName}
+            <RiskBadge skill={skill} />
           </span>
 
         ))}
@@ -641,6 +669,10 @@ const CustomOption = (props) => {
           <th className="px-6 py-4 text-left text-sm font-semibold uppercase">
             Status
           </th>
+
+          <th className="px-6 py-4 text-left text-sm font-semibold uppercase">
+            Risk
+          </th>
         </tr>
 
       </thead>
@@ -652,7 +684,7 @@ const CustomOption = (props) => {
           <tr>
 
             <td
-              colSpan={4}
+              colSpan={5}
               className="py-12 text-center text-mute"
             >
               Select an employee to view gap analysis.
@@ -689,6 +721,10 @@ const CustomOption = (props) => {
                   </span>
                 </td>
 
+                <td className="px-6 py-4">
+                  <RiskBadge skill={skill} />
+                </td>
+
               </tr>
 
             ))}
@@ -716,6 +752,10 @@ const CustomOption = (props) => {
                   <span className="rounded-full bg-red-100 px-3 py-1 text-sm text-red-700">
                     Missing
                   </span>
+                </td>
+
+                <td className="px-6 py-4">
+                  <RiskBadge skill={skill} />
                 </td>
 
               </tr>

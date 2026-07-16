@@ -104,6 +104,21 @@ const overviewItems = [
             icon: FiShield,
             to: "/dashboard/roles",
           },
+          {
+            label: "Role Skill Mapping",
+            icon: FiShield,
+            to: "/dashboard/role-skills",
+          },
+          {
+            label: "Required Skill Levels",
+            icon: FiShield,
+            to: "/dashboard/role-skill-requirements",
+          },
+          {
+            label: "External Courses",
+            icon: FiBookOpen,
+            to: "/dashboard/external-courses",
+          },
         ]
       : []),
     {

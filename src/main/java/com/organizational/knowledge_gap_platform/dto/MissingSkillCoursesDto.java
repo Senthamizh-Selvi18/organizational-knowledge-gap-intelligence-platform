@@ -11,9 +11,8 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class RecommendationResponse {
+public class MissingSkillCoursesDto {
 
-    private List<String> recommendations;
-    private List<String> roadmap;
-    private List<MissingSkillCoursesDto> externalCourses;
+    private String missingSkill;
+    private List<RecommendedCourseDto> recommendedCourses;
 }
