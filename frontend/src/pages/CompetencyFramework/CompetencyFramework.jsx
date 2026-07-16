@@ -77,8 +77,8 @@ function Banner({ status }) {
 }
 
 export default function CompetencyFramework() {
-  const role = localStorage.getItem("role");
-  if (role !== "ADMIN") {
+  const role = localStorage.getItem("role")?.toLowerCase();
+  if (role !== "admin") {
     return <Navigate to="/dashboard" replace />;
   }
 

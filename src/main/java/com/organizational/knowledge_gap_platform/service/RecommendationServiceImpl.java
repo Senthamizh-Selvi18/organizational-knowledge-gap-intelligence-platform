@@ -1,6 +1,9 @@
 package com.organizational.knowledge_gap_platform.service;
 
+import com.organizational.knowledge_gap_platform.dto.ExternalCourseDto;
+import com.organizational.knowledge_gap_platform.dto.MissingSkillCoursesDto;
 import com.organizational.knowledge_gap_platform.dto.RecommendationResponse;
+import com.organizational.knowledge_gap_platform.dto.RecommendedCourseDto;
 import com.organizational.knowledge_gap_platform.entity.Employee;
 import com.organizational.knowledge_gap_platform.entity.EmployeeSkill;
 import com.organizational.knowledge_gap_platform.entity.Skill;
@@ -20,13 +23,16 @@ public class RecommendationServiceImpl implements RecommendationService {
     private final EmployeeRepository employeeRepository;
     private final EmployeeSkillRepository employeeSkillRepository;
     private final SkillRepository skillRepository;
+    private final ExternalCourseService externalCourseService;
 
     public RecommendationServiceImpl(EmployeeRepository employeeRepository,
                                       EmployeeSkillRepository employeeSkillRepository,
-                                      SkillRepository skillRepository) {
+                                      SkillRepository skillRepository,
+                                      ExternalCourseService externalCourseService) {
         this.employeeRepository = employeeRepository;
         this.employeeSkillRepository = employeeSkillRepository;
         this.skillRepository = skillRepository;
+        this.externalCourseService = externalCourseService;
     }
 
     @Override
@@ -54,7 +60,9 @@ public class RecommendationServiceImpl implements RecommendationService {
 
         List<String> roadmap = buildRoadmap(missingSkills);
 
-        return new RecommendationResponse(recommendations, roadmap);
+        List<MissingSkillCoursesDto> externalCourses = buildExternalCourses(missingSkills);
+
+        return new RecommendationResponse(recommendations, roadmap, externalCourses);
     }
 
     private List<String> buildRoadmap(List<Skill> missingSkills) {
@@ -79,5 +87,30 @@ public class RecommendationServiceImpl implements RecommendationService {
         }
 
         return roadmap;
+    }
+
+    private List<MissingSkillCoursesDto> buildExternalCourses(List<Skill> missingSkills) {
+
+        List<MissingSkillCoursesDto> result = new ArrayList<>();
+
+        for (Skill skill : missingSkills) {
+
+            List<ExternalCourseDto> courses = externalCourseService.getCoursesBySkill(skill.getSkillName());
+
+            List<RecommendedCourseDto> recommendedCourses = courses.stream()
+                    .map(c -> new RecommendedCourseDto(
+                            c.getCourseTitle(),
+                            c.getProvider(),
+                            c.getCourseUrl(),
+                            c.getDifficulty(),
+                            c.getDuration(),
+                            c.getDescription()
+                    ))
+                    .collect(Collectors.toList());
+
+            result.add(new MissingSkillCoursesDto(skill.getSkillName(), recommendedCourses));
+        }
+
+        return result;
     }
 }

@@ -81,6 +81,11 @@ const overviewItems = [
     icon: FiBookOpen,
     to: "/dashboard/internal-trainings",
   },
+  {
+    label: "Internal Trainings",
+    icon: FiBookOpen,
+    to: "/dashboard/internal-trainings",
+  },
 ];
   const manageItems = [
     ...(role === "admin"

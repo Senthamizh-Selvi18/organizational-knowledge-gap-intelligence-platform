@@ -202,6 +202,7 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <InternalTrainingCatalog />
+<<<<<<< HEAD
           </ProtectedRoute>
         }
       />
@@ -212,6 +213,8 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Notifications />
+=======
+>>>>>>> 6e3d9c3afed552499f3715bf68568506ca6235e0
           </ProtectedRoute>
         }
       />
