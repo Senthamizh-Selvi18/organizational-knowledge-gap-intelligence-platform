@@ -48,7 +48,7 @@ public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest reques
 
     @PostMapping("/otp/send")
     public ResponseEntity<Map<String, Object>> sendOtp(@RequestBody SendOtpRequest request) {
-        authService.sendFirstLoginOtp(request.getUserId(), request.getPhone());
+        authService.sendFirstLoginOtp(request.getUserId());
         return ResponseEntity.ok(Map.of("message", "OTP sent successfully"));
     }
 
