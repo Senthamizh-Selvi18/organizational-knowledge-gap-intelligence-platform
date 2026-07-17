@@ -62,9 +62,11 @@ export default function DashboardPage() {
   async function loadGapData() {
     try {
       const heatmap = await getSkillGapHeatmap();
-      // Expected shape: { skillNames: string[], rows: [{ displayName, values: number[] }] }
-      const skillNames = heatmap?.skillNames || [];
-      const rows = heatmap?.rows || [];
+
+      // Actual HeatmapResponse shape (see HeatmapResponse.java):
+      //   { skills: string[], employees: [{ employee, values: number[] }] }
+      const skillNames = heatmap?.skills || [];
+      const rows = heatmap?.employees || [];
 
       // Average coverage per skill across all employees
       const averages = skillNames.map((_, skillIdx) => {

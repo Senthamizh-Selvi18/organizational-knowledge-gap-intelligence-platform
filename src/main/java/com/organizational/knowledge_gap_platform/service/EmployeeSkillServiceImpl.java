@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class EmployeeSkillServiceImpl implements EmployeeSkillService {
@@ -37,6 +39,7 @@ public class EmployeeSkillServiceImpl implements EmployeeSkillService {
         this.notificationService = notificationService;
         this.activityLogService = activityLogService;
     }
+
     @Override
     @Transactional
     public void assignSkills(Long employeeId, AssignSkillsRequestDTO request) {
@@ -45,11 +48,21 @@ public class EmployeeSkillServiceImpl implements EmployeeSkillService {
                 .orElseThrow(() ->
                         new EmployeeNotFoundException("Employee not found with id: " + employeeId));
 
-        List<Skill> skills = skillRepository.findAllById(request.getSkillIds());
+        List<Long> skillIds = request.getSkills().stream()
+                .map(AssignSkillsRequestDTO.SkillAssignmentDTO::getSkillId)
+                .toList();
 
-        if (skills.size() != request.getSkillIds().size()) {
+        List<Skill> skills = skillRepository.findAllById(skillIds);
+
+        if (skills.size() != skillIds.size()) {
             throw new SkillNotFoundException("One or more skills not found.");
         }
+
+        Map<Long, Integer> proficiencyBySkillId = request.getSkills().stream()
+                .collect(Collectors.toMap(
+                        AssignSkillsRequestDTO.SkillAssignmentDTO::getSkillId,
+                        s -> s.getProficiencyLevel() != null ? s.getProficiencyLevel() : 0
+                ));
 
         List<String> newlyAssignedSkillNames = new ArrayList<>();
 
@@ -64,6 +77,7 @@ public class EmployeeSkillServiceImpl implements EmployeeSkillService {
             employeeSkill.setEmployee(employee);
             employeeSkill.setSkill(skill);
             employeeSkill.setCreatedAt(LocalDateTime.now());
+            employeeSkill.setProficiencyLevel(proficiencyBySkillId.get(skill.getId()));
 
             employeeSkillRepository.save(employeeSkill);
             newlyAssignedSkillNames.add(skill.getSkillName());
@@ -87,17 +101,29 @@ public class EmployeeSkillServiceImpl implements EmployeeSkillService {
         // Remove all existing skills
         employeeSkillRepository.deleteByEmployeeId(employeeId);
         employeeSkillRepository.flush();
-        List<Skill> skills = skillRepository.findAllById(request.getSkillIds());
 
-        if (skills.size() != request.getSkillIds().size()) {
+        List<Long> skillIds = request.getSkills().stream()
+                .map(AssignSkillsRequestDTO.SkillAssignmentDTO::getSkillId)
+                .toList();
+
+        List<Skill> skills = skillRepository.findAllById(skillIds);
+
+        if (skills.size() != skillIds.size()) {
             throw new SkillNotFoundException("One or more skills not found.");
         }
+
+        Map<Long, Integer> proficiencyBySkillId = request.getSkills().stream()
+                .collect(Collectors.toMap(
+                        AssignSkillsRequestDTO.SkillAssignmentDTO::getSkillId,
+                        s -> s.getProficiencyLevel() != null ? s.getProficiencyLevel() : 0
+                ));
 
         for (Skill skill : skills) {
             EmployeeSkill employeeSkill = new EmployeeSkill();
             employeeSkill.setEmployee(employee);
             employeeSkill.setSkill(skill);
             employeeSkill.setCreatedAt(LocalDateTime.now());
+            employeeSkill.setProficiencyLevel(proficiencyBySkillId.get(skill.getId()));
 
             employeeSkillRepository.save(employeeSkill);
         }
@@ -128,5 +154,4 @@ public class EmployeeSkillServiceImpl implements EmployeeSkillService {
                 ))
                 .toList();
     }
-    // Methods will be added next
 }
