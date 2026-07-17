@@ -20,6 +20,32 @@ import {
   FiCheckCircle,
 } from "react-icons/fi";
 
+const RISK_STYLES = {
+  GREEN: "bg-green-100 text-green-700",
+  AMBER: "bg-amber-100 text-amber-700",
+  RED: "bg-red-100 text-red-700",
+};
+
+function RiskBadge({ skill }) {
+  if (!skill || !skill.riskLabel) {
+    return null;
+  }
+
+  const badgeClass =
+    RISK_STYLES[skill.riskColor] || "bg-slate-100 text-slate-700";
+
+  return (
+    <span
+      className={`ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${badgeClass}`}
+      title={`Required: ${skill.requiredLevel ?? "-"} | Current: ${
+        skill.currentLevel ?? "-"
+      } | Gap: ${skill.gap ?? "-"}`}
+    >
+      {skill.riskLabel}
+    </span>
+  );
+}
+
 export default function GapAnalysis() {
   const [employees, setEmployees] = useState([]);
   const [skills, setSkills] = useState([]);
@@ -36,6 +62,8 @@ export default function GapAnalysis() {
 
   // Heatmap Data
   const [heatmapData, setHeatmapData] = useState([]);
+  const [heatmapLoading, setHeatmapLoading] = useState(false);
+const [heatmapError, setHeatmapError] = useState("");
 
   const employeeOptions = employees.map((employee) => ({
     value: employee.id,
@@ -120,6 +148,9 @@ export default function GapAnalysis() {
 
   const loadHeatmap = async () => {
   try {
+    setHeatmapLoading(true);
+    setHeatmapError("");
+
     const data = await getDepartmentHeatmap();
 
     setHeatmapData(data);
@@ -129,6 +160,11 @@ export default function GapAnalysis() {
     console.error("Department Heatmap Error:", err);
 
     setHeatmapData([]);
+    setHeatmapError("Unable to load department heatmap.");
+
+  } finally {
+
+    setHeatmapLoading(false);
 
   }
 };
@@ -514,9 +550,10 @@ const roleName =
 
         <span
           key={skill.id}
-          className="rounded-full bg-green-100 px-4 py-2 text-sm font-medium text-green-700"
+          className="inline-flex items-center rounded-full bg-green-100 px-4 py-2 text-sm font-medium text-green-700"
         >
           {skill.skillName}
+          <RiskBadge skill={skill} />
         </span>
 
       ))}
@@ -579,9 +616,10 @@ const roleName =
 
           <span
             key={skill.id}
-            className="rounded-full bg-red-100 px-4 py-2 text-sm font-medium text-red-700"
+            className="inline-flex items-center rounded-full bg-red-100 px-4 py-2 text-sm font-medium text-red-700"
           >
             {skill.skillName}
+            <RiskBadge skill={skill} />
           </span>
 
         ))}
@@ -666,6 +704,10 @@ const roleName =
           <th className="px-6 py-4 text-left text-sm font-semibold uppercase">
             Status
           </th>
+
+          <th className="px-6 py-4 text-left text-sm font-semibold uppercase">
+            Risk
+          </th>
         </tr>
 
       </thead>
@@ -677,7 +719,7 @@ const roleName =
           <tr>
 
             <td
-              colSpan={4}
+              colSpan={5}
               className="py-12 text-center text-mute"
             >
               Select an employee to view gap analysis.
@@ -714,6 +756,10 @@ const roleName =
                   </span>
                 </td>
 
+                <td className="px-6 py-4">
+                  <RiskBadge skill={skill} />
+                </td>
+
               </tr>
 
             ))}
@@ -743,6 +789,10 @@ const roleName =
                   </span>
                 </td>
 
+                <td className="px-6 py-4">
+                  <RiskBadge skill={skill} />
+                </td>
+
               </tr>
 
             ))}
@@ -758,7 +808,17 @@ const roleName =
   </div>
 
 </div>
-<GapHeatmapChart data={heatmapData} />
+{heatmapLoading ? (
+  <div className="rounded-3xl bg-panel p-8 shadow-lg text-center">
+    Loading department heatmap...
+  </div>
+) : heatmapError ? (
+  <div className="rounded-3xl border border-red-300 bg-red-50 p-6 text-red-700 shadow-lg">
+    {heatmapError}
+  </div>
+) : (
+  <GapHeatmapChart data={heatmapData} />
+)}
 </div>
 
 </DashboardLayout>

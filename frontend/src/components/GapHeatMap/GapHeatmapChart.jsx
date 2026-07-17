@@ -9,12 +9,24 @@ import {
   Cell,
   LabelList,
 } from "recharts";
-
+import {
+  GAP_THRESHOLDS,
+  GAP_COLORS,
+} from "../../constants/gapThresholds";
 const getColor = (value) => {
-  if (value <= 20) return "#22c55e"; // Green
-  if (value <= 40) return "#facc15"; // Yellow
-  if (value <= 60) return "#fb923c"; // Orange
-  return "#ef4444"; // Red
+  if (value <= GAP_THRESHOLDS.LOW) {
+    return GAP_COLORS.LOW;
+  }
+
+  if (value <= GAP_THRESHOLDS.MODERATE) {
+    return GAP_COLORS.MODERATE;
+  }
+
+  if (value <= GAP_THRESHOLDS.HIGH) {
+    return GAP_COLORS.HIGH;
+  }
+
+  return GAP_COLORS.CRITICAL;
 };
 
 function GapHeatmapChart({ data }) {

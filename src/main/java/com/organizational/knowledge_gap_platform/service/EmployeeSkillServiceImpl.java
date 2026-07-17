@@ -24,15 +24,18 @@ public class EmployeeSkillServiceImpl implements EmployeeSkillService {
     private final SkillRepository skillRepository;
     private final EmployeeSkillRepository employeeSkillRepository;
     private final NotificationService notificationService;
+    private final ActivityLogService activityLogService;
 
     public EmployeeSkillServiceImpl(EmployeeRepository employeeRepository,
                                     SkillRepository skillRepository,
                                     EmployeeSkillRepository employeeSkillRepository,
-                                    NotificationService notificationService) {
+                                    NotificationService notificationService,
+                                    ActivityLogService activityLogService) {
         this.employeeRepository = employeeRepository;
         this.skillRepository = skillRepository;
         this.employeeSkillRepository = employeeSkillRepository;
         this.notificationService = notificationService;
+        this.activityLogService = activityLogService;
     }
     @Override
     @Transactional
@@ -67,6 +70,10 @@ public class EmployeeSkillServiceImpl implements EmployeeSkillService {
         }
 
         notificationService.notifySkillAssigned(employee, newlyAssignedSkillNames);
+
+        if (!newlyAssignedSkillNames.isEmpty()) {
+            activityLogService.logActivity(employee, "Added Skill: " + String.join(", ", newlyAssignedSkillNames));
+        }
     }
 
     @Override
@@ -100,6 +107,7 @@ public class EmployeeSkillServiceImpl implements EmployeeSkillService {
                 .toList();
 
         notificationService.notifySkillUpdated(employee, updatedSkillNames);
+        activityLogService.logActivity(employee, "Updated Skills");
     }
 
 
@@ -115,7 +123,8 @@ public class EmployeeSkillServiceImpl implements EmployeeSkillService {
         return employeeSkills.stream()
                 .map(employeeSkill -> new EmployeeSkillResponseDTO(
                         employeeSkill.getSkill().getId(),
-                        employeeSkill.getSkill().getSkillName()
+                        employeeSkill.getSkill().getSkillName(),
+                        employeeSkill.getProficiencyLevel()
                 ))
                 .toList();
     }

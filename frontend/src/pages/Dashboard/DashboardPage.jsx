@@ -2,25 +2,23 @@ import { useEffect, useRef, useState } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import { useNavigate } from "react-router-dom";
 import { getAllUsers } from "../../services/userService";
+import {
+  getDashboardStats,
+  getSkillGapHeatmap,
+} from "../../services/dashboardService";
 
-// Same demo-style gap survey shown in the reference mockup — the
-// reference file itself hardcodes these as illustrative numbers, so
-// this mirrors that exactly rather than inventing new data.
-const GAP_ROWS = [
-  { label: "Applied ML", pct: 18, tone: "kg-bad" },
-  { label: "Cloud infrastructure", pct: 61, tone: "kg-mid" },
-  { label: "Security practices", pct: 52, tone: "kg-mid" },
-  { label: "Stakeholder communication", pct: 84, tone: "kg-ok" },
-  { label: "Process documentation", pct: 73, tone: "kg-ok" },
-];
+// Coverage % -> tone, same thresholds the mock used
+// (<40 bad, 40-70 mid, >70 ok)
+function toneFor(pct) {
+  if (pct < 40) return "kg-bad";
+  if (pct < 70) return "kg-mid";
+  return "kg-ok";
+}
 
-const PRIORITY_GAPS = [
-  { title: "Applied ML — Operations", detail: "18% covered · 3 modules queued", sev: "rust" },
-  { title: "Security — Design", detail: "22% covered · assessment scheduled", sev: "rust" },
-  { title: "Data & ML — Design", detail: "49% covered · in progress", sev: "gold" },
-];
-
-const READINESS_TARGET = 0.86;
+// Coverage % -> severity color for the "Priority gaps" list
+function severityFor(pct) {
+  return pct < 30 ? "rust" : "gold";
+}
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -38,17 +36,76 @@ export default function DashboardPage() {
   const gaugeRef = useRef(null);
   const [gaugeReady, setGaugeReady] = useState(false);
 
+  // Dynamic replacements for the old hardcoded GAP_ROWS / PRIORITY_GAPS / READINESS_TARGET
+  const [gapRows, setGapRows] = useState([]);
+  const [priorityGaps, setPriorityGaps] = useState([]);
+  const [readiness, setReadiness] = useState(0); // 0..1, e.g. 0.86
+  const [criticalGapsCount, setCriticalGapsCount] = useState(0);
+
   console.log("Stored role:", role);
   console.log("Official:", isOfficial);
 
   useEffect(() => {
     loadUsers();
+    loadGapData();
   }, []);
 
   async function loadUsers() {
     try {
       const data = await getAllUsers();
       setUsers(data);
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async function loadGapData() {
+    try {
+      const heatmap = await getSkillGapHeatmap();
+      // Expected shape: { skillNames: string[], rows: [{ displayName, values: number[] }] }
+      const skillNames = heatmap?.skillNames || [];
+      const rows = heatmap?.rows || [];
+
+      // Average coverage per skill across all employees
+      const averages = skillNames.map((_, skillIdx) => {
+        if (rows.length === 0) return 0;
+        const total = rows.reduce(
+          (sum, row) => sum + (row.values?.[skillIdx] ?? 0),
+          0
+        );
+        return Math.round(total / rows.length);
+      });
+
+      const allRows = skillNames.map((name, idx) => ({
+        label: name,
+        pct: averages[idx],
+        tone: toneFor(averages[idx]),
+      }));
+
+      // "Where the gaps sit" — show the 5 skills with the lowest coverage,
+      // same visual layout as before, real ordering now instead of static.
+      const sortedByLowest = [...allRows].sort((a, b) => a.pct - b.pct);
+      setGapRows(sortedByLowest.slice(0, 5));
+
+      // Priority gaps — worst 3 skills org-wide
+      const worstThree = sortedByLowest.slice(0, 3).map((row) => ({
+        title: row.label,
+        detail: `${row.pct}% covered across ${rows.length} employee${
+          rows.length === 1 ? "" : "s"
+        }`,
+        sev: severityFor(row.pct),
+      }));
+      setPriorityGaps(worstThree);
+
+      // Org readiness — overall average coverage across all skills
+      const overallAvg =
+        allRows.length > 0
+          ? allRows.reduce((sum, r) => sum + r.pct, 0) / allRows.length
+          : 0;
+      setReadiness(overallAvg / 100);
+
+      // Critical gaps open — count of skills under 40% coverage org-wide
+      setCriticalGapsCount(allRows.filter((r) => r.pct < 40).length);
     } catch (err) {
       console.log(err);
     }
@@ -74,9 +131,8 @@ export default function DashboardPage() {
     day: "numeric",
   });
 
-  // Same trick as the reference file's runFills(): animate the dashed
-  // gap bars and the gauge arc in on mount, rather than snapping to
-  // full width immediately.
+  // Same trick as before: animate the dashed gap bars and the gauge arc
+  // in on mount, rather than snapping to full width immediately.
   useEffect(() => {
     const t = setTimeout(() => setGaugeReady(true), 350);
     return () => clearTimeout(t);
@@ -84,12 +140,12 @@ export default function DashboardPage() {
 
   const circumference = 251;
   const gaugeOffset = gaugeReady
-    ? circumference - circumference * READINESS_TARGET
+    ? circumference - circumference * readiness
     : circumference;
 
   return (
     <DashboardLayout>
-      {/* ---------------- Hero — literal port of the reference welcome banner ---------------- */}
+      {/* ---------------- Hero ---------------- */}
       <div className="kg-hero">
         <div className="kg-blob kg-b1" />
         <div className="kg-blob kg-b2" />
@@ -106,12 +162,12 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="kg-score">
-          <div className="kg-n">{Math.round(READINESS_TARGET * 100)}%</div>
+          <div className="kg-n">{Math.round(readiness * 100)}%</div>
           <div className="kg-l">Growth score</div>
         </div>
       </div>
 
-      {/* ---------------- KPI row — wired to real, live data ---------------- */}
+      {/* ---------------- KPI row ---------------- */}
       {isOfficial && (
         <div className="kg-kpi-row">
           <div className="kg-kpi" style={{ animationDelay: ".05s" }}>
@@ -133,10 +189,8 @@ export default function DashboardPage() {
             <div className="kg-val">{internCount}</div>
           </div>
           <div className="kg-kpi kg-rust" style={{ animationDelay: ".2s" }}>
-            <div className="kg-lab">
-              Critical gaps open<span className="kg-trend">2 new</span>
-            </div>
-            <div className="kg-val">6</div>
+            <div className="kg-lab">Critical gaps open</div>
+            <div className="kg-val">{criticalGapsCount}</div>
           </div>
         </div>
       )}
@@ -152,7 +206,10 @@ export default function DashboardPage() {
             gap for that skill area.
           </div>
           <div className="kg-gaplist">
-            {GAP_ROWS.map((row) => (
+            {gapRows.length === 0 && (
+              <p className="text-sub text-sm">No skill data yet.</p>
+            )}
+            {gapRows.map((row) => (
               <div className="kg-row" key={row.label}>
                 <div className="kg-top">
                   <b>{row.label}</b>
@@ -189,12 +246,15 @@ export default function DashboardPage() {
                 style={{ transition: "stroke-dashoffset 1.2s cubic-bezier(.2,.7,.2,1)" }}
               />
             </svg>
-            <div className="kg-gaugenum">{Math.round(READINESS_TARGET * 100)}%</div>
+            <div className="kg-gaugenum">{Math.round(readiness * 100)}%</div>
             <div className="kg-gaugelab">TARGET 90% BY Q4</div>
           </div>
           <h2 style={{ marginTop: 24 }}>Priority gaps</h2>
           <ul className="kg-plist">
-            {PRIORITY_GAPS.map((g) => (
+            {priorityGaps.length === 0 && (
+              <p className="text-sub text-sm">No priority gaps yet.</p>
+            )}
+            {priorityGaps.map((g) => (
               <li key={g.title}>
                 <div
                   className="kg-sev"

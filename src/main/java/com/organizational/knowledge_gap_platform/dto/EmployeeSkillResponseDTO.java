@@ -13,4 +13,6 @@ public class EmployeeSkillResponseDTO {
 
     private String skillName;
 
+    private Integer proficiencyLevel;
+
 }

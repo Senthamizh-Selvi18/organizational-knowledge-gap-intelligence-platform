@@ -9,6 +9,7 @@ import EmployeeGapAnalysis from "../pages/EmployeeGapAnalysis/EmployeeGapAnalysi
 import Profile from "../pages/Profile/Profile";
 import RoleManagement from "../pages/RoleManagement/RoleManagement";
 import RoleSkillMapping from "../pages/RoleSkillMapping/RoleSkillMapping";
+import RoleSkillRequirements from "../pages/RoleSkillRequirements/RoleSkillRequirements";
 import SkillManagement from "../pages/SkillManagement/SkillManagement";
 import EmployeeSkillManagement from "../pages/EmployeeSkillManagement/EmployeeSkillManagement";
 import EmployeeManagement from "../pages/EmployeeManagement/EmployeeManagement";
@@ -16,11 +17,13 @@ import Recommendation from "../pages/recommendation/Recommendation";
 import OAuth2RedirectPage from "../pages/OAuth2Redirect/OAuth2Redirect";
 import ProtectedRoute from "./ProtectedRoute";
 import GapAnalysis from "../pages/GapAnalysis/GapAnalysis";
+import CompetencyFramework from "../pages/CompetencyFramework/CompetencyFramework";
 import CourseCatalog from "../pages/CourseCatalog/CourseCatalog";
 import ChatBox from "../pages/Chat/ChatBox";
 import Settings from "../pages/Settings/Settings";
+import ExternalCourseManagement from "../pages/ExternalCourseManagement/ExternalCourseManagement";
+import InternalTrainingCatalog from "../pages/InternalTrainingCatalog/InternalTrainingCatalog";
 import DashboardLayout from "../components/layout/DashboardLayout";
-
 function AppRoutes() {
   return (
     <Routes>
@@ -93,6 +96,16 @@ function AppRoutes() {
         }
       />
 
+      {/* Required Skill Levels (Risk Badges) */}
+      <Route
+        path="/dashboard/role-skill-requirements"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <RoleSkillRequirements />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Employee Management */}
       <Route
         path="/dashboard/employees"
@@ -155,12 +168,42 @@ function AppRoutes() {
         }
       />
 
+      {/* Competency Framework */}
+      <Route
+        path="/dashboard/competencies"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <CompetencyFramework />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Course Catalog */}
       <Route
         path="/dashboard/course-catalog"
         element={
           <ProtectedRoute allowedRoles={["employee", "intern"]}>
             <CourseCatalog />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* External Course Management (Admin) */}
+      <Route
+        path="/dashboard/external-courses"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <ExternalCourseManagement />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Internal Training Catalog (view for everyone, CRUD gated to admin in-page) */}
+      <Route
+        path="/dashboard/internal-trainings"
+        element={
+          <ProtectedRoute>
+            <InternalTrainingCatalog />
           </ProtectedRoute>
         }
       />

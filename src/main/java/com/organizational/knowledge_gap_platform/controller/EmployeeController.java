@@ -1,14 +1,12 @@
 package com.organizational.knowledge_gap_platform.controller;
+import java.util.List;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import com.organizational.knowledge_gap_platform.dto.EmployeeResponseDTO;
 import com.organizational.knowledge_gap_platform.dto.EmployeeSummaryDTO;
 import com.organizational.knowledge_gap_platform.dto.EmployeeUpdateDTO;
 import com.organizational.knowledge_gap_platform.service.EmployeeService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/employees")
 public class EmployeeController {
@@ -63,4 +61,5 @@ public class EmployeeController {
                 employeeService.getEmployeeByUserId(userId)
         );
     }
+
 }
