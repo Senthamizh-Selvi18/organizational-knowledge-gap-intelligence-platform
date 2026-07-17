@@ -67,11 +67,15 @@ const overviewItems = [
     icon: FiCpu,
     to: "/dashboard/recommendation",
   },
-  {
-    label: "Competencies",
-    icon: FiBarChart2,
-    to: "/dashboard/competencies",
-  },
+  ...(role === "admin"
+    ? [
+        {
+          label: "Competencies",
+          icon: FiBarChart2,
+          to: "/dashboard/competencies",
+        },
+      ]
+    : []),
   {
     label: "Internal Trainings",
     icon: FiBookOpen,

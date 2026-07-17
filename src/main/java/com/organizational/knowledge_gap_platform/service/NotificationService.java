@@ -23,4 +23,6 @@ public interface NotificationService {
     void notifyGapAnalysisCompleted(Employee employee, String roleName);
 
     void notifyProfileUpdated(User user);
+
+    void notifyNewMessage(User sender, User receiver, String messagePreview);
 }
