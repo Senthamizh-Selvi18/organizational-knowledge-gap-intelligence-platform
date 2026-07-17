@@ -8,7 +8,7 @@ import {
   getConversation,
   sendMessage as apiSendMessage,
   markAsRead,
-} from "../../services/chatService";
+} from "../../services/chatservice";
 
 function initials(name = "") {
   return name.trim().charAt(0).toUpperCase() || "?";

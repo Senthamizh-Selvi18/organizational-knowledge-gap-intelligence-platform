@@ -24,6 +24,7 @@ import DashboardLayout from "../components/layout/DashboardLayout";
 import Settings from "../pages/Settings/Settings";
 import ExternalCourseManagement from "../pages/ExternalCourseManagement/ExternalCourseManagement";
 import InternalTrainingCatalog from "../pages/InternalTrainingCatalog/InternalTrainingCatalog";
+import Notifications from "../pages/Notifications/Notifications";
 
 function AppRoutes() {
   return (
@@ -205,6 +206,16 @@ function AppRoutes() {
         }
       />
 
+      {/* Notifications */}
+      <Route
+        path="/dashboard/notifications"
+        element={
+          <ProtectedRoute>
+            <Notifications />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Settings */}
       <Route
         path="/dashboard/settings"
@@ -220,6 +231,9 @@ function AppRoutes() {
         path="/oauth2/redirect"
         element={<OAuth2RedirectPage />}
       />
+
+      {/* Catch-all: unmatched paths should never render a blank page */}
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }
