@@ -1,3 +1,5 @@
+
+
 import { useEffect, useMemo, useState } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import { FiSearch } from "react-icons/fi";
@@ -16,59 +18,28 @@ function CourseCatalog() {
   }, []);
 
   const loadCourses = async () => {
-    try {
-      setLoading(true);
-      setError("");
+  try {
+    setLoading(true);
+    setError("");
 
-      const data = await getCourses();
+    const data = await getCourses();
+    setCourses(data);
+  } catch (err) {
+    console.error("Course API Error:", err);
+    setError("Failed to load courses.");
+  } finally {
+    setLoading(false);
+  }
+};
 
-      setCourses(data);
-    } catch (err) {
-      console.error("Course API Error:", err);
 
-      // Temporary Dummy Data
-      setCourses([
-        {
-          id: 1,
-          title: "Java Spring Boot",
-          platform: "Coursera",
-          duration: "12 Weeks",
-          level: "Intermediate",
-          instructor: "Coursera",
-          image:
-            "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=800",
-          skills: ["Java", "Spring Boot", "REST API"],
-        },
-        {
-          id: 2,
-          title: "React Development",
-          platform: "Udemy",
-          duration: "8 Weeks",
-          level: "Beginner",
-          instructor: "Udemy",
-          image:
-            "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=800",
-          skills: ["React", "JavaScript", "HTML", "CSS"],
-        },
-        {
-          id: 3,
-          title: "Python for Data Science",
-          platform: "Internal",
-          duration: "10 Weeks",
-          level: "Advanced",
-          instructor: "L&D Team",
-          image:
-            "https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=800",
-          skills: ["Python", "Pandas", "Machine Learning"],
-        },
-      ]);
-
-      setError("Backend not available. Showing sample courses.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+const handleViewCourse = (course) => {
+  if (course.courseUrl) {
+    window.open(course.courseUrl, "_blank", "noopener,noreferrer");
+  } else {
+    alert("Course link is not available for this training.");
+  }
+};
   const filteredCourses = useMemo(() => {
     return courses.filter((course) => {
       const keyword = searchTerm.toLowerCase();
@@ -82,9 +53,9 @@ function CourseCatalog() {
         );
 
       const matchesPlatform =
-        platformFilter === "All" ||
-        course.platform === platformFilter;
-
+  platformFilter === "All" ||
+  (platformFilter === "Internal" && course.platform === "Internal") ||
+  (platformFilter === "External" && course.platform !== "Internal");
       return matchesSearch && matchesPlatform;
     });
   }, [courses, searchTerm, platformFilter]);
@@ -156,10 +127,9 @@ function CourseCatalog() {
               onChange={(e) => setPlatformFilter(e.target.value)}
               className="rounded-xl border border-gray-300 px-4 py-3"
             >
-              <option>All</option>
-              <option>Internal</option>
-              <option>Coursera</option>
-              <option>Udemy</option>
+             <option>All</option>
+            <option>Internal</option>
+            <option>External</option>
             </select>
 
           </div>
@@ -227,12 +197,12 @@ function CourseCatalog() {
             ))}
           </div>
 
-          {/* Button */}
           <button
-            className="mt-6 w-full rounded-xl bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-700"
-          >
-            View Course
-          </button>
+  onClick={() => handleViewCourse(course)}
+  className="mt-6 w-full rounded-xl bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-700"
+>
+  View Course
+</button>
 
         </div>
       </div>
