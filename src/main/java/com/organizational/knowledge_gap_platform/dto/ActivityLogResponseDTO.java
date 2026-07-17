@@ -4,15 +4,16 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @AllArgsConstructor
-public class EmployeeSkillResponseDTO {
+public class ActivityLogResponseDTO {
 
-    private Long skillId;
+    private Long id;
 
-    private String skillName;
+    private String description;
 
-    private Integer proficiencyLevel;
-
+    private LocalDateTime createdAt;
 }

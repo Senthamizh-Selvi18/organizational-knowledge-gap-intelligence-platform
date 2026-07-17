@@ -98,7 +98,7 @@ const role = localStorage.getItem("role") || "";
   }, [])
 
   return (
-    <div className="px-4 pt-5 sm:px-8">
+    <div className="px-4 pt-5 sm:px-8 relative z-40">
       <div className="kg-topbar">
         <div className="flex items-center gap-2">
           <button
@@ -155,7 +155,7 @@ const role = localStorage.getItem("role") || "";
             )}
           </button>
 
-          <div className="relative" ref={dropdownRef}>
+          <div className="relative z-50" ref={dropdownRef}>
             <button
               type="button"
               onClick={() => setMenuOpen((o) => !o)}
@@ -177,7 +177,7 @@ const role = localStorage.getItem("role") || "";
 
             <div
               role="menu"
-              className={`absolute right-0 mt-2 w-56 origin-top-right overflow-hidden rounded-2xl border border-line bg-panel shadow-2xl backdrop-blur-xl transition-all duration-200 ${
+              className={`absolute right-0 z-50 mt-2 w-56 origin-top-right overflow-hidden rounded-2xl border border-line bg-panel shadow-2xl backdrop-blur-xl transition-all duration-200 ${
                 menuOpen ? "scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0"
               }`}
             >

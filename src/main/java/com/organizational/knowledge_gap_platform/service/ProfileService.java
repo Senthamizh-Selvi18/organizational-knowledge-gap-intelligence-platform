@@ -23,16 +23,19 @@ public class ProfileService {
     private final EmployeeRepository employeeRepository;
     private final PasswordEncoder passwordEncoder;
     private final NotificationService notificationService;
+    private final ActivityLogService activityLogService;
 
     public ProfileService(UserRepository userRepository,
                           EmployeeRepository employeeRepository,
                           PasswordEncoder passwordEncoder,
-                          NotificationService notificationService) {
+                          NotificationService notificationService,
+                          ActivityLogService activityLogService) {
 
         this.userRepository = userRepository;
         this.employeeRepository = employeeRepository;
         this.passwordEncoder = passwordEncoder;
         this.notificationService = notificationService;
+        this.activityLogService = activityLogService;
     }
     public ProfileResponseDTO getProfile(Long userId) {
 
@@ -63,6 +66,7 @@ public class ProfileService {
 );
 
         if (employee != null) {
+            response.setEmployeeId(employee.getId());
             response.setEmployeeCode(employee.getEmployeeCode());
             response.setDepartment(employee.getDepartment());
             response.setDesignation(employee.getDesignation());
@@ -143,6 +147,7 @@ public class ProfileService {
         employeeRepository.save(employee);
 
         notificationService.notifyProfileUpdated(user);
+        activityLogService.logActivity(employee, "Updated Employee Profile");
 
         return getProfile(userId);
     }
