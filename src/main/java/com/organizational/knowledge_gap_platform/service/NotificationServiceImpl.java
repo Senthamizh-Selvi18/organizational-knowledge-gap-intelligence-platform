@@ -130,6 +130,20 @@ public class NotificationServiceImpl implements NotificationService {
                 user.getId());
     }
 
+    @Override
+    @Transactional
+    public void notifyNewMessage(User sender, User receiver, String messagePreview) {
+        String preview = messagePreview == null ? "" : messagePreview.trim();
+        if (preview.length() > 100) {
+            preview = preview.substring(0, 100) + "...";
+        }
+
+        create(receiver, NotificationType.NEW_MESSAGE,
+                "New message from " + sender.getName(),
+                preview,
+                sender.getId());
+    }
+
     private void create(User recipient, NotificationType type, String title, String message, Long relatedEntityId) {
         Notification notification = new Notification();
         notification.setRecipient(recipient);
