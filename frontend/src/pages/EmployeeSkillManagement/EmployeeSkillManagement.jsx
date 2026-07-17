@@ -15,12 +15,17 @@ import {
   FiCheckCircle,
   FiRefreshCw,
 } from "react-icons/fi";
+
+const DEFAULT_PROFICIENCY = 50;
+
 export default function EmployeeSkillManagement() {
 
   const [employees, setEmployees] = useState([]);
   const [skills, setSkills] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState("");
   const [selectedSkills, setSelectedSkills] = useState([]);
+  // Map of skillId -> proficiency (0-100), kept alongside selectedSkills
+  const [skillProficiency, setSkillProficiency] = useState({});
   const [assignedSkills, setAssignedSkills] = useState([]);
 
   const [loading, setLoading] = useState(true);
@@ -105,6 +110,7 @@ const CustomOption = (props) => {
 const loadEmployeeSkills = useCallback(async (employeeId) => {
   if (!employeeId) {
     setSelectedSkills([]);
+    setSkillProficiency({});
     setAssignedSkills([]);
     return;
   }
@@ -119,11 +125,23 @@ const loadEmployeeSkills = useCallback(async (employeeId) => {
 
     setAssignedSkills(employeeSkills);
     setSelectedSkills(employeeSkills.map((skill) => skill.skillId));
+
+    // Seed the proficiency map from what's already saved, so the
+    // sliders open at the employee's real current level, not the default.
+    const proficiencyMap = {};
+    employeeSkills.forEach((skill) => {
+      proficiencyMap[skill.skillId] =
+        typeof skill.proficiencyLevel === "number"
+          ? skill.proficiencyLevel
+          : DEFAULT_PROFICIENCY;
+    });
+    setSkillProficiency(proficiencyMap);
   } catch (err) {
     console.error("Employee Skills Error:", err);
 
     setAssignedSkills([]);
     setSelectedSkills([]);
+    setSkillProficiency({});
 
     setError(
       err.response?.data?.message ||
@@ -147,12 +165,38 @@ const handleEmployeeChange = (e) => {
 
 // Handle skill checkbox selection
 const handleSkillSelection = (skillId) => {
-  setSelectedSkills((prevSkills) =>
-    prevSkills.includes(skillId)
-      ? prevSkills.filter((id) => id !== skillId)
-      : [...prevSkills, skillId]
-  );
+  setSelectedSkills((prevSkills) => {
+    const isSelected = prevSkills.includes(skillId);
+
+    if (isSelected) {
+      return prevSkills.filter((id) => id !== skillId);
+    }
+
+    // Seed a default proficiency the first time a skill is checked
+    setSkillProficiency((prev) =>
+      prev[skillId] !== undefined
+        ? prev
+        : { ...prev, [skillId]: DEFAULT_PROFICIENCY }
+    );
+
+    return [...prevSkills, skillId];
+  });
 };
+
+// Handle proficiency slider change
+const handleProficiencyChange = (skillId, value) => {
+  setSkillProficiency((prev) => ({
+    ...prev,
+    [skillId]: Number(value),
+  }));
+};
+
+// Build the {skillId, proficiencyLevel} payload from current selection
+const buildSkillsPayload = () =>
+  selectedSkills.map((skillId) => ({
+    skillId,
+    proficiencyLevel: skillProficiency[skillId] ?? DEFAULT_PROFICIENCY,
+  }));
 
 
 // Assign skills
@@ -167,7 +211,7 @@ const handleAssignSkills = async () => {
     setError("");
     setMessage("");
 
-    await assignSkills(selectedEmployee, selectedSkills);
+    await assignSkills(selectedEmployee, buildSkillsPayload());
 
     setMessage("Skills assigned successfully.");
 
@@ -197,7 +241,7 @@ const handleUpdateSkills = async () => {
     setError("");
     setMessage("");
 
-    await updateSkills(selectedEmployee, selectedSkills);
+    await updateSkills(selectedEmployee, buildSkillsPayload());
 
     setMessage("Skills updated successfully.");
 
@@ -343,6 +387,7 @@ const handleUpdateSkills = async () => {
     } else {
       setSelectedEmployee("");
       setSelectedSkills([]);
+      setSkillProficiency({});
       setAssignedSkills([]);
     }
   }}
@@ -364,7 +409,7 @@ const handleUpdateSkills = async () => {
       </h2>
 
       <p className="text-sm text-sub mt-1">
-        Select one or more skills to assign.
+        Select one or more skills to assign, then set each proficiency level.
       </p>
     </div>
 
@@ -408,40 +453,74 @@ const handleUpdateSkills = async () => {
 
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
 
-      {skills.map((skill) => (
+      {skills.map((skill) => {
+        const isChecked = selectedSkills.includes(skill.id);
+        const proficiency = skillProficiency[skill.id] ?? DEFAULT_PROFICIENCY;
 
-        <label
+        return (
+        <div
           key={skill.id}
-          className={`flex cursor-pointer items-center gap-4 rounded-2xl border p-4 transition-all duration-300 hover:shadow-md
+          className={`rounded-2xl border p-4 transition-all duration-300 hover:shadow-md
 
             ${
-              selectedSkills.includes(skill.id)
+              isChecked
                 ? "border-primary bg-primary-tint shadow"
                 : "border-line hover:border-primary"
             }
           `}
         >
 
-          <input
-            type="checkbox"
-            checked={selectedSkills.includes(skill.id)}
-            onChange={() => handleSkillSelection(skill.id)}
-            className="h-5 w-5 accent-blue-600"
-          />
+          <label className="flex cursor-pointer items-center gap-4">
 
-          <div>
-            <p className="font-semibold text-text">
-              {skill.skillName}
-            </p>
+            <input
+              type="checkbox"
+              checked={isChecked}
+              onChange={() => handleSkillSelection(skill.id)}
+              className="h-5 w-5 accent-blue-600"
+            />
 
-            <p className="text-xs text-sub">
-              Skill ID: {skill.id}
-            </p>
-          </div>
+            <div>
+              <p className="font-semibold text-text">
+                {skill.skillName}
+              </p>
 
-        </label>
+              <p className="text-xs text-sub">
+                Skill ID: {skill.id}
+              </p>
+            </div>
 
-      ))}
+          </label>
+
+          {isChecked && (
+            <div className="mt-4">
+
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium text-sub">
+                  Proficiency
+                </span>
+                <span className="text-xs font-semibold text-primary-dark">
+                  {proficiency}%
+                </span>
+              </div>
+
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={5}
+                value={proficiency}
+                onChange={(e) =>
+                  handleProficiencyChange(skill.id, e.target.value)
+                }
+                className="w-full accent-blue-600"
+              />
+
+            </div>
+          )}
+
+        </div>
+        );
+      })}
 
     </div>
 
@@ -574,6 +653,10 @@ const handleUpdateSkills = async () => {
                   Skill Name
                 </th>
 
+                <th className="px-6 py-4 text-left text-sm font-semibold uppercase text-sub">
+                  Proficiency
+                </th>
+
               </tr>
 
             </thead>
@@ -585,7 +668,7 @@ const handleUpdateSkills = async () => {
                 <tr>
 
                   <td
-                    colSpan={3}
+                    colSpan={4}
                     className="py-12 text-center text-mute"
                   >
                     Please select an employee to view assigned skills.
@@ -598,7 +681,7 @@ const handleUpdateSkills = async () => {
                 <tr>
 
                   <td
-                    colSpan={3}
+                    colSpan={4}
                     className="py-12 text-center text-mute"
                   >
                     No skills have been assigned yet.
@@ -625,6 +708,12 @@ const handleUpdateSkills = async () => {
 
                     <td className="px-6 py-4 font-semibold text-text">
                       {skill.skillName}
+                    </td>
+
+                    <td className="px-6 py-4 text-text">
+                      {typeof skill.proficiencyLevel === "number"
+                        ? `${skill.proficiencyLevel}%`
+                        : "—"}
                     </td>
 
                   </tr>

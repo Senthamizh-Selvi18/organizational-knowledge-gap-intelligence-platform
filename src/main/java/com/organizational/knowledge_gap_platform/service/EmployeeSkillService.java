@@ -12,5 +12,4 @@ public interface EmployeeSkillService {
     void updateSkills(Long employeeId, AssignSkillsRequestDTO request);
 
     List<EmployeeSkillResponseDTO> getEmployeeSkills(Long employeeId);
-
 }

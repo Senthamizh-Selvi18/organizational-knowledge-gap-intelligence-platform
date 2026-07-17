@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 public class ProfileResponseDTO {
 
     private Long userId;
+    private Long employeeId;
     private String employeeCode;
     private String name;
     private String email;

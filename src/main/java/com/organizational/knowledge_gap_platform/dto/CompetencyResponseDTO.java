@@ -7,12 +7,11 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class EmployeeSkillResponseDTO {
+public class CompetencyResponseDTO {
 
-    private Long skillId;
+    private Long id;
 
     private String skillName;
 
-    private Integer proficiencyLevel;
-
+    private String level;
 }

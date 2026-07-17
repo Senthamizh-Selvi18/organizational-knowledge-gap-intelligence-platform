@@ -211,7 +211,7 @@ function AppRoutes() {
         path="/dashboard/notifications"
         element={
           <ProtectedRoute>
-            <Notifications /> 
+            <Notifications />
           </ProtectedRoute>
         }
       />

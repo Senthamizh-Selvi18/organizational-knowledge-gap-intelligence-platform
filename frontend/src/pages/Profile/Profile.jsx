@@ -15,11 +15,15 @@ import {
 } from "react-icons/fi";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import { changePassword } from "../../services/profileService";
+import { getEmployeeSkills } from "../../services/EmployeeSkillService";
+import { getEmployeeCompetencies } from "../../services/competencyService";
+import { getRecentActivities } from "../../services/activityService";
 import { toast } from "../../components/ui/Toast.jsx";
 
 
 const initialProfile = {
   userId: "",
+  employeeId: "",
   employeeCode: "",
   name: "",
   email: "",
@@ -34,30 +38,11 @@ const initialProfile = {
   createdAt: "",
 };
 
-const skills = [
-  { name: "Java", level: 90 },
-  { name: "Spring Boot", level: 85 },
-  { name: "React.js", level: 80 },
-  { name: "PostgreSQL", level: 78 },
-  { name: "JavaScript", level: 88 },
-];
-
-const competencies = [
-  { name: "Leadership", level: "Intermediate" },
-  { name: "Communication", level: "Advanced" },
-  { name: "Problem Solving", level: "Advanced" },
-  { name: "Team Collaboration", level: "Expert" },
-];
-
-const activities = [
-  "Completed React Advanced Training",
-  "Updated Employee Profile",
-  "Completed Spring Boot Assessment",
-  "Added PostgreSQL Skill",
-];
-
 export default function Profile() {
           const [profile, setProfile] = useState(initialProfile);
+          const [skills, setSkills] = useState([]);
+          const [competencies, setCompetencies] = useState([]);
+          const [activities, setActivities] = useState([]);
           const [isEditing, setIsEditing] = useState(false);
           const [showPasswordModal, setShowPasswordModal] = useState(false);
           const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -72,6 +57,41 @@ export default function Profile() {
         useEffect(() => {
             fetchProfile();
         }, []);
+
+        useEffect(() => {
+            if (profile.employeeId) {
+                fetchSkills();
+                fetchCompetencies();
+                fetchActivities();
+            }
+        }, [profile.employeeId]);
+
+       const fetchSkills = async () => {
+    try {
+        const response = await getEmployeeSkills(profile.employeeId);
+        setSkills(response.data);
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+        const fetchCompetencies = async () => {
+            try {
+                const data = await getEmployeeCompetencies(profile.employeeId);
+                setCompetencies(data);
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        const fetchActivities = async () => {
+            try {
+                const data = await getRecentActivities(profile.employeeId);
+                setActivities(data);
+            } catch (error) {
+                console.error(error);
+            }
+        };
 
         const fetchProfile = async () => {
             try {
@@ -92,31 +112,58 @@ export default function Profile() {
                 console.error(error);
             }
         };
+
         const updateProfile = async () => {
           try {
-           const token = localStorage.getItem("token");
+            const token = localStorage.getItem("token");
+
+            // Sanitize payload: convert empty strings to null,
+            // and make sure experience is a number (or null) not a string.
+            // This prevents 400 Bad Request errors caused by Spring
+            // failing to bind "" to Integer/LocalDate fields.
+            const payload = {
+              ...profile,
+              phoneNumber: profile.phoneNumber?.trim() === "" ? null : profile.phoneNumber,
+              location: profile.location?.trim() === "" ? null : profile.location,
+              department: profile.department?.trim() === "" ? null : profile.department,
+              designation: profile.designation?.trim() === "" ? null : profile.designation,
+              manager: profile.manager?.trim() === "" ? null : profile.manager,
+              joiningDate: profile.joiningDate?.trim() === "" ? null : profile.joiningDate,
+              experience:
+                profile.experience === "" ||
+                profile.experience === null ||
+                profile.experience === undefined
+                  ? null
+                  : Number(profile.experience),
+            };
 
             await axios.put(
               `http://localhost:8080/api/profile/${userId}`,
-              profile,
+              payload,
               {
-                  headers: {
-                      Authorization: `Bearer ${token}`
-                  }
+                headers: {
+                  Authorization: `Bearer ${token}`
+                }
               }
-          );
+            );
 
             toast.success("Profile updated successfully!");
 
             setIsEditing(false);
 
             fetchProfile();
+            fetchActivities();
 
           } catch (error) {
             console.error(error);
-            toast.error("Failed to update profile.");
+            console.error("Backend response:", error.response?.data);
+            toast.error(
+              error.response?.data?.message ||
+              "Failed to update profile."
+            );
           }
         };
+
              const handleChangePassword = async () => {
 
     if (
@@ -260,7 +307,7 @@ export default function Profile() {
                     setIsEditing(true);
                   }
                 }}
-                className="flex items-center gap-2 bg-primary text-text px-5 py-3 rounded-xl hover:bg-primary-dark transition"
+                className="flex items-center gap-2 bg-primary text-white px-5 py-3 rounded-xl shadow-md shadow-primary/30 hover:bg-primary-dark transition"
               >
                 <FiEdit />
                 {isEditing ? "Save Profile" : "Edit Profile"}
@@ -268,7 +315,7 @@ export default function Profile() {
 
               <button
               onClick={() => setShowPasswordModal(true)}
-              className="flex items-center gap-2 border border-line px-5 py-3 rounded-xl hover:bg-bg transition"
+              className="flex items-center gap-2 border border-line text-text px-5 py-3 rounded-xl hover:bg-bg transition"
               >
               <FiLock />
               Change Password
@@ -453,32 +500,36 @@ export default function Profile() {
 
             <div className="space-y-5">
 
-              {skills.map((skill) => (
-                <div key={skill.name}>
+              {skills.length === 0 ? (
+                <p className="text-sub text-sm">No skills added yet.</p>
+              ) : (
+                skills.map((skill) => (
+                  <div key={skill.skillId}>
 
-                  <div className="flex justify-between mb-2">
+                    <div className="flex justify-between mb-2">
 
-                    <span className="font-medium text-text">
-                      {skill.name}
-                    </span>
+                      <span className="font-medium text-text">
+                        {skill.skillName}
+                      </span>
 
-                    <span className="text-primary font-semibold">
-                      {skill.level}%
-                    </span>
+                      <span className="text-primary font-semibold">
+                        {skill.proficiencyLevel != null ? `${skill.proficiencyLevel}%` : "N/A"}
+                      </span>
+
+                    </div>
+
+                    <div className="w-full h-3 rounded-full bg-line">
+
+                      <div
+                        className="h-3 rounded-full bg-gradient-to-r from-primary to-sky-500"
+                        style={{ width: `${skill.proficiencyLevel ?? 0}%` }}
+                      />
+
+                    </div>
 
                   </div>
-
-                  <div className="w-full h-3 rounded-full bg-line">
-
-                    <div
-                      className="h-3 rounded-full bg-gradient-to-r from-primary to-sky-500"
-                      style={{ width: `${skill.level}%` }}
-                    />
-
-                  </div>
-
-                </div>
-              ))}
+                ))
+              )}
 
             </div>
 
@@ -500,24 +551,28 @@ export default function Profile() {
 
             <div className="space-y-4">
 
-              {competencies.map((item) => (
+              {competencies.length === 0 ? (
+                <p className="text-sub text-sm">No competencies recorded yet.</p>
+              ) : (
+                competencies.map((item) => (
 
-                <div
-                  key={item.name}
-                  className="flex items-center justify-between rounded-xl bg-bg px-4 py-3"
-                >
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between rounded-xl bg-bg px-4 py-3"
+                  >
 
-                  <span className="font-medium">
-                    {item.name}
-                  </span>
+                    <span className="font-medium">
+                      {item.skillName}
+                    </span>
 
-                  <span className="rounded-full bg-primary-tint px-3 py-1 text-sm font-semibold text-primary-dark">
-                    {item.level}
-                  </span>
+                    <span className="rounded-full bg-primary-tint px-3 py-1 text-sm font-semibold text-primary-dark">
+                      {item.level}
+                    </span>
 
-                </div>
+                  </div>
 
-              ))}
+                ))
+              )}
 
             </div>
 
@@ -533,22 +588,26 @@ export default function Profile() {
 
             <ul className="space-y-4">
 
-              {activities.map((activity, index) => (
+              {activities.length === 0 ? (
+                <li className="text-sub text-sm">No recent activity.</li>
+              ) : (
+                activities.map((activity) => (
 
-                <li
-                  key={index}
-                  className="flex items-center gap-3 rounded-xl bg-bg px-4 py-3"
-                >
+                  <li
+                    key={activity.id}
+                    className="flex items-center gap-3 rounded-xl bg-bg px-4 py-3"
+                  >
 
-                  <div className="w-3 h-3 rounded-full bg-primary"></div>
+                    <div className="w-3 h-3 rounded-full bg-primary"></div>
 
-                  <span className="text-text">
-                    {activity}
-                  </span>
+                    <span className="text-text">
+                      {activity.description}
+                    </span>
 
-                </li>
+                  </li>
 
-              ))}
+                ))
+              )}
 
             </ul>
 
