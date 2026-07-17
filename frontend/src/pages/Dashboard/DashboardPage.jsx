@@ -62,9 +62,13 @@ export default function DashboardPage() {
   async function loadGapData() {
     try {
       const heatmap = await getSkillGapHeatmap();
-      // Expected shape: { skillNames: string[], rows: [{ displayName, values: number[] }] }
-      const skillNames = heatmap?.skillNames || [];
-      const rows = heatmap?.rows || [];
+      console.log("HEATMAP DATA:", heatmap);
+
+
+      // Actual HeatmapResponse shape (see HeatmapResponse.java):
+      //   { skills: string[], employees: [{ employee, values: number[] }] }
+      const skillNames = heatmap?.skills || [];
+      const rows = heatmap?.employees || [];
 
       // Average coverage per skill across all employees
       const averages = skillNames.map((_, skillIdx) => {
@@ -75,6 +79,7 @@ export default function DashboardPage() {
         );
         return Math.round(total / rows.length);
       });
+      
 
       const allRows = skillNames.map((name, idx) => ({
         label: name,
@@ -199,7 +204,21 @@ export default function DashboardPage() {
       <div className="kg-split mb-8">
         <div className="kg-panel">
           <h2>
-            Where the gaps sit <span className="kg-link">View full survey →</span>
+            Where the gaps sit{" "}
+            <span
+              className="kg-link"
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate("/dashboard/gap-analysis")}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  navigate("/dashboard/gap-analysis");
+                }
+              }}
+              style={{ cursor: "pointer" }}
+            >
+              View full survey →
+            </span>
           </h2>
           <div className="kg-desc">
             Solid fill is measured coverage; the dashed remainder is the open

@@ -27,18 +27,21 @@ export const getEmployeeSkills = (employeeId) => {
   );
 };
 
-export const assignSkills = (employeeId, skillIds) => {
+// `skills` is now an array of { skillId, proficiencyLevel } objects,
+// not a flat array of IDs — proficiencyLevel (0-100) is required for
+// the Dashboard gap panel and Profile skill bars to show real data.
+export const assignSkills = (employeeId, skills) => {
   return axios.post(
     `${API_BASE_URL}/api/employees/${employeeId}/skills`,
-    { skillIds },
+    { skills },
     authHeader()
   );
 };
 
-export const updateSkills = (employeeId, skillIds) => {
+export const updateSkills = (employeeId, skills) => {
   return axios.put(
     `${API_BASE_URL}/api/employees/${employeeId}/skills`,
-    { skillIds },
+    { skills },
     authHeader()
   );
 };
