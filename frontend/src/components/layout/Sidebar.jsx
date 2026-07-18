@@ -11,6 +11,7 @@ import {
   FiLogOut,
   FiBookOpen,
   FiMessageCircle,
+  FiAward,
   FiX,
 } from "react-icons/fi";
 
@@ -36,6 +37,11 @@ const overviewItems = [
     label: "Profile",
     icon: FiUser,
     to: "/dashboard/profile",
+  },
+  {
+    label: "Certifications",
+    icon: FiAward,
+    to: "/dashboard/certifications",
   },
 
   // Show Course Catalog only for Employee & Intern
