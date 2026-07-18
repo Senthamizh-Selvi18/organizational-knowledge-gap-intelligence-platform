@@ -4,22 +4,27 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.organizational.knowledge_gap_platform.ai.AiRecommendationException;
 import com.organizational.knowledge_gap_platform.ai.AiRecommendationRouter;
-import com.organizational.knowledge_gap_platform.dto.GapAnalysisResponseDTO;
+import com.organizational.knowledge_gap_platform.dto.ExternalCourseDto;
+import com.organizational.knowledge_gap_platform.dto.MissingSkillCoursesDto;
 import com.organizational.knowledge_gap_platform.dto.RecommendationResponse;
-import com.organizational.knowledge_gap_platform.dto.SkillDTO;
+import com.organizational.knowledge_gap_platform.dto.RecommendedCourseDto;
 import com.organizational.knowledge_gap_platform.entity.Employee;
 import com.organizational.knowledge_gap_platform.entity.EmployeeSkill;
+import com.organizational.knowledge_gap_platform.entity.Role;
+import com.organizational.knowledge_gap_platform.entity.RoleSkillRequirement;
 import com.organizational.knowledge_gap_platform.entity.Skill;
+import com.organizational.knowledge_gap_platform.entity.User;
 import com.organizational.knowledge_gap_platform.repository.EmployeeRepository;
 import com.organizational.knowledge_gap_platform.repository.EmployeeSkillRepository;
-import com.organizational.knowledge_gap_platform.repository.SkillRepository;
+import com.organizational.knowledge_gap_platform.repository.RoleSkillRequirementRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -30,21 +35,21 @@ public class RecommendationServiceImpl implements RecommendationService {
 
     private final EmployeeRepository employeeRepository;
     private final EmployeeSkillRepository employeeSkillRepository;
-    private final SkillRepository skillRepository;
-    private final GapAnalysisService gapAnalysisService;
+    private final RoleSkillRequirementRepository roleSkillRequirementRepository;
+    private final ExternalCourseService externalCourseService;
     private final AiRecommendationRouter aiRecommendationRouter;
     private final ObjectMapper objectMapper;
 
     public RecommendationServiceImpl(EmployeeRepository employeeRepository,
                                       EmployeeSkillRepository employeeSkillRepository,
-                                      SkillRepository skillRepository,
-                                      GapAnalysisService gapAnalysisService,
+                                      RoleSkillRequirementRepository roleSkillRequirementRepository,
+                                      ExternalCourseService externalCourseService,
                                       AiRecommendationRouter aiRecommendationRouter,
                                       ObjectMapper objectMapper) {
         this.employeeRepository = employeeRepository;
         this.employeeSkillRepository = employeeSkillRepository;
-        this.skillRepository = skillRepository;
-        this.gapAnalysisService = gapAnalysisService;
+        this.roleSkillRequirementRepository = roleSkillRequirementRepository;
+        this.externalCourseService = externalCourseService;
         this.aiRecommendationRouter = aiRecommendationRouter;
         this.objectMapper = objectMapper;
     }
@@ -55,56 +60,65 @@ public class RecommendationServiceImpl implements RecommendationService {
         Employee employee = employeeRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Employee not found for user id: " + userId));
 
-        List<String> missingSkillNames = resolveMissingSkillNames(employee);
+        List<Skill> missingSkills = resolveMissingSkills(employee);
 
-        if (missingSkillNames.isEmpty()) {
+        if (missingSkills.isEmpty()) {
             return new RecommendationResponse(
                     List.of("No skill gaps detected - great job staying current!"),
+                    List.of(),
                     List.of());
         }
 
+        List<MissingSkillCoursesDto> externalCourses = buildExternalCourses(missingSkills);
+
         try {
-            return generateAiRecommendations(employee, missingSkillNames);
+            RecommendationResponse aiResponse = generateAiRecommendations(employee, missingSkills);
+            aiResponse.setExternalCourses(externalCourses);
+            return aiResponse;
         } catch (AiRecommendationException ex) {
             log.warn("AI recommendation generation failed for employee {}, falling back to rule-based output: {}",
                     employee.getId(), ex.getMessage());
-            return buildFallbackRecommendations(missingSkillNames);
+            return buildFallbackRecommendations(missingSkills, externalCourses);
         }
     }
 
     /**
-     * Prefers role-based gaps (what's actually required for the employee's assigned roles).
-     * Falls back to "every skill in the catalog the employee doesn't have" if they have no
-     * role assigned yet, so the API still returns something useful.
+     * Employee has no single role field. Role lives on User, and a User can hold
+     * MULTIPLE roles (e.g. Employee + Admin at once). Union the required skills
+     * across all of the user's roles, so nothing is missed if any role requires it.
      */
-    private List<String> resolveMissingSkillNames(Employee employee) {
+    private List<Skill> resolveMissingSkills(Employee employee) {
 
-        List<GapAnalysisResponseDTO> roleGaps = gapAnalysisService.analyzeGapForEmployee(employee.getId());
-
-        Set<String> missing = new LinkedHashSet<>();
-        for (GapAnalysisResponseDTO gap : roleGaps) {
-            for (SkillDTO skill : gap.getMissingSkills()) {
-                missing.add(skill.getSkillName());
-            }
-        }
-
-        if (!missing.isEmpty()) {
-            return new ArrayList<>(missing);
-        }
-
-        // No roles assigned (or no gaps found via roles) - fall back to catalog-wide comparison.
         List<EmployeeSkill> ownedSkills = employeeSkillRepository.findByEmployeeId(employee.getId());
         Set<Long> ownedSkillIds = ownedSkills.stream()
                 .map(es -> es.getSkill().getId())
                 .collect(Collectors.toSet());
 
-        return skillRepository.findAll().stream()
+        User user = employee.getUser();
+        Set<Role> roles = user.getRoles();
+
+        // Map keyed by skill id so the same skill required by two different
+        // roles only appears once in the union.
+        Map<Long, Skill> requiredSkillsById = new LinkedHashMap<>();
+
+        for (Role role : roles) {
+            List<RoleSkillRequirement> requirements = roleSkillRequirementRepository.findByRole(role);
+            for (RoleSkillRequirement requirement : requirements) {
+                Skill skill = requirement.getSkill();
+                requiredSkillsById.put(skill.getId(), skill);
+            }
+        }
+
+        return requiredSkillsById.values().stream()
                 .filter(skill -> !ownedSkillIds.contains(skill.getId()))
-                .map(Skill::getSkillName)
                 .collect(Collectors.toList());
     }
 
-    private RecommendationResponse generateAiRecommendations(Employee employee, List<String> missingSkillNames) {
+    private RecommendationResponse generateAiRecommendations(Employee employee, List<Skill> missingSkills) {
+
+        List<String> missingSkillNames = missingSkills.stream()
+                .map(Skill::getSkillName)
+                .collect(Collectors.toList());
 
         String prompt = buildPrompt(employee, missingSkillNames);
         String rawResponse = aiRecommendationRouter.generate(prompt);
@@ -120,7 +134,7 @@ public class RecommendationServiceImpl implements RecommendationService {
                 throw new AiRecommendationException("AI response contained no recommendations: " + rawResponse);
             }
 
-            return new RecommendationResponse(recommendations, roadmap);
+            return new RecommendationResponse(recommendations, roadmap, null);
         } catch (AiRecommendationException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -174,34 +188,61 @@ public class RecommendationServiceImpl implements RecommendationService {
     }
 
     /**
-     * Simple, deterministic fallback used when the AI provider is unavailable, unconfigured,
-     * or returns something we can't parse - keeps the endpoint reliable.
+     * Deterministic fallback used when the AI provider is unavailable, unconfigured,
+     * or returns something unparsable - keeps the endpoint reliable either way.
      */
-    private RecommendationResponse buildFallbackRecommendations(List<String> missingSkillNames) {
+    private RecommendationResponse buildFallbackRecommendations(List<Skill> missingSkills,
+                                                                 List<MissingSkillCoursesDto> externalCourses) {
 
-        List<String> recommendations = missingSkillNames.stream()
-                .map(name -> "Learn " + name)
+        List<String> recommendations = missingSkills.stream()
+                .map(skill -> "Learn " + skill.getSkillName())
                 .collect(Collectors.toList());
 
-        List<String> roadmap = buildRoadmap(missingSkillNames);
+        List<String> roadmap = buildRoadmap(missingSkills);
 
-        return new RecommendationResponse(recommendations, roadmap);
+        return new RecommendationResponse(recommendations, roadmap, externalCourses);
     }
 
-    private List<String> buildRoadmap(List<String> missingSkillNames) {
+    private List<String> buildRoadmap(List<Skill> missingSkills) {
 
         List<String> roadmap = new ArrayList<>();
 
         int skillsPerMonth = 2;
         int month = 1;
 
-        for (int i = 0; i < missingSkillNames.size(); i += skillsPerMonth) {
-            int end = Math.min(i + skillsPerMonth, missingSkillNames.size());
-            List<String> monthSkills = missingSkillNames.subList(i, end);
+        for (int i = 0; i < missingSkills.size(); i += skillsPerMonth) {
+            int end = Math.min(i + skillsPerMonth, missingSkills.size());
+            List<String> monthSkills = missingSkills.subList(i, end).stream()
+                    .map(Skill::getSkillName)
+                    .collect(Collectors.toList());
             roadmap.add("Month " + month + ": " + String.join(", ", monthSkills));
             month++;
         }
 
         return roadmap;
+    }
+
+    private List<MissingSkillCoursesDto> buildExternalCourses(List<Skill> missingSkills) {
+
+        List<MissingSkillCoursesDto> result = new ArrayList<>();
+
+        for (Skill skill : missingSkills) {
+            List<ExternalCourseDto> courses = externalCourseService.getCoursesBySkill(skill.getSkillName());
+
+            List<RecommendedCourseDto> recommendedCourses = courses.stream()
+                    .map(c -> new RecommendedCourseDto(
+                            c.getCourseTitle(),
+                            c.getProvider(),
+                            c.getCourseUrl(),
+                            c.getDifficulty(),
+                            c.getDuration(),
+                            c.getDescription()
+                    ))
+                    .collect(Collectors.toList());
+
+            result.add(new MissingSkillCoursesDto(skill.getSkillName(), recommendedCourses));
+        }
+
+        return result;
     }
 }
