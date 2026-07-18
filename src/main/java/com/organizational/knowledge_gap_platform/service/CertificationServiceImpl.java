@@ -10,6 +10,8 @@ import com.organizational.knowledge_gap_platform.exception.EmployeeNotFoundExcep
 import com.organizational.knowledge_gap_platform.exception.FileUploadException;
 import com.organizational.knowledge_gap_platform.repository.CertificationRepository;
 import com.organizational.knowledge_gap_platform.repository.EmployeeRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,10 +30,12 @@ import java.util.stream.Collectors;
 @Service
 public class CertificationServiceImpl implements CertificationService {
 
+    private static final Logger log = LoggerFactory.getLogger(CertificationServiceImpl.class);
+
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
             "application/pdf", "image/png", "image/jpeg"
     );
-    private static final long MAX_FILE_SIZE_BYTES = 5L * 1024 * 1024; 
+    private static final long MAX_FILE_SIZE_BYTES = 5L * 1024 * 1024;
 
     private final Cloudinary cloudinary;
     private final CertificationRepository certificationRepository;
@@ -56,6 +60,7 @@ public class CertificationServiceImpl implements CertificationService {
 
         Employee employee = requireOwnedEmployee(employeeId);
         validateFile(file);
+        validateMetadata(certificationName, issuingOrganization, issueDate, expiryDate);
 
         Map<String, Object> uploadResult;
         try {
@@ -72,8 +77,8 @@ public class CertificationServiceImpl implements CertificationService {
 
         Certification certification = new Certification();
         certification.setEmployee(employee);
-        certification.setCertificationName(certificationName);
-        certification.setIssuingOrganization(issuingOrganization);
+        certification.setCertificationName(certificationName.trim());
+        certification.setIssuingOrganization(issuingOrganization.trim());
         certification.setIssueDate(issueDate);
         certification.setExpiryDate(expiryDate);
         certification.setFileUrl((String) uploadResult.get("secure_url"));
@@ -81,7 +86,16 @@ public class CertificationServiceImpl implements CertificationService {
         certification.setResourceType((String) uploadResult.get("resource_type"));
         certification.setUploadedAt(LocalDateTime.now());
 
-        certificationRepository.save(certification);
+        try {
+            certificationRepository.save(certification);
+        } catch (RuntimeException e) {
+            // Cloudinary upload already succeeded but the DB write failed.
+            // Log the public_id so the orphaned file can be cleaned up manually.
+            log.error("Certification DB save failed after successful Cloudinary upload. " +
+                            "Orphaned Cloudinary asset publicId={}, resourceType={}",
+                    certification.getPublicId(), certification.getResourceType(), e);
+            throw e;
+        }
 
         return toDto(certification);
     }
@@ -109,16 +123,25 @@ public class CertificationServiceImpl implements CertificationService {
             throw new AccessDeniedException("You are not authorized to delete this certification.");
         }
 
+        String publicId = certification.getPublicId();
+        String resourceType = certification.getResourceType();
+
+        // Remove the DB record first so the app never ends up with a certification
+        // row pointing at a file that no longer exists. If the Cloudinary delete
+        // below fails, we're left with an orphaned remote file (recoverable via
+        // Cloudinary's dashboard/API) rather than a broken DB reference.
+        certificationRepository.delete(certification);
+
         try {
             cloudinary.uploader().destroy(
-                    certification.getPublicId(),
-                    ObjectUtils.asMap("resource_type", certification.getResourceType())
+                    publicId,
+                    ObjectUtils.asMap("resource_type", resourceType)
             );
         } catch (IOException e) {
-            throw new FileUploadException("Failed to delete certification file: " + e.getMessage());
+            log.error("Certification record {} deleted from DB, but failed to delete " +
+                    "the corresponding Cloudinary asset publicId={}, resourceType={}. " +
+                    "Manual cleanup may be required.", certificationId, publicId, resourceType, e);
         }
-
-        certificationRepository.delete(certification);
     }
 
     private void validateFile(MultipartFile file) {
@@ -132,6 +155,27 @@ public class CertificationServiceImpl implements CertificationService {
         String contentType = file.getContentType();
         if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase())) {
             throw new FileUploadException("Only PDF, JPG, and PNG files are allowed.");
+        }
+    }
+
+    private void validateMetadata(String certificationName,
+                                   String issuingOrganization,
+                                   LocalDate issueDate,
+                                   LocalDate expiryDate) {
+        if (certificationName == null || certificationName.isBlank()) {
+            throw new FileUploadException("Certification name is required.");
+        }
+        if (issuingOrganization == null || issuingOrganization.isBlank()) {
+            throw new FileUploadException("Issuing organization is required.");
+        }
+        if (issueDate == null) {
+            throw new FileUploadException("Issue date is required.");
+        }
+        if (issueDate.isAfter(LocalDate.now())) {
+            throw new FileUploadException("Issue date cannot be in the future.");
+        }
+        if (expiryDate != null && expiryDate.isBefore(issueDate)) {
+            throw new FileUploadException("Expiry date cannot be before the issue date.");
         }
     }
 
