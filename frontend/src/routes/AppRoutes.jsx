@@ -20,10 +20,10 @@ import GapAnalysis from "../pages/GapAnalysis/GapAnalysis";
 import CompetencyFramework from "../pages/CompetencyFramework/CompetencyFramework";
 import CourseCatalog from "../pages/CourseCatalog/CourseCatalog";
 import ChatBox from "../pages/Chat/ChatBox";
-import DashboardLayout from "../components/layout/DashboardLayout";
 import Settings from "../pages/Settings/Settings";
 import ExternalCourseManagement from "../pages/ExternalCourseManagement/ExternalCourseManagement";
 import InternalTrainingCatalog from "../pages/InternalTrainingCatalog/InternalTrainingCatalog";
+import DashboardLayout from "../components/layout/DashboardLayout";
 import Notifications from "../pages/Notifications/Notifications";
 
 function AppRoutes() {
@@ -40,7 +40,9 @@ function AppRoutes() {
       <Route
         path="/dashboard"
         element={
-          <ProtectedRoute allowedRoles={["admin", "hr", "manager", "team lead"]}>
+          <ProtectedRoute
+            allowedRoles={["admin", "hr", "manager", "team lead"]}
+          >
             <DashboardPage />
           </ProtectedRoute>
         }
@@ -160,7 +162,9 @@ function AppRoutes() {
       <Route
         path="/dashboard/gap-analysis"
         element={
-          <ProtectedRoute allowedRoles={["admin", "hr", "manager", "team lead"]}>
+          <ProtectedRoute
+            allowedRoles={["admin", "hr", "manager", "team lead"]}
+          >
             <GapAnalysis />
           </ProtectedRoute>
         }
