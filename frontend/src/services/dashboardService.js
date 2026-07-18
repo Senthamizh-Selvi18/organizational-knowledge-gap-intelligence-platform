@@ -38,12 +38,6 @@ export const getSkillsOverview = async () => {
 
   return response.data;
 };
-
-export const getCompetencyAnalytics = async () => {
-  const response = await axios.get(`${API_BASE_URL}/api/dashboard/competency-analytics`);
-  return response.data;
-};
-
 export const getTrainingProgress = async () => {
   const response = await axios.get(`${API_BASE_URL}/api/dashboard/training-progress`);
   return response.data;
@@ -54,12 +48,50 @@ export const getNotifications = async () => {
   return response.data;
 };
 
-export const getRecentActivity = async () => {
-  const response = await axios.get(`${API_BASE_URL}/api/dashboard/recent-activity`);
-  return response.data;
-};
 
 export const getSkillGapHeatmap = async () => {
   const response = await axios.get(`${API_BASE_URL}/api/dashboard/skill-gap-heatmap`);
+  return response.data;
+};
+
+export const getCompetencyAnalytics = async () => {
+  const userId = localStorage.getItem("userId");
+
+  if (!userId) {
+    throw new Error("No userId found.");
+  }
+
+  // Convert logged-in userId -> employeeId
+  const employeeResponse = await axios.get(
+    `${API_BASE_URL}/api/employees/by-user/${userId}`
+  );
+
+  const employeeId = employeeResponse.data.employeeId;
+
+  const response = await axios.get(
+    `${API_BASE_URL}/api/dashboard/employee/${employeeId}/competency-analytics`
+  );
+
+  return response.data;
+};
+
+export const getRecentActivity = async () => {
+  const userId = localStorage.getItem("userId");
+
+  if (!userId) {
+    throw new Error("No userId found.");
+  }
+
+  // Convert logged-in userId -> employeeId
+  const employeeResponse = await axios.get(
+    `${API_BASE_URL}/api/employees/by-user/${userId}`
+  );
+
+  const employeeId = employeeResponse.data.employeeId;
+
+  const response = await axios.get(
+    `${API_BASE_URL}/api/dashboard/employee/${employeeId}/recent-activity`
+  );
+
   return response.data;
 };
