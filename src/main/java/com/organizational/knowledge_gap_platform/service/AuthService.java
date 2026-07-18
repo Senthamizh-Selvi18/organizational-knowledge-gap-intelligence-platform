@@ -3,8 +3,10 @@ package com.organizational.knowledge_gap_platform.service;
 import com.organizational.knowledge_gap_platform.dto.AuthResponse;
 import com.organizational.knowledge_gap_platform.dto.LoginRequest;
 import com.organizational.knowledge_gap_platform.dto.RegisterRequest;
+import com.organizational.knowledge_gap_platform.entity.Employee;
 import com.organizational.knowledge_gap_platform.entity.Role;
 import com.organizational.knowledge_gap_platform.entity.User;
+import com.organizational.knowledge_gap_platform.repository.EmployeeRepository;
 import com.organizational.knowledge_gap_platform.repository.RoleRepository;
 import com.organizational.knowledge_gap_platform.repository.UserRepository;
 import com.organizational.knowledge_gap_platform.security.JwtService;
@@ -21,6 +23,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final EmployeeRepository employeeRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
@@ -28,12 +31,14 @@ public class AuthService {
 
     public AuthService(UserRepository userRepository,
                        RoleRepository roleRepository,
+                       EmployeeRepository employeeRepository,
                        PasswordEncoder passwordEncoder,
                        JwtService jwtService,
                        AuthenticationManager authenticationManager,
                        OtpService otpService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.employeeRepository = employeeRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
@@ -55,6 +60,24 @@ public class AuthService {
     user.setCreatedAt(LocalDateTime.now());
 
     userRepository.save(user);
+
+    // --- THE FIX ---
+    // Previously, registering a User never created a matching Employee
+    // row (Week 1 spec required "create profile on first login" —
+    // this step was missing entirely). Employee has NOT NULL columns
+    // for department/designation, and RegisterRequest doesn't collect
+    // those at signup, so we use clear placeholder values here.
+    // HR/Admin can fill in the real values afterward via the existing
+    // Employee Management "Edit" flow (EmployeeServiceImpl.updateEmployee).
+    Employee employee = new Employee();
+    employee.setEmployeeCode("EMP-" + user.getId());
+    employee.setUser(user);
+    employee.setDepartment("Not Assigned");
+    employee.setDesignation("Not Assigned");
+    employee.setExperience(0);
+    employee.setCreatedAt(LocalDateTime.now());
+
+    employeeRepository.save(employee);
 
         String token = jwtService.generateToken(user.getEmail());
         String roleName = user.getRoles()

@@ -41,7 +41,7 @@ function AppRoutes() {
       <Route
         path="/dashboard"
         element={
-          <ProtectedRoute allowedRoles={["admin", "hr", "manager", "team lead"]}>
+          <ProtectedRoute allowedRoles={["admin", "hr specialist", "manager", "department head", "l&d admin"]}>
             <DashboardPage />
           </ProtectedRoute>
         }
@@ -111,7 +111,7 @@ function AppRoutes() {
       <Route
         path="/dashboard/employees"
         element={
-          <ProtectedRoute allowedRoles={["admin", "hr"]}>
+          <ProtectedRoute allowedRoles={["admin", "hr specialist"]}>
             <EmployeeManagement />
           </ProtectedRoute>
         }
@@ -121,7 +121,7 @@ function AppRoutes() {
       <Route
         path="/dashboard/roles"
         element={
-          <ProtectedRoute allowedRoles={["admin", "hr"]}>
+          <ProtectedRoute allowedRoles={["admin", "hr specialist"]}>
             <RoleManagement />
           </ProtectedRoute>
         }
@@ -141,7 +141,7 @@ function AppRoutes() {
       <Route
         path="/dashboard/employee-skills"
         element={
-          <ProtectedRoute allowedRoles={["admin", "hr"]}>
+          <ProtectedRoute allowedRoles={["admin", "hr specialist"]}>
             <EmployeeSkillManagement />
           </ProtectedRoute>
         }
@@ -161,7 +161,7 @@ function AppRoutes() {
       <Route
         path="/dashboard/gap-analysis"
         element={
-          <ProtectedRoute allowedRoles={["admin", "hr", "manager", "team lead"]}>
+          <ProtectedRoute allowedRoles={["admin", "hr specialist", "manager", "department head"]}>
             <GapAnalysis />
           </ProtectedRoute>
         }

@@ -29,7 +29,17 @@ export default function RoleSkillMapping() {
           getRoles(),
           getSkills(),
         ]);
-        setRoles(rolesRes.data);
+
+        // The roles endpoint returns ALL roles, including soft-deleted
+        // ones (active: false) from the 10->6 role migration. Filter
+        // those out here so merged/retired roles never appear in this
+        // dropdown. Treat missing/undefined `active` as visible, so we
+        // don't accidentally hide a role due to a missing field.
+        const visibleRoles = (rolesRes.data || []).filter(
+          (r) => r.active !== false
+        );
+
+        setRoles(visibleRoles);
         setSkills(skillsRes.data);
       } catch (err) {
         console.error(err);

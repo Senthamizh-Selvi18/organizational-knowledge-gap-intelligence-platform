@@ -36,17 +36,13 @@ public List<RoleDetailsResponse> getAllRoles() {
                 dto.setId(role.getId());
                 dto.setRoleName(role.getRoleName());
 
-                
-
                 dto.setUsers(new ArrayList<>());
 
                 dto.setTotalUsers(role.getUsers().size());
 
                 dto.setDescription(role.getDescription());
-dto.setActive(role.getActive());
-dto.setCreatedAt(role.getCreatedAt());
-
-                
+                dto.setActive(role.getActive());
+                dto.setCreatedAt(role.getCreatedAt());
 
                 return dto;
 
@@ -112,11 +108,15 @@ dto.setCreatedAt(role.getCreatedAt());
     @Override
     public List<Role> getRegisterableRoles() {
 
+        // Previously also matched "Intern" — that role no longer exists
+        // after the 10->6 role migration, so that branch was removed.
+        // Added an active-flag check so a soft-deleted (merged-away)
+        // role can never be offered to a new signup.
         return roleRepository.findAll()
                 .stream()
                 .filter(role ->
                         role.getRoleName().equalsIgnoreCase("Employee")
-                                || role.getRoleName().equalsIgnoreCase("Intern"))
+                                && Boolean.TRUE.equals(role.getActive()))
                 .toList();
     }
 
@@ -157,8 +157,8 @@ public RoleDetailsResponse getRoleDetails(Long id) {
     response.setId(role.getId());
     response.setRoleName(role.getRoleName());
     response.setDescription(role.getDescription());
-response.setCreatedAt(role.getCreatedAt());
-response.setActive(role.getActive());
+    response.setCreatedAt(role.getCreatedAt());
+    response.setActive(role.getActive());
 
     List<UserSummary> users = role.getUsers()
             .stream()
@@ -173,10 +173,6 @@ response.setActive(role.getActive());
 
     response.setUsers(users);
     response.setTotalUsers(users.size());
-    response.setDescription(role.getDescription());
-    response.setCreatedAt(role.getCreatedAt());
-    response.setActive(role.getActive());
-
     return response;
 }
 }
