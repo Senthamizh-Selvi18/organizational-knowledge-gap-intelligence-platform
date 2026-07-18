@@ -18,13 +18,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class NotificationServiceImpl implements NotificationService {
+
+    private static final DateTimeFormatter DUE_DATE_FORMAT = DateTimeFormatter.ofPattern("MMM d, yyyy");
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
@@ -142,6 +146,39 @@ public class NotificationServiceImpl implements NotificationService {
                 "New message from " + sender.getName(),
                 preview,
                 sender.getId());
+    }
+
+    @Override
+    @Transactional
+    public void notifyAssessmentAssigned(User assessor, String subjectName, String assessmentTypeLabel,
+                                          LocalDate dueDate, Long assessmentId) {
+        String dueText = dueDate != null ? " Due by " + dueDate.format(DUE_DATE_FORMAT) + "." : "";
+        create(assessor, NotificationType.ASSESSMENT_ASSIGNED,
+                "New " + assessmentTypeLabel + " assessment assigned",
+                "You have been asked to complete a " + assessmentTypeLabel.toLowerCase()
+                        + " assessment for " + subjectName + "." + dueText,
+                assessmentId);
+    }
+
+    @Override
+    @Transactional
+    public void notifyAssessmentReminder(User assessor, String subjectName, LocalDate dueDate, Long assessmentId) {
+        String dueText = dueDate != null ? " It is due by " + dueDate.format(DUE_DATE_FORMAT) + "." : "";
+        create(assessor, NotificationType.ASSESSMENT_REMINDER,
+                "Assessment reminder",
+                "Your assessment for " + subjectName + " is still pending." + dueText,
+                assessmentId);
+    }
+
+    @Override
+    @Transactional
+    public void notifyAssessmentCompleted(Employee subjectEmployee, String assessmentTypeLabel,
+                                           String assessorName, Long assessmentId) {
+        create(subjectEmployee.getUser(), NotificationType.ASSESSMENT_COMPLETED,
+                assessmentTypeLabel + " assessment completed",
+                assessorName + " completed a " + assessmentTypeLabel.toLowerCase()
+                        + " assessment for you. Your skill gaps have been recalculated.",
+                assessmentId);
     }
 
     private void create(User recipient, NotificationType type, String title, String message, Long relatedEntityId) {

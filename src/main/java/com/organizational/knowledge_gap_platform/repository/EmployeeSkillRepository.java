@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface EmployeeSkillRepository extends JpaRepository<EmployeeSkill, Long> {
@@ -17,6 +18,10 @@ public interface EmployeeSkillRepository extends JpaRepository<EmployeeSkill, Lo
     List<EmployeeSkill> findByEmployeeId(Long employeeId);
 
     List<EmployeeSkill> findByEmployee(Employee employee);
+
+    // Added for the Assessment module: lets assessment submission upsert
+    // the employee's proficiency level for a specific skill.
+    Optional<EmployeeSkill> findByEmployeeAndSkill(Employee employee, Skill skill);
 
     @Modifying
     @Query("DELETE FROM EmployeeSkill es WHERE es.employee.id = :employeeId")

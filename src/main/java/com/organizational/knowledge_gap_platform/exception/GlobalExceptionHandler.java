@@ -33,6 +33,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody(ex.getMessage()));
     }
 
+    @ExceptionHandler(AssessmentTemplateNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleAssessmentTemplateNotFound(AssessmentTemplateNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorBody(ex.getMessage()));
+    }
+
+    @ExceptionHandler(AssessmentNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleAssessmentNotFound(AssessmentNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorBody(ex.getMessage()));
+    }
+
+    @ExceptionHandler(AssessmentQuestionNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleAssessmentQuestionNotFound(AssessmentQuestionNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorBody(ex.getMessage()));
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, Object>> handleAccessDenied(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody(ex.getMessage()));
