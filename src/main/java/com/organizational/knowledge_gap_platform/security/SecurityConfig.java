@@ -92,7 +92,7 @@ public class SecurityConfig {
                         // Read-only access for HR: viewing employees is required for
                         // Gap Analysis, but creating/editing/deleting employees stays Admin-only.
                         .requestMatchers(HttpMethod.GET, "/api/employees/**")
-                        .hasAnyRole("ADMIN", "HR")
+                        .authenticated()
 
                         // Added to restrict Employee Management write APIs to Admin only
                         .requestMatchers("/api/employees/**")
