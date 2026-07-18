@@ -6,14 +6,19 @@ import com.organizational.knowledge_gap_platform.dto.RecommendationResponse;
 import com.organizational.knowledge_gap_platform.dto.RecommendedCourseDto;
 import com.organizational.knowledge_gap_platform.entity.Employee;
 import com.organizational.knowledge_gap_platform.entity.EmployeeSkill;
+import com.organizational.knowledge_gap_platform.entity.Role;
+import com.organizational.knowledge_gap_platform.entity.RoleSkillRequirement;
 import com.organizational.knowledge_gap_platform.entity.Skill;
+import com.organizational.knowledge_gap_platform.entity.User;
 import com.organizational.knowledge_gap_platform.repository.EmployeeRepository;
 import com.organizational.knowledge_gap_platform.repository.EmployeeSkillRepository;
-import com.organizational.knowledge_gap_platform.repository.SkillRepository;
+import com.organizational.knowledge_gap_platform.repository.RoleSkillRequirementRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -22,16 +27,16 @@ public class RecommendationServiceImpl implements RecommendationService {
 
     private final EmployeeRepository employeeRepository;
     private final EmployeeSkillRepository employeeSkillRepository;
-    private final SkillRepository skillRepository;
+    private final RoleSkillRequirementRepository roleSkillRequirementRepository;
     private final ExternalCourseService externalCourseService;
 
     public RecommendationServiceImpl(EmployeeRepository employeeRepository,
                                       EmployeeSkillRepository employeeSkillRepository,
-                                      SkillRepository skillRepository,
+                                      RoleSkillRequirementRepository roleSkillRequirementRepository,
                                       ExternalCourseService externalCourseService) {
         this.employeeRepository = employeeRepository;
         this.employeeSkillRepository = employeeSkillRepository;
-        this.skillRepository = skillRepository;
+        this.roleSkillRequirementRepository = roleSkillRequirementRepository;
         this.externalCourseService = externalCourseService;
     }
 
@@ -41,6 +46,7 @@ public class RecommendationServiceImpl implements RecommendationService {
         Employee employee = employeeRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Employee not found for user id: " + userId));
 
+        // Skills the employee currently owns
         List<EmployeeSkill> ownedSkills =
                 employeeSkillRepository.findByEmployeeId(employee.getId());
 
@@ -48,9 +54,30 @@ public class RecommendationServiceImpl implements RecommendationService {
                 .map(es -> es.getSkill().getId())
                 .collect(Collectors.toSet());
 
-        List<Skill> allSkills = skillRepository.findAll();
+        // --- THE FIX ---
+        // Employee has no single role field. Role lives on User, and a User
+        // can hold MULTIPLE roles (e.g. Employee + Admin at once).
+        // Per your decision: union the required skills across all of the
+        // user's roles, so nothing is missed if any role requires it.
+        User user = employee.getUser();
 
-        List<Skill> missingSkills = allSkills.stream()
+        Set<Role> roles = user.getRoles();
+
+        // Map keyed by skill id so the same skill required by two different
+        // roles only appears once in the union.
+        Map<Long, Skill> requiredSkillsById = new LinkedHashMap<>();
+
+        for (Role role : roles) {
+            List<RoleSkillRequirement> requirements =
+                    roleSkillRequirementRepository.findByRole(role);
+
+            for (RoleSkillRequirement requirement : requirements) {
+                Skill skill = requirement.getSkill();
+                requiredSkillsById.put(skill.getId(), skill);
+            }
+        }
+
+        List<Skill> missingSkills = requiredSkillsById.values().stream()
                 .filter(skill -> !ownedSkillIds.contains(skill.getId()))
                 .collect(Collectors.toList());
 
