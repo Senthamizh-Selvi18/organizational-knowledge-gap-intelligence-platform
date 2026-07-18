@@ -1,9 +1,9 @@
 
-
 import { useEffect, useMemo, useState } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import { FiSearch } from "react-icons/fi";
 import { getCourses } from "../../services/courseCatalogService";
+import { toast } from "../../components/ui/Toast.jsx";
 
 function CourseCatalog() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -37,7 +37,7 @@ const handleViewCourse = (course) => {
   if (course.courseUrl) {
     window.open(course.courseUrl, "_blank", "noopener,noreferrer");
   } else {
-    alert("Course link is not available for this training.");
+    toast.info("Course link is not available for this training.");
   }
 };
   const filteredCourses = useMemo(() => {
