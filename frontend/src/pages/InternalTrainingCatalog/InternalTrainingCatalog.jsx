@@ -7,7 +7,13 @@ import {
   updateInternalTraining,
   deleteInternalTraining,
 } from "../../services/internalTrainingService";
-
+import {
+  enroll,
+  getEnrolledTrainingIds,
+  getAllEnrollments,
+  completeTraining,
+} from "../../services/learningService";
+import { toast } from "../../components/ui/Toast.jsx";
 const MODE_OPTIONS = ["Online", "Offline", "Hybrid"];
 
 const EMPTY_FORM = {
@@ -27,7 +33,9 @@ export default function InternalTrainingCatalog() {
 
   const role = localStorage.getItem("role")?.toLowerCase();
   const isAdmin = role === "admin";
-
+  const employeeId = Number(localStorage.getItem("employeeId"));
+  const [enrolledTrainingIds, setEnrolledTrainingIds] = useState([]);
+  const [enrollments, setEnrollments] = useState([]);
   const [trainings, setTrainings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -63,10 +71,54 @@ export default function InternalTrainingCatalog() {
 
   };
 
-  useEffect(() => {
-    loadTrainings();
-  }, []);
+  const loadEnrollments = async () => {
 
+  if (!employeeId) return;
+
+  try {
+
+    const response = await getEnrolledTrainingIds(employeeId);
+
+    setEnrolledTrainingIds(response.data);
+
+  } catch (err) {
+
+    console.error(err);
+
+  }
+
+};
+const loadAllEnrollments = async () => {
+
+  try {
+
+    const response = await getAllEnrollments();
+
+    setEnrollments(response.data);
+
+  } catch (err) {
+
+    console.error(err);
+
+  }
+
+};
+
+useEffect(() => {
+
+  loadTrainings();
+
+  if (isAdmin) {
+
+    loadAllEnrollments();
+
+  } else {
+
+    loadEnrollments();
+
+  }
+
+}, []);
   useEffect(() => {
 
     if (showModal || deleteTarget) {
@@ -226,6 +278,51 @@ export default function InternalTrainingCatalog() {
 
   };
 
+  const handleEnroll = async (trainingId) => {
+
+  if (!employeeId) {
+    toast.error("Employee not found.");
+    return;
+  }
+
+  try {
+
+    await enroll(employeeId, trainingId);
+
+    toast.success("Training enrolled successfully.");
+
+    // Update button immediately
+    setEnrolledTrainingIds(prev => [...prev, trainingId]);
+
+  } catch (err) {
+
+    console.error(err);
+
+    toast.error("Unable to enroll.");
+
+  }
+
+};
+const handleComplete = async (enrollmentId) => {
+
+  try {
+
+    await completeTraining(enrollmentId);
+
+    toast.success("Training marked as completed.");
+
+    loadAllEnrollments();   // Refresh Admin table
+    loadTrainings();        // Refresh training list if needed
+
+  } catch (err) {
+
+    console.error(err);
+
+    toast.error("Unable to update training.");
+
+  }
+
+};
   return (
     <DashboardLayout>
 
@@ -330,6 +427,7 @@ export default function InternalTrainingCatalog() {
                   <th className="py-3 pr-4">Mandatory</th>
                   <th className="py-3 pr-4">Status</th>
                   {isAdmin && <th className="py-3 pr-4">Actions</th>}
+                  {!isAdmin && <th className="py-3 pr-4">Enroll</th>}
                 </tr>
               </thead>
               <tbody>
@@ -383,7 +481,6 @@ export default function InternalTrainingCatalog() {
                         {training.active ? "Active" : "Inactive"}
                       </span>
                     </td>
-
                     {isAdmin && (
                       <td className="py-4 pr-4">
                         <div className="flex items-center gap-3">
@@ -407,6 +504,32 @@ export default function InternalTrainingCatalog() {
                         </div>
                       </td>
                     )}
+                    {!isAdmin && (
+  <td className="py-4 pr-4">
+
+    {enrolledTrainingIds.includes(training.id) ? (
+
+      <button
+        disabled
+        className="inline-flex items-center gap-2 bg-green-50 text-green-700 border border-green-200 px-5 py-2.5 rounded-xl font-semibold shadow-sm cursor-not-allowed"
+      >
+        <span className="text-lg">✅</span>
+        Enrolled
+      </button>
+
+    ) : (
+
+      <button
+        onClick={() => handleEnroll(training.id)}
+        className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+      >
+        📚 Enroll Now
+      </button>
+
+    )}
+
+  </td>
+)}
 
                   </tr>
                 ))}
@@ -418,6 +541,198 @@ export default function InternalTrainingCatalog() {
         </div>
 
       </div>
+
+      {isAdmin && (
+  <div className="bg-panel rounded-3xl shadow-xl p-6 mt-8 overflow-x-auto">
+
+   <div className="mb-6">
+
+  <h2 className="text-3xl font-bold text-text">
+    Learning Progress Management
+  </h2>
+
+  <p className="text-sub mt-2">
+    Monitor employee enrollments and manage training completion.
+  </p>
+
+</div>
+<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+
+  <div className="bg-white rounded-2xl shadow-md p-5">
+
+    <p className="text-sub text-sm">
+      Total Enrollments
+    </p>
+
+    <h2 className="text-3xl font-bold mt-2">
+      {enrollments.length}
+    </h2>
+
+  </div>
+
+  <div className="bg-white rounded-2xl shadow-md p-5">
+
+    <p className="text-sub text-sm">
+      Completed
+    </p>
+
+    <h2 className="text-3xl font-bold text-green-600 mt-2">
+
+      {
+        enrollments.filter(
+          e => e.status === "COMPLETED"
+        ).length
+      }
+
+    </h2>
+
+  </div>
+
+  <div className="bg-white rounded-2xl shadow-md p-5">
+
+    <p className="text-sub text-sm">
+      Pending
+    </p>
+
+    <h2 className="text-3xl font-bold text-orange-500 mt-2">
+
+      {
+        enrollments.filter(
+          e => e.status !== "COMPLETED"
+        ).length
+      }
+
+    </h2>
+
+  </div>
+
+</div>
+
+    {enrollments.length === 0 ? (
+
+      <p>No employee enrollments found.</p>
+
+    ) : (
+
+      <table className="min-w-full text-left border-separate border-spacing-y-2">
+
+     <thead className="bg-gray-50">
+
+          <tr className="border-b">
+
+            <th className="py-3">Employee</th>
+
+            <th className="py-3">Training</th>
+
+            <th className="py-3">Status</th>
+
+            <th className="py-3">Progress</th>
+
+            <th className="py-3">Action</th>
+
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+          {enrollments.map((enrollment) => (
+
+            <tr
+            key={enrollment.id}
+            className="border-b border-gray-100 hover:bg-gray-50 transition"
+          >
+
+              <td className="py-3">
+                {enrollment.employeeName}
+              </td>
+
+              <td className="py-3">
+                {enrollment.trainingTitle}
+              </td>
+
+              <td className="py-4">
+
+  {enrollment.status === "COMPLETED" ? (
+
+    <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">
+      ✓ Completed
+    </span>
+
+  ) : enrollment.status === "IN_PROGRESS" ? (
+
+    <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-semibold">
+      ⏳ In Progress
+    </span>
+
+  ) : (
+
+    <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">
+      📘 Enrolled
+    </span>
+
+  )}
+
+</td>
+
+             <td className="py-4">
+
+  <div className="w-36">
+
+    <div className="w-full bg-gray-200 rounded-full h-2">
+
+      <div
+        className="bg-indigo-600 h-2 rounded-full"
+        style={{
+          width: `${enrollment.progress}%`
+        }}
+      />
+
+    </div>
+
+    <p className="text-xs text-gray-500 mt-1">
+      {enrollment.progress}%
+    </p>
+
+  </div>
+
+</td>
+
+              <td className="py-3">
+
+                {enrollment.status === "ENROLLED" ? (
+
+                  <button
+                    onClick={() =>
+                      handleComplete(enrollment.id)
+                    }
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition"
+                  >
+                    Mark as Completed
+                  </button>
+
+                ) : (
+
+                  <span className="bg-green-100 text-green-700 px-4 py-2 rounded-xl text-sm font-semibold">
+                  ✓ Completed
+                </span>
+
+                )}
+
+              </td>
+
+            </tr>
+
+          ))}
+
+        </tbody>
+
+      </table>
+
+    )}
+
+  </div>
+)}
 
       {/* Add/Edit Modal */}
       {isAdmin && showModal && (

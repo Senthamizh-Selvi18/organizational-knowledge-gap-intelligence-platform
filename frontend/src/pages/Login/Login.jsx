@@ -57,6 +57,7 @@ const handleSubmit = async (e) => {
     localStorage.setItem("token", data.token);
     localStorage.setItem("role", data.role);
     localStorage.setItem("userId", data.userId);
+    localStorage.setItem("employeeId", data.employeeId);
     localStorage.setItem("name", data.name);
 
     if (data.firstLogin) {
