@@ -1,5 +1,4 @@
 package com.organizational.knowledge_gap_platform.repository;
-
 import com.organizational.knowledge_gap_platform.entity.Employee;
 import com.organizational.knowledge_gap_platform.entity.EmployeeSkill;
 import com.organizational.knowledge_gap_platform.entity.Skill;
