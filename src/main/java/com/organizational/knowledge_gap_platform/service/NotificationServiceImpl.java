@@ -1,16 +1,22 @@
 package com.organizational.knowledge_gap_platform.service;
 
 import com.organizational.knowledge_gap_platform.dto.NotificationListResponseDTO;
+import com.organizational.knowledge_gap_platform.dto.NotificationPageResponseDTO;
 import com.organizational.knowledge_gap_platform.dto.NotificationResponseDTO;
 import com.organizational.knowledge_gap_platform.entity.Employee;
 import com.organizational.knowledge_gap_platform.entity.Notification;
+import com.organizational.knowledge_gap_platform.entity.NotificationPriority;
 import com.organizational.knowledge_gap_platform.entity.NotificationType;
 import com.organizational.knowledge_gap_platform.entity.User;
 import com.organizational.knowledge_gap_platform.exception.NotificationNotFoundException;
 import com.organizational.knowledge_gap_platform.repository.NotificationRepository;
+import com.organizational.knowledge_gap_platform.repository.NotificationSpecifications;
 import com.organizational.knowledge_gap_platform.repository.UserRepository;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -38,6 +44,10 @@ public class NotificationServiceImpl implements NotificationService {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
     }
+
+    // =========================================================================================
+    // ---- Existing methods (unchanged behavior) ----
+    // =========================================================================================
 
     @Override
     public NotificationListResponseDTO getRecentNotifications(Long userId, int limit) {
@@ -100,7 +110,7 @@ public class NotificationServiceImpl implements NotificationService {
         create(employee.getUser(), NotificationType.SKILL_ASSIGNED,
                 "New skill(s) assigned",
                 "You have been assigned: " + String.join(", ", skillNames),
-                employee.getId());
+                employee.getId(), NotificationPriority.MEDIUM, null);
     }
 
     @Override
@@ -113,7 +123,7 @@ public class NotificationServiceImpl implements NotificationService {
         create(employee.getUser(), NotificationType.SKILL_UPDATED,
                 "Skills updated",
                 "Your skills have been updated: " + skillList,
-                employee.getId());
+                employee.getId(), NotificationPriority.MEDIUM, null);
     }
 
     @Override
@@ -122,7 +132,7 @@ public class NotificationServiceImpl implements NotificationService {
         create(employee.getUser(), NotificationType.GAP_ANALYSIS_COMPLETED,
                 "Gap analysis completed",
                 "Your gap analysis for the role \"" + roleName + "\" is ready to view.",
-                employee.getId());
+                employee.getId(), NotificationPriority.MEDIUM, null);
     }
 
     @Override
@@ -131,12 +141,14 @@ public class NotificationServiceImpl implements NotificationService {
         create(user, NotificationType.PROFILE_UPDATED,
                 "Profile updated",
                 "Your profile information was updated successfully.",
-                user.getId());
+                user.getId(), NotificationPriority.LOW, null);
     }
-
     @Override
-    @Transactional
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     public void notifyNewMessage(User sender, User receiver, String messagePreview) {
+        System.out.println("### notifyNewMessage() ENTERED: senderId=" + (sender != null ? sender.getId() : "NULL")
+                + " receiverId=" + (receiver != null ? receiver.getId() : "NULL"));
+
         String preview = messagePreview == null ? "" : messagePreview.trim();
         if (preview.length() > 100) {
             preview = preview.substring(0, 100) + "...";
@@ -145,9 +157,8 @@ public class NotificationServiceImpl implements NotificationService {
         create(receiver, NotificationType.NEW_MESSAGE,
                 "New message from " + sender.getName(),
                 preview,
-                sender.getId());
+                sender.getId(), NotificationPriority.MEDIUM, null);
     }
-
     @Override
     @Transactional
     public void notifyAssessmentAssigned(User assessor, String subjectName, String assessmentTypeLabel,
@@ -157,7 +168,7 @@ public class NotificationServiceImpl implements NotificationService {
                 "New " + assessmentTypeLabel + " assessment assigned",
                 "You have been asked to complete a " + assessmentTypeLabel.toLowerCase()
                         + " assessment for " + subjectName + "." + dueText,
-                assessmentId);
+                assessmentId, NotificationPriority.MEDIUM, null);
     }
 
     @Override
@@ -167,7 +178,7 @@ public class NotificationServiceImpl implements NotificationService {
         create(assessor, NotificationType.ASSESSMENT_REMINDER,
                 "Assessment reminder",
                 "Your assessment for " + subjectName + " is still pending." + dueText,
-                assessmentId);
+                assessmentId, NotificationPriority.HIGH, null);
     }
 
     @Override
@@ -178,20 +189,140 @@ public class NotificationServiceImpl implements NotificationService {
                 assessmentTypeLabel + " assessment completed",
                 assessorName + " completed a " + assessmentTypeLabel.toLowerCase()
                         + " assessment for you. Your skill gaps have been recalculated.",
-                assessmentId);
+                assessmentId, NotificationPriority.MEDIUM, null);
     }
 
-    private void create(User recipient, NotificationType type, String title, String message, Long relatedEntityId) {
-        Notification notification = new Notification();
-        notification.setRecipient(recipient);
-        notification.setType(type);
-        notification.setTitle(title);
-        notification.setMessage(message);
-        notification.setRelatedEntityId(relatedEntityId);
-        notification.setRead(false);
-        notification.setCreatedAt(LocalDateTime.now());
+    // =========================================================================================
+    // ---- New methods added for the full Notification Module ----
+    // =========================================================================================
 
-        notificationRepository.save(notification);
+    @Override
+    public NotificationPageResponseDTO getAllNotifications(Long userId, int page, int size) {
+        User user = requireOwnedUser(userId);
+
+        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.max(size, 1),
+                Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Notification> result = notificationRepository.findByRecipientId(user.getId(), pageable);
+        long unreadCount = notificationRepository.countByRecipientIdAndIsReadFalse(user.getId());
+
+        return toPageDto(result, unreadCount);
+    }
+
+    @Override
+    public List<NotificationResponseDTO> getUnreadNotifications(Long userId) {
+        User user = requireOwnedUser(userId);
+        return notificationRepository.findByRecipientIdAndIsReadFalseOrderByCreatedAtDesc(user.getId())
+                .stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public NotificationPageResponseDTO searchNotifications(Long userId, String keyword, String type, String priority,
+                                                             Boolean isRead, LocalDateTime startDate, LocalDateTime endDate,
+                                                             int page, int size) {
+        User user = requireOwnedUser(userId);
+
+        NotificationType typeFilter = parseTypeOrNull(type);
+        NotificationPriority priorityFilter = parsePriorityOrNull(priority);
+        String keywordFilter = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
+
+        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.max(size, 1),
+                Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Specification<Notification> spec = NotificationSpecifications.forSearch(
+                user.getId(), typeFilter, priorityFilter, isRead, keywordFilter, startDate, endDate);
+
+        Page<Notification> result = notificationRepository.findAll(spec, pageable);
+
+        long unreadCount = notificationRepository.countByRecipientIdAndIsReadFalse(user.getId());
+
+        return toPageDto(result, unreadCount);
+    }
+
+    @Override
+    @Transactional
+    public void deleteNotification(Long userId, Long notificationId) {
+        User user = requireOwnedUser(userId);
+
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new NotificationNotFoundException(
+                        "Notification not found with id: " + notificationId));
+
+        if (!notification.getRecipient().getId().equals(user.getId())) {
+            throw new AccessDeniedException("You are not authorized to delete this notification.");
+        }
+
+        notificationRepository.delete(notification);
+    }
+
+    @Override
+    @Transactional
+    public void clearAllNotifications(Long userId) {
+        User user = requireOwnedUser(userId);
+        List<Notification> all = notificationRepository.findByRecipientId(user.getId());
+        notificationRepository.deleteAll(all);
+    }
+
+    @Override
+    @Transactional
+    public NotificationResponseDTO createNotification(Long recipientUserId, String type, String title,
+                                                        String message, String priority, String actionUrl,
+                                                        Long relatedEntityId) {
+        System.out.println("### createNotification() ENTERED: recipientUserId=" + recipientUserId + " type=" + type);
+
+        User recipient = userRepository.findById(recipientUserId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + recipientUserId));
+
+        NotificationType notificationType;
+        try {
+            notificationType = NotificationType.valueOf(type.trim().toUpperCase());
+        } catch (IllegalArgumentException | NullPointerException ex) {
+            System.out.println("### createNotification() BAD TYPE: '" + type + "' is not a valid NotificationType");
+            throw new IllegalArgumentException("Unknown notification type: " + type);
+        }
+
+        NotificationPriority notificationPriority = parsePriorityOrNull(priority);
+        if (notificationPriority == null) {
+            notificationPriority = NotificationPriority.MEDIUM;
+        }
+
+        Notification notification = create(recipient, notificationType, title, message,
+                relatedEntityId, notificationPriority, actionUrl);
+
+        return toDto(notification);
+    }
+
+    // =========================================================================================
+    // ---- Internal helpers ----
+    // =========================================================================================
+
+    private Notification create(User recipient, NotificationType type, String title, String message,
+                                 Long relatedEntityId, NotificationPriority priority, String actionUrl) {
+        System.out.println("### NOTIFICATION CREATE CALLED: type=" + type
+                + " recipientId=" + (recipient != null ? recipient.getId() : "NULL_RECIPIENT"));
+        try {
+            Notification notification = new Notification();
+            notification.setRecipient(recipient);
+            notification.setType(type);
+            notification.setTitle(title);
+            notification.setMessage(message);
+            notification.setRelatedEntityId(relatedEntityId);
+            notification.setRead(false);
+            notification.setPriority(priority != null ? priority : NotificationPriority.MEDIUM);
+            notification.setActionUrl(actionUrl);
+            notification.setCreatedAt(LocalDateTime.now());
+
+            Notification saved = notificationRepository.saveAndFlush(notification);
+            System.out.println("### NOTIFICATION SAVED SUCCESSFULLY: id=" + saved.getId()
+                    + " type=" + type + " recipientId=" + recipient.getId());
+            return saved;
+        } catch (Exception ex) {
+            System.out.println("### NOTIFICATION SAVE FAILED: type=" + type
+                    + " error=" + ex.getClass().getName() + " message=" + ex.getMessage());
+            ex.printStackTrace();
+            throw ex;
+        }
     }
 
     private User requireOwnedUser(Long userId) {
@@ -208,6 +339,42 @@ public class NotificationServiceImpl implements NotificationService {
         return user;
     }
 
+    private NotificationType parseTypeOrNull(String type) {
+        if (type == null || type.isBlank()) {
+            return null;
+        }
+        try {
+            return NotificationType.valueOf(type.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            return null; // unknown filter value -> treated as "no filter" rather than erroring the search
+        }
+    }
+
+    private NotificationPriority parsePriorityOrNull(String priority) {
+        if (priority == null || priority.isBlank()) {
+            return null;
+        }
+        try {
+            return NotificationPriority.valueOf(priority.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
+    }
+
+    private NotificationPageResponseDTO toPageDto(Page<Notification> page, long unreadCount) {
+        List<NotificationResponseDTO> dtos = page.getContent().stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+
+        return new NotificationPageResponseDTO(
+                dtos,
+                unreadCount,
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.getNumber()
+        );
+    }
+
     private NotificationResponseDTO toDto(Notification notification) {
         return new NotificationResponseDTO(
                 notification.getId(),
@@ -216,7 +383,10 @@ public class NotificationServiceImpl implements NotificationService {
                 notification.getMessage(),
                 notification.isRead(),
                 notification.getCreatedAt(),
-                formatTimeAgo(notification.getCreatedAt())
+                formatTimeAgo(notification.getCreatedAt()),
+                notification.getPriority() != null ? notification.getPriority().name() : NotificationPriority.MEDIUM.name(),
+                notification.getActionUrl(),
+                notification.getRelatedEntityId()
         );
     }
 

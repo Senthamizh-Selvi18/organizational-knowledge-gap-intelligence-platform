@@ -4,12 +4,15 @@ import com.organizational.knowledge_gap_platform.dto.AuthResponse;
 import com.organizational.knowledge_gap_platform.dto.LoginRequest;
 import com.organizational.knowledge_gap_platform.dto.RegisterRequest;
 import com.organizational.knowledge_gap_platform.entity.Employee;
+import com.organizational.knowledge_gap_platform.entity.NotificationType;
 import com.organizational.knowledge_gap_platform.entity.Role;
 import com.organizational.knowledge_gap_platform.entity.User;
 import com.organizational.knowledge_gap_platform.repository.EmployeeRepository;
 import com.organizational.knowledge_gap_platform.repository.RoleRepository;
 import com.organizational.knowledge_gap_platform.repository.UserRepository;
 import com.organizational.knowledge_gap_platform.security.JwtService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,6 +24,8 @@ import java.time.LocalDateTime;
 @Service
 public class AuthService {
 
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final EmployeeRepository employeeRepository;
@@ -28,6 +33,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final OtpService otpService;
+    private final NotificationService notificationService;
 
     public AuthService(UserRepository userRepository,
                        RoleRepository roleRepository,
@@ -35,7 +41,8 @@ public class AuthService {
                        PasswordEncoder passwordEncoder,
                        JwtService jwtService,
                        AuthenticationManager authenticationManager,
-                       OtpService otpService) {
+                       OtpService otpService,
+                       NotificationService notificationService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.employeeRepository = employeeRepository;
@@ -43,6 +50,7 @@ public class AuthService {
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
         this.otpService = otpService;
+        this.notificationService = notificationService;
     }
 
    public AuthResponse register(RegisterRequest request) {
@@ -79,6 +87,8 @@ public class AuthService {
 
     employeeRepository.save(employee);
 
+    notifyEmployeeCreated(user, employee);
+
         String token = jwtService.generateToken(user.getEmail());
         String roleName = user.getRoles()
         .stream()
@@ -94,6 +104,27 @@ return new AuthResponse(
         !user.isFirstLoginCompleted()
 );
 }
+
+    /**
+     * Fires an EMPLOYEE_CREATED notification to the newly registered user themselves
+     * (welcome-style notification, e.g. "complete your profile"). Never allowed to
+     * break registration if it fails.
+     */
+    private void notifyEmployeeCreated(User user, Employee employee) {
+        try {
+            notificationService.createNotification(
+                    user.getId(),
+                    NotificationType.EMPLOYEE_CREATED.name(),
+                    "Welcome aboard!",
+                    "Your employee profile has been created. Please complete your department and designation details.",
+                    "MEDIUM",
+                    "/profile",
+                    employee.getId()
+            );
+        } catch (Exception ex) {
+            log.error("Failed to create EMPLOYEE_CREATED notification for user {}", user.getId(), ex);
+        }
+    }
 
 
     public AuthResponse login(LoginRequest request) {

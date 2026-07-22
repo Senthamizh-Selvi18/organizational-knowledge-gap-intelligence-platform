@@ -5,23 +5,21 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
-
+/**
+ * Request body for POST /api/notifications/create.
+ * Used by NotificationController.createNotification() to build a notification
+ * for any recipient/type via NotificationService.createNotification(...).
+ */
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class NotificationResponseDTO {
+public class NotificationCreateRequestDTO {
 
-    private Long id;
+    private Long recipientUserId;
     private String type;
     private String title;
     private String message;
-    private boolean read;
-    private LocalDateTime createdAt;
-    private String timeAgo;
-
-    // NEW fields
     private String priority;
     private String actionUrl;
     private Long relatedEntityId;

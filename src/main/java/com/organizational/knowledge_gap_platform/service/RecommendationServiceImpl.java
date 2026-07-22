@@ -10,12 +10,14 @@ import com.organizational.knowledge_gap_platform.dto.RecommendationResponse;
 import com.organizational.knowledge_gap_platform.dto.RecommendedCourseDto;
 import com.organizational.knowledge_gap_platform.entity.Employee;
 import com.organizational.knowledge_gap_platform.entity.EmployeeSkill;
+import com.organizational.knowledge_gap_platform.entity.NotificationType;
 import com.organizational.knowledge_gap_platform.entity.Role;
 import com.organizational.knowledge_gap_platform.entity.RoleSkillRequirement;
 import com.organizational.knowledge_gap_platform.entity.Skill;
 import com.organizational.knowledge_gap_platform.entity.User;
 import com.organizational.knowledge_gap_platform.repository.EmployeeRepository;
 import com.organizational.knowledge_gap_platform.repository.EmployeeSkillRepository;
+import com.organizational.knowledge_gap_platform.repository.NotificationRepository;
 import com.organizational.knowledge_gap_platform.repository.RoleSkillRequirementRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,19 +41,25 @@ public class RecommendationServiceImpl implements RecommendationService {
     private final ExternalCourseService externalCourseService;
     private final AiRecommendationRouter aiRecommendationRouter;
     private final ObjectMapper objectMapper;
+    private final NotificationService notificationService;
+    private final NotificationRepository notificationRepository;
 
     public RecommendationServiceImpl(EmployeeRepository employeeRepository,
                                       EmployeeSkillRepository employeeSkillRepository,
                                       RoleSkillRequirementRepository roleSkillRequirementRepository,
                                       ExternalCourseService externalCourseService,
                                       AiRecommendationRouter aiRecommendationRouter,
-                                      ObjectMapper objectMapper) {
+                                      ObjectMapper objectMapper,
+                                      NotificationService notificationService,
+                                      NotificationRepository notificationRepository) {
         this.employeeRepository = employeeRepository;
         this.employeeSkillRepository = employeeSkillRepository;
         this.roleSkillRequirementRepository = roleSkillRequirementRepository;
         this.externalCourseService = externalCourseService;
         this.aiRecommendationRouter = aiRecommendationRouter;
         this.objectMapper = objectMapper;
+        this.notificationService = notificationService;
+        this.notificationRepository = notificationRepository;
     }
 
     @Override
@@ -71,14 +79,52 @@ public class RecommendationServiceImpl implements RecommendationService {
 
         List<MissingSkillCoursesDto> externalCourses = buildExternalCourses(missingSkills);
 
+        RecommendationResponse response;
         try {
             RecommendationResponse aiResponse = generateAiRecommendations(employee, missingSkills);
             aiResponse.setExternalCourses(externalCourses);
-            return aiResponse;
+            response = aiResponse;
         } catch (AiRecommendationException ex) {
             log.warn("AI recommendation generation failed for employee {}, falling back to rule-based output: {}",
                     employee.getId(), ex.getMessage());
-            return buildFallbackRecommendations(missingSkills, externalCourses);
+            response = buildFallbackRecommendations(missingSkills, externalCourses);
+        }
+
+        notifyRecommendationsReady(employee, missingSkills.size());
+
+        return response;
+    }
+
+    /**
+     * Fires an AI_RECOMMENDATION notification once per employee while an unread one
+     * already exists, so re-loading the recommendations page doesn't spam notifications.
+     * Failure here must never affect the recommendations response itself.
+     */
+    private void notifyRecommendationsReady(Employee employee, int missingSkillCount) {
+        try {
+            Long recipientUserId = employee.getUser().getId();
+            Long relatedEntityId = employee.getId();
+
+            boolean alreadyNotified = notificationRepository
+                    .existsByRecipientIdAndTypeAndRelatedEntityIdAndIsReadFalse(
+                            recipientUserId, NotificationType.AI_RECOMMENDATION, relatedEntityId);
+
+            if (alreadyNotified) {
+                return;
+            }
+
+            notificationService.createNotification(
+                    recipientUserId,
+                    NotificationType.AI_RECOMMENDATION.name(),
+                    "New learning recommendations available",
+                    "We've generated personalized recommendations covering " + missingSkillCount
+                            + " skill gap(s) for you.",
+                    "MEDIUM",
+                    "/recommendations",
+                    relatedEntityId
+            );
+        } catch (Exception ex) {
+            log.error("Failed to create AI_RECOMMENDATION notification for employee {}", employee.getId(), ex);
         }
     }
 
