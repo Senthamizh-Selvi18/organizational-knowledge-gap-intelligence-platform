@@ -27,18 +27,18 @@ import {
   FiUser,
   FiBriefcase,
 } from "react-icons/fi";
-
+import { LabelList } from "recharts";
 import DashboardLayout from "../../components/layout/DashboardLayout.jsx";
-
 import {
   getDashboardStats,
   getSkillsOverview,
   getCompetencyAnalytics,
-  getTrainingProgress,
   getNotifications,
   getRecentActivity,
   getSkillGapHeatmap,
 } from "../../services/dashboardService";
+
+import { getLearningDashboard } from "../../services/learningService";
 
 /* =========================================================
    CARD STYLE
@@ -472,57 +472,58 @@ export default function EmployeeDashboard() {
        4. TRAINING PROGRESS
     ----------------------------------------------------- */
 
-    getTrainingProgress()
-      .then((data) => {
-        if (
-          Array.isArray(data) &&
-          data.length > 0
-        ) {
-          const mapped = data.map((item) => ({
-            month: item.month,
-            completed: Number(
-              item.completed ?? 0
-            ),
-          }));
+    const employeeId = Number(localStorage.getItem("employeeId"));
 
-          setTrainingProgress(mapped);
+if (employeeId) {
+  getLearningDashboard(employeeId)
+    .then((response) => {
 
-          const totalCompleted =
-            mapped.reduce(
-              (sum, item) =>
-                sum + item.completed,
-              0
-            );
+      const data = response.data;
 
-          setHasTrainingData(
-            totalCompleted > 0
-          );
+      setTrainingProgress([
+  {
+    name: "Enrolled",
+    value: data.enrolled,
+  },
+  {
+    name: "Completed",
+    value: data.completed,
+  },
+  {
+    name: "In Progress",
+    value: data.pending,
+  },
+]);
 
-          setStats((previousStats) =>
-            previousStats.map((stat) =>
-              stat.label ===
-              "Completed Trainings"
-                ? {
-                    ...stat,
-                    value: totalCompleted,
-                    delta:
-                      totalCompleted === 1
-                        ? "1 completed training"
-                        : `${totalCompleted} completed trainings`,
-                  }
-                : stat
-            )
-          );
-        }
-      })
-      .catch((error) => {
-        console.log(
-          "Training progress unavailable:",
-          error
-        );
+setHasTrainingData(true);
+      setStats((previousStats) =>
+        previousStats.map((stat) => {
 
-        setHasTrainingData(false);
-      });
+          if (stat.label === "Completed Trainings") {
+            return {
+              ...stat,
+              value: data.completed,
+              delta: `${data.completed} completed trainings`,
+            };
+          }
+
+          if (stat.label === "Pending Programs") {
+            return {
+              ...stat,
+              value: data.pending,
+              delta: `${data.pending} training(s) in progress`,
+            };
+          }
+
+          return stat;
+        })
+      );
+
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+}
 
     /* -----------------------------------------------------
        5. NOTIFICATIONS
@@ -968,11 +969,16 @@ export default function EmployeeDashboard() {
             <div className="mb-5 flex items-center justify-between">
 
               <div className="flex items-center gap-2">
-                <FiBarChart2 className="h-5 w-5 text-primary" />
+                 <FiBarChart2 className="h-5 w-5 text-primary" />
+                    <div className="flex-1">
+                      <h2 className="text-lg font-bold text-text">
+                        Learning Analytics
+                      </h2>
 
-                <h2 className="text-lg font-bold text-text">
-                  My Training Progress
-                </h2>
+                      <p className="text-sm text-sub mt-1">
+                        Monitor your learning progress and course completion.
+                      </p>
+                    </div>
               </div>
 
             </div>
@@ -1002,7 +1008,7 @@ export default function EmployeeDashboard() {
                     />
 
                     <XAxis
-                      dataKey="month"
+                      dataKey="name"
                       axisLine={false}
                       tickLine={false}
                       tick={{
@@ -1011,15 +1017,10 @@ export default function EmployeeDashboard() {
                       }}
                     />
 
-                    <YAxis
-                      allowDecimals={false}
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{
-                        fill: "#94a3b8",
-                        fontSize: 11,
-                      }}
-                    />
+                   <YAxis
+                    allowDecimals={false}
+                    domain={[0, "dataMax + 1"]}
+                />
 
                     <Tooltip
                       cursor={{
@@ -1032,11 +1033,12 @@ export default function EmployeeDashboard() {
                     />
 
                     <Bar
-                      dataKey="completed"
-                      fill="#2563eb"
-                      radius={[8, 8, 0, 0]}
-                      maxBarSize={42}
-                    />
+                        dataKey="value"
+                        fill="#2563eb"
+                        radius={[8, 8, 0, 0]}
+                        >
+                         <LabelList dataKey="value" position="top" />
+                      </Bar>
 
                   </BarChart>
                 </ResponsiveContainer>

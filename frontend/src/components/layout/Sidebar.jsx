@@ -38,6 +38,15 @@ const overviewItems = [
     icon: FiUser,
     to: "/dashboard/profile",
   },
+ ...(role === "employee" || role === "intern"
+  ? [
+      {
+        label: "My Learning",
+        icon: FiBookOpen,
+        to: "/employee/learning-progress",
+      },
+    ]
+  : []),
   {
     label: "Certifications",
     icon: FiAward,

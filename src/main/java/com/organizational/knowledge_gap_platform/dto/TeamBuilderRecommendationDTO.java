@@ -5,39 +5,27 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class EmployeeResponseDTO {
+public class TeamBuilderRecommendationDTO {
 
-    private Long id;
-
+    private Long employeeId;
     private String employeeCode;
-
     private String name;
-
     private String email;
-
     private String department;
-
     private String designation;
 
-    private String phoneNumber;
+    private int totalRequiredSkills;
+    private int matchedSkillCount;
+    private int missingSkillCount;
 
-    private String location;
+    private double matchPercentage;
 
-    private LocalDate joiningDate;
-
-    private Integer experience;
-
-    private String manager;
-
-    private String role;
-
-    private Long userId;
-
-    private Long roleId;
+    private List<SkillDTO> matchedSkills;
+    private List<SkillDTO> missingSkills;
 }

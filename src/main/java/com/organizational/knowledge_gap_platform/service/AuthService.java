@@ -96,13 +96,14 @@ public class AuthService {
         .map(Role::getRoleName)
         .orElse("Employee");
 
-return new AuthResponse(
-        token,
-        roleName,
-        user.getId(),
-        user.getName(),
-        !user.isFirstLoginCompleted()
-);
+       return new AuthResponse(
+               token,
+               roleName,
+               user.getId(),
+               employee.getId(),
+               user.getName(),
+               !user.isFirstLoginCompleted()
+       );
 }
 
     /**
@@ -154,14 +155,16 @@ String role = user.getRoles()
             .map(Role::getRoleName)
             .orElse("Employee")
         );
-
-return new AuthResponse(
-        token,
-        role,
-        user.getId(),
-        user.getName(),
-        !user.isFirstLoginCompleted()
-);
+        Employee employee = employeeRepository.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("Employee not found"));
+        return new AuthResponse(
+                token,
+                role,
+                user.getId(),
+                employee.getId(),
+                user.getName(),
+                !user.isFirstLoginCompleted()
+        );
     }
 
     public void sendFirstLoginOtp(Long userId) {
