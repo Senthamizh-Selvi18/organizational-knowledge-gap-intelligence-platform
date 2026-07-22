@@ -31,10 +31,16 @@ export default function DashboardLayout({ children }) {
   const isCompact = layout === "compact"
 
   return (
-    <div className="flex min-h-screen bg-bg font-sans">
+    // h-screen + overflow-hidden (instead of min-h-screen) pins the shell to
+    // exactly one viewport: the sidebar and navbar never scroll away. Any
+    // page whose content is taller than the available space scrolls inside
+    // <main> only (overflow-y-auto below), not the whole document. Pages
+    // that fit — like Chat, sized with h-full — simply won't show a
+    // scrollbar there at all.
+    <div className="flex h-screen overflow-hidden bg-bg font-sans">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <Navbar onMenuClick={() => setSidebarOpen(true)} />
 
         {/* key={pathname} remounts this on every navigation, which is
@@ -44,7 +50,7 @@ export default function DashboardLayout({ children }) {
             the Dashboard Layout setting actually change the UI. */}
         <main
           key={location.pathname}
-          className={`page-transition flex-1 min-w-0 ${
+          className={`page-transition min-h-0 flex-1 min-w-0 overflow-y-auto ${
             isCompact ? "p-4 sm:p-5 layout-compact" : "p-6 sm:p-8"
           }`}
         >
