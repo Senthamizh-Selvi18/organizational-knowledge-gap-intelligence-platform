@@ -26,6 +26,7 @@ import ExternalCourseManagement from "../pages/ExternalCourseManagement/External
 import InternalTrainingCatalog from "../pages/InternalTrainingCatalog/InternalTrainingCatalog";
 import Notifications from "../pages/Notifications/Notifications";
 import Certification from "../pages/Certification/Certification";
+import LearningProgress from "../pages/LearningProgress/LearningProgress";
 
 function AppRoutes() {
   return (
@@ -216,6 +217,14 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+     <Route
+  path="/employee/learning-progress"
+  element={
+    <ProtectedRoute allowedRoles={["employee", "intern"]}>
+        <LearningProgress />
+    </ProtectedRoute>
+  }
+/>
 
       {/* Settings */}
       <Route
