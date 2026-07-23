@@ -13,6 +13,9 @@ import {
   FiMessageCircle,
   FiAward,
   FiX,
+  FiUserCheck,
+  FiCalendar,
+  FiBook,
 } from "react-icons/fi";
 
 export default function Sidebar({ open, onClose }) {
@@ -96,6 +99,26 @@ const overviewItems = [
     icon: FiBookOpen,
     to: "/dashboard/internal-trainings",
   },
+  {
+  label: "Expert Directory",
+  icon: FiUserCheck,
+  to: "/dashboard/mentor-directory",
+},
+{
+  label: "Mentor Matching",
+  icon: FiUsers,
+  to: "/dashboard/mentorship-requests",
+},
+{
+  label: "Session Booking",
+  icon: FiCalendar,
+  to: "/dashboard/mentorship-sessions",
+},
+{
+  label: "Knowledge Base",
+  icon: FiBook,
+  to: "/dashboard/knowledge-base",
+},
 ];
   const manageItems = [
     ...(role === "admin"
