@@ -27,6 +27,7 @@ import InternalTrainingCatalog from "../pages/InternalTrainingCatalog/InternalTr
 import Notifications from "../pages/Notifications/Notifications";
 import Certification from "../pages/Certification/Certification";
 import LearningProgress from "../pages/LearningProgress/LearningProgress";
+import Assessment from "../pages/Assessment/Assessment";
 
 function AppRoutes() {
   return (
@@ -164,6 +165,16 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={["admin", "hr specialist", "manager", "department head"]}>
             <GapAnalysis />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Performance Assessments (Self/Peer/Manager) */}
+      <Route
+        path="/dashboard/assessments"
+        element={
+          <ProtectedRoute>
+            <Assessment />
           </ProtectedRoute>
         }
       />

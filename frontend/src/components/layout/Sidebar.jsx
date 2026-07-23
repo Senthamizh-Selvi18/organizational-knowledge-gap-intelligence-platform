@@ -12,6 +12,7 @@ import {
   FiBookOpen,
   FiMessageCircle,
   FiAward,
+  FiClipboard,
   FiX,
 } from "react-icons/fi";
 
@@ -81,6 +82,11 @@ const overviewItems = [
     label: "AI Recommendation",
     icon: FiCpu,
     to: "/dashboard/recommendation",
+  },
+  {
+    label: "Assessments",
+    icon: FiClipboard,
+    to: "/dashboard/assessments",
   },
   ...(role === "admin"
     ? [
