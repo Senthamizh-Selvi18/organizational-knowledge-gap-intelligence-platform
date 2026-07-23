@@ -27,6 +27,10 @@ import InternalTrainingCatalog from "../pages/InternalTrainingCatalog/InternalTr
 import Notifications from "../pages/Notifications/Notifications";
 import Certification from "../pages/Certification/Certification";
 import LearningProgress from "../pages/LearningProgress/LearningProgress";
+import MentorDirectory from "../pages/MentorDirectory/MentorDirectory";
+import MentorshipRequests from "../pages/MentorshipRequests/MentorshipRequests";
+import SessionBooking from "../pages/SessionBooking/SessionBooking";
+import KnowledgeBase from "../pages/KnowledgeBase/KnowledgeBase";
 
 function AppRoutes() {
   return (
@@ -245,6 +249,45 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      {/* Mentorship & Knowledge Sharing: Expert Directory */}
+<Route
+  path="/dashboard/mentor-directory"
+  element={
+    <ProtectedRoute>
+      <MentorDirectory />
+    </ProtectedRoute>
+  }
+/>
+
+{/* Mentorship & Knowledge Sharing: Mentor Matching */}
+<Route
+  path="/dashboard/mentorship-requests"
+  element={
+    <ProtectedRoute>
+      <MentorshipRequests />
+    </ProtectedRoute>
+  }
+/>
+
+{/* Mentorship & Knowledge Sharing: Session Booking */}
+<Route
+  path="/dashboard/mentorship-sessions"
+  element={
+    <ProtectedRoute>
+      <SessionBooking />
+    </ProtectedRoute>
+  }
+/>
+
+{/* Mentorship & Knowledge Sharing: Knowledge Base */}
+<Route
+  path="/dashboard/knowledge-base"
+  element={
+    <ProtectedRoute>
+      <KnowledgeBase />
+    </ProtectedRoute>
+  }
+/>
 
       {/* OAuth2 Redirect */}
       <Route
