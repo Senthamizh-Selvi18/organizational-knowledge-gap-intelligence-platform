@@ -744,10 +744,11 @@ const handleComplete = async (enrollmentId) => {
 
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto relative"
+            className="bg-white rounded-3xl shadow-2xl border border-gray-100 w-full max-w-lg max-h-[90vh] relative flex flex-col overflow-hidden"
           >
 
-            <div className="flex items-center justify-between mb-5">
+            {/* Fixed header: always visible, never scrolls away */}
+            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100 shrink-0">
 
               <h2 className="text-xl font-bold text-text">
                 {isEditing ? "Edit Internal Training" : "Add Internal Training"}
@@ -765,13 +766,16 @@ const handleComplete = async (enrollmentId) => {
 
             </div>
 
-            {formError && (
-              <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl mb-4">
-                {formError}
-              </div>
-            )}
+            <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1">
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Scrollable body: only the fields scroll, not the buttons */}
+              <div className="overflow-y-auto px-6 py-4 space-y-4">
+
+              {formError && (
+                <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl mb-4">
+                  {formError}
+                </div>
+              )}
 
               <div>
                 <label className="block text-sub text-sm mb-1">Title</label>
@@ -882,7 +886,10 @@ const handleComplete = async (enrollmentId) => {
                 </label>
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
+              </div>
+
+              {/* Fixed footer: Cancel/Save stay visible without scrolling */}
+              <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 shrink-0">
 
                 <button
                   type="button"
