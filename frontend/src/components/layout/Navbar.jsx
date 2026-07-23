@@ -38,25 +38,26 @@ function useCrumb() {
 }
 
 export default function Navbar({ onMenuClick }) {
-const [darkMode, setDarkMode] = useState(() => {
-  const storedTheme = localStorage.getItem("theme");
-  return storedTheme
-    ? storedTheme === "dark"
-    : document.documentElement.classList.contains("dark");
-});
+  const [darkMode, setDarkMode] = useState(() => {
+    const storedTheme = localStorage.getItem("theme");
+    return storedTheme
+      ? storedTheme === "dark"
+      : document.documentElement.classList.contains("dark");
+  });
 
-useEffect(() => {
-  document.documentElement.classList.toggle("dark", darkMode);
-  localStorage.setItem("theme", darkMode ? "dark" : "light");
-}, [darkMode]);
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", darkMode);
+    localStorage.setItem("theme", darkMode ? "dark" : "light");
+  }, [darkMode]);
 
-useEffect(() => {
-  const syncFromStorage = () => {
-    setDarkMode(document.documentElement.classList.contains("dark"));
-  };
-  window.addEventListener("themechange", syncFromStorage);
-  return () => window.removeEventListener("themechange", syncFromStorage);
-}, []);
+  useEffect(() => {
+    const syncFromStorage = () => {
+      setDarkMode(document.documentElement.classList.contains("dark"));
+    };
+    window.addEventListener("themechange", syncFromStorage);
+    return () => window.removeEventListener("themechange", syncFromStorage);
+  }, []);
+
   const [menuOpen, setMenuOpen] = useState(false)
   const dropdownRef = useRef(null)
   const navigate = useNavigate()
@@ -64,17 +65,22 @@ useEffect(() => {
   const crumb = useCrumb()
 
   const userName = localStorage.getItem("name") || "User";
-const role = localStorage.getItem("role") || "";
+  const role = localStorage.getItem("role") || "";
+
+  // ⬇️ THE FIX: read the logged-in user's id from localStorage
+  const userId = localStorage.getItem("userId");
 
   const [unreadCount, setUnreadCount] = useState(0);
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
 
   useEffect(() => {
+    if (!userId) return; // ⬅️ guard: skip the call instead of hitting "/undefined/"
+
     let cancelled = false;
 
     const fetchUnreadNotifs = async () => {
       try {
-        const count = await getUnreadNotifCount();
+        const count = await getUnreadNotifCount(userId); // ⬅️ pass userId now
         if (!cancelled) setUnreadNotifCount(count);
       } catch (e) {
         // silent — bell badge shouldn't break the navbar
@@ -87,14 +93,16 @@ const role = localStorage.getItem("role") || "";
       cancelled = true;
       clearInterval(id);
     };
-  }, [location.pathname]);
+  }, [location.pathname, userId]);
 
   useEffect(() => {
+    if (!userId) return; // ⬅️ guard: skip the call instead of hitting "/undefined/"
+
     let cancelled = false;
 
     const fetchUnread = async () => {
       try {
-        const count = await getUnreadCount();
+        const count = await getUnreadCount(userId); // ⬅️ pass userId now
         if (!cancelled) setUnreadCount(count);
       } catch (e) {
         // silent — chat badge shouldn't break the navbar
@@ -107,7 +115,7 @@ const role = localStorage.getItem("role") || "";
       cancelled = true;
       clearInterval(id);
     };
-  }, [location.pathname]);
+  }, [location.pathname, userId]);
 
   useEffect(() => {
     function handleClickOutside(e) {

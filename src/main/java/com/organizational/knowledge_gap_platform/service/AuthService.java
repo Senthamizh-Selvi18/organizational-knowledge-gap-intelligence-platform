@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -69,14 +70,6 @@ public class AuthService {
 
     userRepository.save(user);
 
-    // --- THE FIX ---
-    // Previously, registering a User never created a matching Employee
-    // row (Week 1 spec required "create profile on first login" —
-    // this step was missing entirely). Employee has NOT NULL columns
-    // for department/designation, and RegisterRequest doesn't collect
-    // those at signup, so we use clear placeholder values here.
-    // HR/Admin can fill in the real values afterward via the existing
-    // Employee Management "Edit" flow (EmployeeServiceImpl.updateEmployee).
     Employee employee = new Employee();
     employee.setEmployeeCode("EMP-" + user.getId());
     employee.setUser(user);
@@ -106,11 +99,6 @@ public class AuthService {
        );
 }
 
-    /**
-     * Fires an EMPLOYEE_CREATED notification to the newly registered user themselves
-     * (welcome-style notification, e.g. "complete your profile"). Never allowed to
-     * break registration if it fails.
-     */
     private void notifyEmployeeCreated(User user, Employee employee) {
         try {
             notificationService.createNotification(
@@ -130,31 +118,43 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest request) {
 
-    authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(
-                    request.getEmail(),
-                    request.getPassword()
-            )
-    );
+        // IMPORTANT: authenticationManager.authenticate() throws a
+        // Spring Security AuthenticationException on bad credentials.
+        // If that exception is allowed to propagate as-is, Spring
+        // Security's ExceptionTranslationFilter intercepts it and,
+        // because oauth2Login() is also configured, can resolve to
+        // the OAuth2 entry point (redirecting to Google) instead of
+        // our JSON 401 handler. Catching it here and rethrowing a
+        // plain RuntimeException keeps it out of Security's exception
+        // handling entirely.
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getEmail(),
+                            request.getPassword()
+                    )
+            );
+        } catch (AuthenticationException ex) {
+            throw new InvalidCredentialsException("Invalid email or password");
+        }
 
-   User user = userRepository.findByEmail(request.getEmail())
-        .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         String token = jwtService.generateToken(user.getEmail());
 
-        
-String role = user.getRoles()
-        .stream()
-        .map(Role::getRoleName)
-        .filter(r -> r.equalsIgnoreCase("Admin"))
-        .findFirst()
-        .orElse(
-            user.getRoles()
-            .stream()
-            .findFirst()
-            .map(Role::getRoleName)
-            .orElse("Employee")
-        );
+        String role = user.getRoles()
+                .stream()
+                .map(Role::getRoleName)
+                .filter(r -> r.equalsIgnoreCase("Admin"))
+                .findFirst()
+                .orElse(
+                    user.getRoles()
+                    .stream()
+                    .findFirst()
+                    .map(Role::getRoleName)
+                    .orElse("Employee")
+                );
         Employee employee = employeeRepository.findByUser(user)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
         return new AuthResponse(
