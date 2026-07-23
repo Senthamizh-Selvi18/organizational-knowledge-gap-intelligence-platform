@@ -15,4 +15,5 @@ public class RecommendationResponse {
 
     private List<String> recommendations;
     private List<String> roadmap;
+    private List<MissingSkillCoursesDto> externalCourses;
 }

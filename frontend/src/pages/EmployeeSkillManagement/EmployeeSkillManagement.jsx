@@ -15,12 +15,17 @@ import {
   FiCheckCircle,
   FiRefreshCw,
 } from "react-icons/fi";
+
+const DEFAULT_PROFICIENCY = 50;
+
 export default function EmployeeSkillManagement() {
 
   const [employees, setEmployees] = useState([]);
   const [skills, setSkills] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState("");
   const [selectedSkills, setSelectedSkills] = useState([]);
+  // Map of skillId -> proficiency (0-100), kept alongside selectedSkills
+  const [skillProficiency, setSkillProficiency] = useState({});
   const [assignedSkills, setAssignedSkills] = useState([]);
 
   const [loading, setLoading] = useState(true);
@@ -28,21 +33,18 @@ export default function EmployeeSkillManagement() {
 
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-
-  const employeeOptions = employees.map((employee) => ({
+const employeeOptions = employees.map((employee) => ({
   value: employee.id,
-
-  label: `${employee.user?.name} (${employee.employeeCode})`,
-
+  label: `${employee.name} (${employee.employeeCode})`,
   searchText: `
-    ${employee.user?.name}
+    ${employee.name}
     ${employee.employeeCode}
     ${employee.department}
     ${employee.designation}
   `,
-
   employee,
 }));
+
 const filterEmployeeOption = (option, inputValue) => {
   return option.data.searchText
     .toLowerCase()
@@ -56,18 +58,18 @@ const CustomOption = (props) => {
     <components.Option {...props}>
       <div className="py-1">
         <p className="font-semibold text-slate-800">
-          {employee.user?.name}
+          {employee.name}
         </p>
 
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-sub">
           {employee.employeeCode}
         </p>
 
-        <p className="text-xs text-blue-600">
+        <p className="text-xs text-primary">
           {employee.designation}
         </p>
 
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-sub">
           {employee.department}
         </p>
       </div>
@@ -108,6 +110,7 @@ const CustomOption = (props) => {
 const loadEmployeeSkills = useCallback(async (employeeId) => {
   if (!employeeId) {
     setSelectedSkills([]);
+    setSkillProficiency({});
     setAssignedSkills([]);
     return;
   }
@@ -122,11 +125,23 @@ const loadEmployeeSkills = useCallback(async (employeeId) => {
 
     setAssignedSkills(employeeSkills);
     setSelectedSkills(employeeSkills.map((skill) => skill.skillId));
+
+    // Seed the proficiency map from what's already saved, so the
+    // sliders open at the employee's real current level, not the default.
+    const proficiencyMap = {};
+    employeeSkills.forEach((skill) => {
+      proficiencyMap[skill.skillId] =
+        typeof skill.proficiencyLevel === "number"
+          ? skill.proficiencyLevel
+          : DEFAULT_PROFICIENCY;
+    });
+    setSkillProficiency(proficiencyMap);
   } catch (err) {
     console.error("Employee Skills Error:", err);
 
     setAssignedSkills([]);
     setSelectedSkills([]);
+    setSkillProficiency({});
 
     setError(
       err.response?.data?.message ||
@@ -150,12 +165,38 @@ const handleEmployeeChange = (e) => {
 
 // Handle skill checkbox selection
 const handleSkillSelection = (skillId) => {
-  setSelectedSkills((prevSkills) =>
-    prevSkills.includes(skillId)
-      ? prevSkills.filter((id) => id !== skillId)
-      : [...prevSkills, skillId]
-  );
+  setSelectedSkills((prevSkills) => {
+    const isSelected = prevSkills.includes(skillId);
+
+    if (isSelected) {
+      return prevSkills.filter((id) => id !== skillId);
+    }
+
+    // Seed a default proficiency the first time a skill is checked
+    setSkillProficiency((prev) =>
+      prev[skillId] !== undefined
+        ? prev
+        : { ...prev, [skillId]: DEFAULT_PROFICIENCY }
+    );
+
+    return [...prevSkills, skillId];
+  });
 };
+
+// Handle proficiency slider change
+const handleProficiencyChange = (skillId, value) => {
+  setSkillProficiency((prev) => ({
+    ...prev,
+    [skillId]: Number(value),
+  }));
+};
+
+// Build the {skillId, proficiencyLevel} payload from current selection
+const buildSkillsPayload = () =>
+  selectedSkills.map((skillId) => ({
+    skillId,
+    proficiencyLevel: skillProficiency[skillId] ?? DEFAULT_PROFICIENCY,
+  }));
 
 
 // Assign skills
@@ -170,7 +211,7 @@ const handleAssignSkills = async () => {
     setError("");
     setMessage("");
 
-    await assignSkills(selectedEmployee, selectedSkills);
+    await assignSkills(selectedEmployee, buildSkillsPayload());
 
     setMessage("Skills assigned successfully.");
 
@@ -200,7 +241,7 @@ const handleUpdateSkills = async () => {
     setError("");
     setMessage("");
 
-    await updateSkills(selectedEmployee, selectedSkills);
+    await updateSkills(selectedEmployee, buildSkillsPayload());
 
     setMessage("Skills updated successfully.");
 
@@ -222,14 +263,14 @@ const handleUpdateSkills = async () => {
     <div className="space-y-8">
 
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl p-8 text-white shadow-lg">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between bg-gradient-to-r from-primary to-primary-dark rounded-3xl p-8 text-white shadow-lg">
 
         <div>
           <h1 className="text-4xl font-bold">
             Employee Skill Management
           </h1>
 
-          <p className="mt-2 text-blue-100 text-lg">
+          <p className="mt-2 text-primary-tint text-lg">
             Assign, update and manage employee skills across your organization.
           </p>
         </div>
@@ -240,22 +281,22 @@ const handleUpdateSkills = async () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
         {/* Employees Card */}
-        <div className="bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6">
+        <div className="bg-panel rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6">
 
           <div className="flex justify-between items-center">
 
             <div>
-              <p className="text-gray-500 text-sm font-medium uppercase">
+              <p className="text-sub text-sm font-medium uppercase">
                 Employees
               </p>
 
-              <h2 className="text-4xl font-bold text-gray-800 mt-2">
+              <h2 className="text-4xl font-bold text-text mt-2">
                 {employees.length}
               </h2>
             </div>
 
-            <div className="w-16 h-16 flex items-center justify-center rounded-full bg-blue-100">
-              <FiUsers className="text-blue-600 text-3xl" />
+            <div className="w-16 h-16 flex items-center justify-center rounded-full bg-primary-tint">
+              <FiUsers className="text-primary text-3xl" />
             </div>
 
           </div>
@@ -263,16 +304,16 @@ const handleUpdateSkills = async () => {
         </div>
 
         {/* Skills Card */}
-        <div className="bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6">
+        <div className="bg-panel rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6">
 
           <div className="flex justify-between items-center">
 
             <div>
-              <p className="text-gray-500 text-sm font-medium uppercase">
+              <p className="text-sub text-sm font-medium uppercase">
                 Skills
               </p>
 
-              <h2 className="text-4xl font-bold text-gray-800 mt-2">
+              <h2 className="text-4xl font-bold text-text mt-2">
                 {skills.length}
               </h2>
             </div>
@@ -286,22 +327,22 @@ const handleUpdateSkills = async () => {
         </div>
 
         {/* Assigned Skills Card */}
-        <div className="bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6">
+        <div className="bg-panel rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6">
 
           <div className="flex justify-between items-center">
 
             <div>
-              <p className="text-gray-500 text-sm font-medium uppercase">
+              <p className="text-sub text-sm font-medium uppercase">
                 Assigned Skills
               </p>
 
-              <h2 className="text-4xl font-bold text-gray-800 mt-2">
+              <h2 className="text-4xl font-bold text-text mt-2">
                 {assignedSkills.length}
               </h2>
             </div>
 
-            <div className="w-16 h-16 flex items-center justify-center rounded-full bg-purple-100">
-              <FiCheckCircle className="text-purple-600 text-3xl" />
+            <div className="w-16 h-16 flex items-center justify-center rounded-full bg-primary-tint">
+              <FiCheckCircle className="text-primary text-3xl" />
             </div>
 
           </div>
@@ -313,14 +354,14 @@ const handleUpdateSkills = async () => {
 
 {/* Employee Selection */}
 
-<div className="bg-white rounded-3xl shadow-lg p-6">
+<div className="bg-panel rounded-3xl shadow-lg p-6">
 
   <div className="flex items-center justify-between mb-5">
-    <h2 className="text-2xl font-bold text-slate-800">
+    <h2 className="text-2xl font-bold text-text">
       Select Employee
     </h2>
 
-    <span className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-full">
+    <span className="px-3 py-1 text-sm bg-primary-tint text-primary-dark rounded-full">
       {employees.length} Employees
     </span>
   </div>
@@ -346,6 +387,7 @@ const handleUpdateSkills = async () => {
     } else {
       setSelectedEmployee("");
       setSelectedSkills([]);
+      setSkillProficiency({});
       setAssignedSkills([]);
     }
   }}
@@ -357,17 +399,17 @@ const handleUpdateSkills = async () => {
 
 {/* Skills Section */}
 
-<div className="bg-white rounded-3xl shadow-lg p-6">
+<div className="bg-panel rounded-3xl shadow-lg p-6">
 
   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
 
     <div>
-      <h2 className="text-2xl font-bold text-slate-800">
+      <h2 className="text-2xl font-bold text-text">
         Available Skills
       </h2>
 
-      <p className="text-sm text-slate-500 mt-1">
-        Select one or more skills to assign.
+      <p className="text-sm text-sub mt-1">
+        Select one or more skills to assign, then set each proficiency level.
       </p>
     </div>
 
@@ -379,7 +421,7 @@ const handleUpdateSkills = async () => {
 
       <button
         onClick={loadData}
-        className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-white transition-all duration-300 hover:bg-blue-700 hover:shadow-lg"
+        className="flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-text transition-all duration-300 hover:bg-primary-dark hover:shadow-lg"
       >
         <FiRefreshCw className={loading ? "animate-spin" : ""} />
         Refresh
@@ -393,9 +435,9 @@ const handleUpdateSkills = async () => {
 
     <div className="flex flex-col items-center justify-center py-16">
 
-      <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600"></div>
+      <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary-tint border-t-primary"></div>
 
-      <p className="mt-4 text-slate-500">
+      <p className="mt-4 text-sub">
         Loading skills...
       </p>
 
@@ -403,7 +445,7 @@ const handleUpdateSkills = async () => {
 
   ) : skills.length === 0 ? (
 
-    <div className="rounded-2xl border border-dashed border-slate-300 py-12 text-center text-slate-500">
+    <div className="rounded-2xl border border-dashed border-line py-12 text-center text-sub">
       No skills available.
     </div>
 
@@ -411,40 +453,74 @@ const handleUpdateSkills = async () => {
 
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
 
-      {skills.map((skill) => (
+      {skills.map((skill) => {
+        const isChecked = selectedSkills.includes(skill.id);
+        const proficiency = skillProficiency[skill.id] ?? DEFAULT_PROFICIENCY;
 
-        <label
+        return (
+        <div
           key={skill.id}
-          className={`flex cursor-pointer items-center gap-4 rounded-2xl border p-4 transition-all duration-300 hover:shadow-md
+          className={`rounded-2xl border p-4 transition-all duration-300 hover:shadow-md
 
             ${
-              selectedSkills.includes(skill.id)
-                ? "border-blue-600 bg-blue-50 shadow"
-                : "border-slate-200 hover:border-blue-400"
+              isChecked
+                ? "border-primary bg-primary-tint shadow"
+                : "border-line hover:border-primary"
             }
           `}
         >
 
-          <input
-            type="checkbox"
-            checked={selectedSkills.includes(skill.id)}
-            onChange={() => handleSkillSelection(skill.id)}
-            className="h-5 w-5 accent-blue-600"
-          />
+          <label className="flex cursor-pointer items-center gap-4">
 
-          <div>
-            <p className="font-semibold text-slate-800">
-              {skill.skillName}
-            </p>
+            <input
+              type="checkbox"
+              checked={isChecked}
+              onChange={() => handleSkillSelection(skill.id)}
+              className="h-5 w-5 accent-blue-600"
+            />
 
-            <p className="text-xs text-slate-500">
-              Skill ID: {skill.id}
-            </p>
-          </div>
+            <div>
+              <p className="font-semibold text-text">
+                {skill.skillName}
+              </p>
 
-        </label>
+              <p className="text-xs text-sub">
+                Skill ID: {skill.id}
+              </p>
+            </div>
 
-      ))}
+          </label>
+
+          {isChecked && (
+            <div className="mt-4">
+
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium text-sub">
+                  Proficiency
+                </span>
+                <span className="text-xs font-semibold text-primary-dark">
+                  {proficiency}%
+                </span>
+              </div>
+
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={5}
+                value={proficiency}
+                onChange={(e) =>
+                  handleProficiencyChange(skill.id, e.target.value)
+                }
+                className="w-full accent-blue-600"
+              />
+
+            </div>
+          )}
+
+        </div>
+        );
+      })}
 
     </div>
 
@@ -460,7 +536,7 @@ const handleUpdateSkills = async () => {
         <button
           onClick={handleAssignSkills}
           disabled={saving}
-          className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-md transition-all duration-300 hover:bg-blue-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-semibold text-text shadow-md transition-all duration-300 hover:bg-primary-dark hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
         >
           {saving ? (
             <>
@@ -532,23 +608,23 @@ const handleUpdateSkills = async () => {
 
       {/* Assigned Skills Table */}
 
-      <div className="overflow-hidden rounded-3xl bg-white shadow-lg">
+      <div className="overflow-hidden rounded-3xl bg-panel shadow-lg">
 
         <div className="flex flex-col gap-2 border-b p-6 md:flex-row md:items-center md:justify-between">
 
           <div>
 
-            <h2 className="text-2xl font-bold text-slate-800">
+            <h2 className="text-2xl font-bold text-text">
               Assigned Skills
             </h2>
 
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-sub">
               Skills currently assigned to the selected employee.
             </p>
 
           </div>
 
-          <span className="rounded-full bg-purple-100 px-4 py-2 text-sm font-semibold text-purple-700">
+          <span className="rounded-full bg-primary-tint px-4 py-2 text-sm font-semibold text-primary-dark">
 
             {assignedSkills.length} Assigned
 
@@ -561,20 +637,24 @@ const handleUpdateSkills = async () => {
 
           <table className="min-w-full">
 
-            <thead className="bg-slate-100">
+            <thead className="bg-bg">
 
               <tr>
 
-                <th className="px-6 py-4 text-left text-sm font-semibold uppercase text-slate-600">
+                <th className="px-6 py-4 text-left text-sm font-semibold uppercase text-sub">
                   #
                 </th>
 
-                <th className="px-6 py-4 text-left text-sm font-semibold uppercase text-slate-600">
+                <th className="px-6 py-4 text-left text-sm font-semibold uppercase text-sub">
                   Skill ID
                 </th>
 
-                <th className="px-6 py-4 text-left text-sm font-semibold uppercase text-slate-600">
+                <th className="px-6 py-4 text-left text-sm font-semibold uppercase text-sub">
                   Skill Name
+                </th>
+
+                <th className="px-6 py-4 text-left text-sm font-semibold uppercase text-sub">
+                  Proficiency
                 </th>
 
               </tr>
@@ -588,8 +668,8 @@ const handleUpdateSkills = async () => {
                 <tr>
 
                   <td
-                    colSpan={3}
-                    className="py-12 text-center text-slate-400"
+                    colSpan={4}
+                    className="py-12 text-center text-mute"
                   >
                     Please select an employee to view assigned skills.
                   </td>
@@ -601,8 +681,8 @@ const handleUpdateSkills = async () => {
                 <tr>
 
                   <td
-                    colSpan={3}
-                    className="py-12 text-center text-slate-400"
+                    colSpan={4}
+                    className="py-12 text-center text-mute"
                   >
                     No skills have been assigned yet.
                   </td>
@@ -615,19 +695,25 @@ const handleUpdateSkills = async () => {
 
                   <tr
                     key={skill.skillId}
-                    className="border-b transition-colors duration-200 hover:bg-blue-50"
+                    className="border-b transition-colors duration-200 hover:bg-primary-tint"
                   >
 
-                    <td className="px-6 py-4 font-medium text-slate-600">
+                    <td className="px-6 py-4 font-medium text-sub">
                       {index + 1}
                     </td>
 
-                    <td className="px-6 py-4 text-slate-700">
+                    <td className="px-6 py-4 text-text">
                       {skill.skillId}
                     </td>
 
-                    <td className="px-6 py-4 font-semibold text-slate-800">
+                    <td className="px-6 py-4 font-semibold text-text">
                       {skill.skillName}
+                    </td>
+
+                    <td className="px-6 py-4 text-text">
+                      {typeof skill.proficiencyLevel === "number"
+                        ? `${skill.proficiencyLevel}%`
+                        : "—"}
                     </td>
 
                   </tr>

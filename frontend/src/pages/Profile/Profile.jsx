@@ -15,10 +15,15 @@ import {
 } from "react-icons/fi";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import { changePassword } from "../../services/profileService";
+import { getEmployeeSkills } from "../../services/EmployeeSkillService";
+import { getEmployeeCompetencies } from "../../services/competencyService";
+import { getRecentActivities } from "../../services/activityService";
+import { toast } from "../../components/ui/Toast.jsx";
 
 
 const initialProfile = {
   userId: "",
+  employeeId: "",
   employeeCode: "",
   name: "",
   email: "",
@@ -33,30 +38,11 @@ const initialProfile = {
   createdAt: "",
 };
 
-const skills = [
-  { name: "Java", level: 90 },
-  { name: "Spring Boot", level: 85 },
-  { name: "React.js", level: 80 },
-  { name: "PostgreSQL", level: 78 },
-  { name: "JavaScript", level: 88 },
-];
-
-const competencies = [
-  { name: "Leadership", level: "Intermediate" },
-  { name: "Communication", level: "Advanced" },
-  { name: "Problem Solving", level: "Advanced" },
-  { name: "Team Collaboration", level: "Expert" },
-];
-
-const activities = [
-  "Completed React Advanced Training",
-  "Updated Employee Profile",
-  "Completed Spring Boot Assessment",
-  "Added PostgreSQL Skill",
-];
-
 export default function Profile() {
           const [profile, setProfile] = useState(initialProfile);
+          const [skills, setSkills] = useState([]);
+          const [competencies, setCompetencies] = useState([]);
+          const [activities, setActivities] = useState([]);
           const [isEditing, setIsEditing] = useState(false);
           const [showPasswordModal, setShowPasswordModal] = useState(false);
           const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -71,6 +57,41 @@ export default function Profile() {
         useEffect(() => {
             fetchProfile();
         }, []);
+
+        useEffect(() => {
+            if (profile.employeeId) {
+                fetchSkills();
+                fetchCompetencies();
+                fetchActivities();
+            }
+        }, [profile.employeeId]);
+
+       const fetchSkills = async () => {
+    try {
+        const response = await getEmployeeSkills(profile.employeeId);
+        setSkills(response.data);
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+        const fetchCompetencies = async () => {
+            try {
+                const data = await getEmployeeCompetencies(profile.employeeId);
+                setCompetencies(data);
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        const fetchActivities = async () => {
+            try {
+                const data = await getRecentActivities(profile.employeeId);
+                setActivities(data);
+            } catch (error) {
+                console.error(error);
+            }
+        };
 
         const fetchProfile = async () => {
             try {
@@ -91,31 +112,58 @@ export default function Profile() {
                 console.error(error);
             }
         };
+
         const updateProfile = async () => {
           try {
-           const token = localStorage.getItem("token");
+            const token = localStorage.getItem("token");
+
+            // Sanitize payload: convert empty strings to null,
+            // and make sure experience is a number (or null) not a string.
+            // This prevents 400 Bad Request errors caused by Spring
+            // failing to bind "" to Integer/LocalDate fields.
+            const payload = {
+              ...profile,
+              phoneNumber: profile.phoneNumber?.trim() === "" ? null : profile.phoneNumber,
+              location: profile.location?.trim() === "" ? null : profile.location,
+              department: profile.department?.trim() === "" ? null : profile.department,
+              designation: profile.designation?.trim() === "" ? null : profile.designation,
+              manager: profile.manager?.trim() === "" ? null : profile.manager,
+              joiningDate: profile.joiningDate?.trim() === "" ? null : profile.joiningDate,
+              experience:
+                profile.experience === "" ||
+                profile.experience === null ||
+                profile.experience === undefined
+                  ? null
+                  : Number(profile.experience),
+            };
 
             await axios.put(
               `http://localhost:8080/api/profile/${userId}`,
-              profile,
+              payload,
               {
-                  headers: {
-                      Authorization: `Bearer ${token}`
-                  }
+                headers: {
+                  Authorization: `Bearer ${token}`
+                }
               }
-          );
+            );
 
-            alert("Profile updated successfully!");
+            toast.success("Profile updated successfully!");
 
             setIsEditing(false);
 
             fetchProfile();
+            fetchActivities();
 
           } catch (error) {
             console.error(error);
-            alert("Failed to update profile.");
+            console.error("Backend response:", error.response?.data);
+            toast.error(
+              error.response?.data?.message ||
+              "Failed to update profile."
+            );
           }
         };
+
              const handleChangePassword = async () => {
 
     if (
@@ -123,7 +171,7 @@ export default function Profile() {
         !passwordData.newPassword ||
         !passwordData.confirmPassword
     ) {
-        alert("Please fill all the fields.");
+        toast.warning("Please fill all the fields.");
         return;
     }
 
@@ -131,7 +179,7 @@ export default function Profile() {
         passwordData.newPassword !==
         passwordData.confirmPassword
     ) {
-        alert("New Password and Confirm Password must match.");
+        toast.warning("New Password and Confirm Password must match.");
         return;
     }
 
@@ -142,7 +190,7 @@ export default function Profile() {
             passwordData
         );
 
-        alert("Password changed successfully.");
+        toast.success("Password changed successfully.");
 
         setPasswordData({
             currentPassword: "",
@@ -154,7 +202,7 @@ export default function Profile() {
 
     } catch (error) {
 
-        alert(
+        toast.error(
             error.response?.data?.message ||
             "Failed to change password."
         );
@@ -167,7 +215,7 @@ export default function Profile() {
 
         {/* Header */}
 
-        <div className="rounded-3xl bg-white/70 backdrop-blur-xl shadow-xl p-8 border border-white">
+        <div className="rounded-3xl bg-panel/70 backdrop-blur-xl shadow-xl p-8 border border-white">
 
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
 
@@ -194,7 +242,7 @@ export default function Profile() {
                   }
                 />
               ) : (
-                <h1 className="text-3xl font-bold text-slate-800">
+                <h1 className="text-3xl font-bold text-text">
                   {profile.name}
                 </h1>
               )}
@@ -203,6 +251,7 @@ export default function Profile() {
                 <input
                   type="text"
                   className="border rounded-lg px-3 py-2 w-full mt-2"
+                  placeholder="Enter Designation"
                   value={profile.designation}
                   onChange={(e) =>
                     setProfile({
@@ -212,7 +261,7 @@ export default function Profile() {
                   }
                 />
               ) : (
-                <p className="text-slate-500">
+                <p className="text-sub">
                   {profile.designation}
                 </p>
               )}
@@ -223,6 +272,7 @@ export default function Profile() {
                     <input
                       type="text"
                       className="border rounded-lg px-3 py-2"
+                      placeholder="Enter Department"
                       value={profile.department}
                       onChange={(e) =>
                         setProfile({
@@ -232,7 +282,7 @@ export default function Profile() {
                       }
                     />
                   ) : (
-                    <span className="px-4 py-1 rounded-full bg-blue-100 text-blue-700 text-sm">
+                    <span className="px-4 py-1 rounded-full bg-primary-tint text-primary-dark text-sm">
                       {profile.department}
                     </span>
                   )}
@@ -257,7 +307,7 @@ export default function Profile() {
                     setIsEditing(true);
                   }
                 }}
-                className="flex items-center gap-2 bg-blue-600 text-white px-5 py-3 rounded-xl hover:bg-blue-700 transition"
+                className="flex items-center gap-2 bg-primary text-white px-5 py-3 rounded-xl shadow-md shadow-primary/30 hover:bg-primary-dark transition"
               >
                 <FiEdit />
                 {isEditing ? "Save Profile" : "Edit Profile"}
@@ -265,7 +315,7 @@ export default function Profile() {
 
               <button
               onClick={() => setShowPasswordModal(true)}
-              className="flex items-center gap-2 border border-slate-300 px-5 py-3 rounded-xl hover:bg-slate-100 transition"
+              className="flex items-center gap-2 border border-line text-text px-5 py-3 rounded-xl hover:bg-bg transition"
               >
               <FiLock />
               Change Password
@@ -281,7 +331,7 @@ export default function Profile() {
 
 <div className="grid lg:grid-cols-2 gap-6">
 
-  <div className="bg-white rounded-3xl shadow-xl p-6">
+  <div className="bg-panel rounded-3xl shadow-xl p-6">
 
     <h2 className="text-xl font-bold mb-6">
       Profile Information
@@ -297,13 +347,13 @@ export default function Profile() {
 
       <div className="flex items-start gap-4">
 
-  <div className="p-3 rounded-xl bg-blue-100 text-blue-600">
+  <div className="p-3 rounded-xl bg-primary-tint text-primary">
     <FiPhone />
   </div>
 
   <div className="flex-1">
 
-    <p className="text-sm text-slate-500">
+    <p className="text-sm text-sub">
       Phone
     </p>
 
@@ -320,7 +370,7 @@ export default function Profile() {
         }
       />
     ) : (
-      <p className="font-semibold text-slate-800">
+      <p className="font-semibold text-text">
         {profile.phoneNumber}
       </p>
     )}
@@ -331,13 +381,13 @@ export default function Profile() {
 
       <div className="flex items-start gap-4">
 
-  <div className="p-3 rounded-xl bg-blue-100 text-blue-600">
+  <div className="p-3 rounded-xl bg-primary-tint text-primary">
     <FiMapPin />
   </div>
 
   <div className="flex-1">
 
-    <p className="text-sm text-slate-500">
+    <p className="text-sm text-sub">
       Location
     </p>
 
@@ -354,7 +404,7 @@ export default function Profile() {
         }
       />
     ) : (
-      <p className="font-semibold text-slate-800">
+      <p className="font-semibold text-text">
         {profile.location}
       </p>
     )}
@@ -371,13 +421,13 @@ export default function Profile() {
 
       <div className="flex items-start gap-4">
 
-  <div className="p-3 rounded-xl bg-blue-100 text-blue-600">
+  <div className="p-3 rounded-xl bg-primary-tint text-primary">
     <FiBriefcase />
   </div>
 
   <div className="flex-1">
 
-    <p className="text-sm text-slate-500">
+    <p className="text-sm text-sub">
       Experience
     </p>
 
@@ -394,7 +444,7 @@ export default function Profile() {
         }
       />
     ) : (
-      <p className="font-semibold text-slate-800">
+      <p className="font-semibold text-text">
         {profile.experience}
       </p>
     )}
@@ -405,13 +455,13 @@ export default function Profile() {
 
       <div className="flex items-start gap-4">
 
-  <div className="p-3 rounded-xl bg-blue-100 text-blue-600">
+  <div className="p-3 rounded-xl bg-primary-tint text-primary">
     <FiUsers />
   </div>
 
   <div className="flex-1">
 
-    <p className="text-sm text-slate-500">
+    <p className="text-sm text-sub">
       Reporting Manager
     </p>
 
@@ -428,7 +478,7 @@ export default function Profile() {
         }
       />
     ) : (
-      <p className="font-semibold text-slate-800">
+      <p className="font-semibold text-text">
         {profile.manager}
       </p>
     )}
@@ -442,7 +492,7 @@ export default function Profile() {
   </div>
                     {/* Skills */}
 
-          <div className="bg-white rounded-3xl shadow-xl p-6">
+          <div className="bg-panel rounded-3xl shadow-xl p-6">
 
             <h2 className="text-xl font-bold mb-6">
               Skills
@@ -450,32 +500,36 @@ export default function Profile() {
 
             <div className="space-y-5">
 
-              {skills.map((skill) => (
-                <div key={skill.name}>
+              {skills.length === 0 ? (
+                <p className="text-sub text-sm">No skills added yet.</p>
+              ) : (
+                skills.map((skill) => (
+                  <div key={skill.skillId}>
 
-                  <div className="flex justify-between mb-2">
+                    <div className="flex justify-between mb-2">
 
-                    <span className="font-medium text-slate-700">
-                      {skill.name}
-                    </span>
+                      <span className="font-medium text-text">
+                        {skill.skillName}
+                      </span>
 
-                    <span className="text-blue-600 font-semibold">
-                      {skill.level}%
-                    </span>
+                      <span className="text-primary font-semibold">
+                        {skill.proficiencyLevel != null ? `${skill.proficiencyLevel}%` : "N/A"}
+                      </span>
+
+                    </div>
+
+                    <div className="w-full h-3 rounded-full bg-line">
+
+                      <div
+                        className="h-3 rounded-full bg-gradient-to-r from-primary to-sky-500"
+                        style={{ width: `${skill.proficiencyLevel ?? 0}%` }}
+                      />
+
+                    </div>
 
                   </div>
-
-                  <div className="w-full h-3 rounded-full bg-slate-200">
-
-                    <div
-                      className="h-3 rounded-full bg-gradient-to-r from-blue-500 to-sky-500"
-                      style={{ width: `${skill.level}%` }}
-                    />
-
-                  </div>
-
-                </div>
-              ))}
+                ))
+              )}
 
             </div>
 
@@ -489,7 +543,7 @@ export default function Profile() {
 
           {/* Competencies */}
 
-          <div className="bg-white rounded-3xl shadow-xl p-6">
+          <div className="bg-panel rounded-3xl shadow-xl p-6">
 
             <h2 className="text-xl font-bold mb-6">
               Competencies
@@ -497,24 +551,28 @@ export default function Profile() {
 
             <div className="space-y-4">
 
-              {competencies.map((item) => (
+              {competencies.length === 0 ? (
+                <p className="text-sub text-sm">No competencies recorded yet.</p>
+              ) : (
+                competencies.map((item) => (
 
-                <div
-                  key={item.name}
-                  className="flex items-center justify-between rounded-xl bg-slate-100 px-4 py-3"
-                >
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between rounded-xl bg-bg px-4 py-3"
+                  >
 
-                  <span className="font-medium">
-                    {item.name}
-                  </span>
+                    <span className="font-medium">
+                      {item.skillName}
+                    </span>
 
-                  <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-700">
-                    {item.level}
-                  </span>
+                    <span className="rounded-full bg-primary-tint px-3 py-1 text-sm font-semibold text-primary-dark">
+                      {item.level}
+                    </span>
 
-                </div>
+                  </div>
 
-              ))}
+                ))
+              )}
 
             </div>
 
@@ -522,7 +580,7 @@ export default function Profile() {
 
           {/* Recent Activity */}
 
-          <div className="bg-white rounded-3xl shadow-xl p-6">
+          <div className="bg-panel rounded-3xl shadow-xl p-6">
 
             <h2 className="text-xl font-bold mb-6">
               Recent Activity
@@ -530,22 +588,26 @@ export default function Profile() {
 
             <ul className="space-y-4">
 
-              {activities.map((activity, index) => (
+              {activities.length === 0 ? (
+                <li className="text-sub text-sm">No recent activity.</li>
+              ) : (
+                activities.map((activity) => (
 
-                <li
-                  key={index}
-                  className="flex items-center gap-3 rounded-xl bg-slate-100 px-4 py-3"
-                >
+                  <li
+                    key={activity.id}
+                    className="flex items-center gap-3 rounded-xl bg-bg px-4 py-3"
+                  >
 
-                  <div className="w-3 h-3 rounded-full bg-blue-600"></div>
+                    <div className="w-3 h-3 rounded-full bg-primary"></div>
 
-                  <span className="text-slate-700">
-                    {activity}
-                  </span>
+                    <span className="text-text">
+                      {activity.description}
+                    </span>
 
-                </li>
+                  </li>
 
-              ))}
+                ))
+              )}
 
             </ul>
 
@@ -558,7 +620,7 @@ export default function Profile() {
 
               <div className="fixed inset-0 bg-black/40 flex justify-center items-center">
 
-              <div className="bg-white rounded-xl p-6 w-96">
+              <div className="bg-panel rounded-xl p-6 w-96">
 
               <h2 className="text-xl font-bold mb-5">
               Change Password
@@ -643,7 +705,7 @@ export default function Profile() {
 
               <button
               onClick={handleChangePassword}
-              className="px-4 py-2 rounded-lg bg-blue-600 text-white"
+              className="px-4 py-2 rounded-lg bg-primary text-white"
               >
               Update
               </button>
@@ -663,17 +725,17 @@ function Info({ icon, title, value }) {
   return (
     <div className="flex items-start gap-4">
 
-      <div className="p-3 rounded-xl bg-blue-100 text-blue-600">
+      <div className="p-3 rounded-xl bg-primary-tint text-primary">
         {icon}
       </div>
 
       <div>
 
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-sub">
           {title}
         </p>
 
-        <p className="font-semibold text-slate-800">
+        <p className="font-semibold text-text">
           {value}
         </p>
 

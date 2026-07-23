@@ -8,6 +8,8 @@ import {
 } from "../../services/EmployeeSkillService";
 
 import { getGapAnalysis } from "../../services/GapAnalysisService";
+import { getDepartmentHeatmap } from "../../services/gapHeatmapService";
+import GapHeatmapChart from "../../components/GapHeatMap/GapHeatmapChart";
 
 import {
   FiUsers,
@@ -17,6 +19,32 @@ import {
   FiBarChart2,
   FiCheckCircle,
 } from "react-icons/fi";
+
+const RISK_STYLES = {
+  GREEN: "bg-green-100 text-green-700",
+  AMBER: "bg-amber-100 text-amber-700",
+  RED: "bg-red-100 text-red-700",
+};
+
+function RiskBadge({ skill }) {
+  if (!skill || !skill.riskLabel) {
+    return null;
+  }
+
+  const badgeClass =
+    RISK_STYLES[skill.riskColor] || "bg-slate-100 text-slate-700";
+
+  return (
+    <span
+      className={`ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${badgeClass}`}
+      title={`Required: ${skill.requiredLevel ?? "-"} | Current: ${
+        skill.currentLevel ?? "-"
+      } | Gap: ${skill.gap ?? "-"}`}
+    >
+      {skill.riskLabel}
+    </span>
+  );
+}
 
 export default function GapAnalysis() {
   const [employees, setEmployees] = useState([]);
@@ -32,11 +60,16 @@ export default function GapAnalysis() {
   // Backend Gap Analysis Data
   const [gapData, setGapData] = useState([]);
 
+  // Heatmap Data
+  const [heatmapData, setHeatmapData] = useState([]);
+  const [heatmapLoading, setHeatmapLoading] = useState(false);
+const [heatmapError, setHeatmapError] = useState("");
+
   const employeeOptions = employees.map((employee) => ({
     value: employee.id,
-    label: `${employee.user?.name} (${employee.employeeCode})`,
+    label: `${employee.name} (${employee.employeeCode})`,
     searchText: `
-      ${employee.user?.name}
+      ${employee.name}
       ${employee.employeeCode}
       ${employee.department}
       ${employee.designation}
@@ -51,16 +84,14 @@ export default function GapAnalysis() {
   };
 
   const handleRefresh = async () => {
-  setSelectedEmployee("");
+    setSelectedEmployee("");
+    setGapData([]);
+    setMessage("");
+    setError("");
 
-  setGapData([]);
-
-  setMessage("");
-
-  setError("");
-
-  await loadData();
-};
+    await loadData();
+    await loadHeatmap();
+  };
 
   const CustomOption = (props) => {
     const employee = props.data.employee;
@@ -69,18 +100,18 @@ export default function GapAnalysis() {
       <components.Option {...props}>
         <div className="py-1">
           <p className="font-semibold text-slate-800">
-            {employee.user?.name}
+            {employee.name}
           </p>
 
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-sub">
             {employee.employeeCode}
           </p>
 
-          <p className="text-xs text-blue-600">
+          <p className="text-xs text-primary">
             {employee.designation}
           </p>
 
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-sub">
             {employee.department}
           </p>
         </div>
@@ -115,8 +146,31 @@ export default function GapAnalysis() {
     }
   }, []);
 
+  const loadHeatmap = async () => {
+  try {
+    setHeatmapLoading(true);
+    setHeatmapError("");
+
+    const data = await getDepartmentHeatmap();
+
+    setHeatmapData(data);
+
+  } catch (err) {
+
+    console.error("Department Heatmap Error:", err);
+
+    setHeatmapData([]);
+    setHeatmapError("Unable to load department heatmap.");
+
+  } finally {
+
+    setHeatmapLoading(false);
+
+  }
+};
   useEffect(() => {
     loadData();
+    loadHeatmap();
   }, [loadData]);
 
   const loadGapAnalysis = async (employeeId) => {
@@ -141,6 +195,7 @@ export default function GapAnalysis() {
       }
 
     } catch (err) {
+
       console.error("Gap Analysis Error:", err);
 
       setGapData([]);
@@ -154,48 +209,49 @@ export default function GapAnalysis() {
       setLoading(false);
     }
   };
-
   // Current Gap Analysis
   const currentGap =
-    gapData.length > 0 ? gapData[0] : null;
+  gapData.length > 0 ? gapData[0] : null;
 
-  const matchedSkills =
-    currentGap?.matchedSkills || [];
+const matchedSkills =
+  currentGap?.matchedSkills || [];
 
-  const missingSkills =
-    currentGap?.missingSkills || [];
+const missingSkills =
+  currentGap?.missingSkills || [];
 
-  const gapPercentage =
-    currentGap?.gapPercentage || 0;
+const gapPercentage =
+  currentGap?.gapPercentage || 0;
 
-  const matchedSkillCount =
-    currentGap?.matchedSkillCount || 0;
+const matchedSkillCount =
+  currentGap?.matchedSkillCount || 0;
 
-  const missingSkillCount =
-    currentGap?.missingSkillCount || 0;
+const missingSkillCount =
+  currentGap?.missingSkillCount || 0;
 
-  const totalRequiredSkills =
-    currentGap?.totalRequiredSkills || 0;
+const totalRequiredSkills =
+  currentGap?.totalRequiredSkills || 0;
 
-  const employeeName =
-    currentGap?.employeeName || "";
+const employeeName =
+  currentGap?.employeeName || "";
 
-  const roleName =
-    currentGap?.roleName || "";
+const roleName =
+  currentGap?.roleName || "";
+
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
 
         {/* Header */}
 
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between rounded-3xl bg-gradient-to-r from-blue-600 to-indigo-600 p-8 text-white shadow-lg">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between rounded-3xl bg-gradient-to-r from-primary to-primary-dark p-8 text-white shadow-lg">
 
           <div>
             <h1 className="text-4xl font-bold">
               Gap Analysis
             </h1>
 
-            <p className="mt-2 text-blue-100 text-lg">
+            <p className="mt-2 text-primary-tint text-lg">
               Analyze employee skill gaps and identify missing competencies.
             </p>
           </div>
@@ -208,12 +264,12 @@ export default function GapAnalysis() {
 
           {/* Employees */}
 
-          <div className="rounded-3xl bg-white p-6 shadow-lg">
+          <div className="rounded-3xl bg-panel p-6 shadow-lg">
 
             <div className="flex items-center justify-between">
 
               <div>
-                <p className="text-sm uppercase text-gray-500">
+                <p className="text-sm uppercase text-sub">
                   Employees
                 </p>
 
@@ -222,8 +278,8 @@ export default function GapAnalysis() {
                 </h2>
               </div>
 
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-                <FiUsers className="text-3xl text-blue-600" />
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-tint">
+                <FiUsers className="text-3xl text-primary" />
               </div>
 
             </div>
@@ -232,22 +288,22 @@ export default function GapAnalysis() {
 
           {/* Required Skills */}
 
-          <div className="rounded-3xl bg-white p-6 shadow-lg">
+          <div className="rounded-3xl bg-panel p-6 shadow-lg">
 
             <div className="flex items-center justify-between">
 
               <div>
-                <p className="text-sm uppercase text-gray-500">
+                <p className="text-sm uppercase text-sub">
                   Required Skills
                 </p>
 
-                <h2 className="mt-2 text-4xl font-bold text-blue-600">
+                <h2 className="mt-2 text-4xl font-bold text-primary">
                   {totalRequiredSkills}
                 </h2>
               </div>
 
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-                <FiCpu className="text-3xl text-blue-600" />
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-tint">
+                <FiCpu className="text-3xl text-primary" />
               </div>
 
             </div>
@@ -256,12 +312,12 @@ export default function GapAnalysis() {
 
           {/* Missing Skills */}
 
-          <div className="rounded-3xl bg-white p-6 shadow-lg">
+          <div className="rounded-3xl bg-panel p-6 shadow-lg">
 
             <div className="flex items-center justify-between">
 
               <div>
-                <p className="text-sm uppercase text-gray-500">
+                <p className="text-sm uppercase text-sub">
                   Missing Skills
                 </p>
 
@@ -280,12 +336,12 @@ export default function GapAnalysis() {
 
           {/* Gap Percentage */}
 
-          <div className="rounded-3xl bg-white p-6 shadow-lg">
+          <div className="rounded-3xl bg-panel p-6 shadow-lg">
 
             <div className="flex items-center justify-between">
 
               <div>
-                <p className="text-sm uppercase text-gray-500">
+                <p className="text-sm uppercase text-sub">
                   Gap %
                 </p>
 
@@ -305,7 +361,7 @@ export default function GapAnalysis() {
         </div>
 
         {/* Employee Selection */}
-<div className="rounded-3xl bg-white p-6 shadow-lg">
+<div className="rounded-3xl bg-panel p-6 shadow-lg">
 
   <div className="mb-5 flex items-center justify-between">
 
@@ -315,7 +371,7 @@ export default function GapAnalysis() {
 
     <button
   onClick={handleRefresh}
-  className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-white"
+  className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-white"
 >
   <FiRefreshCw />
   Refresh
@@ -347,12 +403,12 @@ export default function GapAnalysis() {
   />
 
   {currentGap && (
-    <div className="mt-5 rounded-xl bg-slate-50 p-4">
-      <p className="font-semibold text-slate-800">
+    <div className="mt-5 rounded-xl bg-bg p-4">
+      <p className="font-semibold text-text">
         Employee : {employeeName}
       </p>
 
-      <p className="mt-1 text-slate-600">
+      <p className="mt-1 text-sub">
         Role : {roleName}
       </p>
     </div>
@@ -360,79 +416,129 @@ export default function GapAnalysis() {
 
 </div>
 
-{/* Gap Progress */}
+{/* Overall Skill Gap */}
 
-<div className="rounded-3xl bg-white p-6 shadow-lg">
+<div className="rounded-3xl bg-panel p-8 shadow-xl">
 
-  <div className="mb-6">
+  <div className="flex items-center justify-between">
 
-    <h2 className="text-2xl font-bold text-slate-800">
-      Overall Skill Gap
-    </h2>
+    <div>
 
-    <p className="mt-1 text-sm text-slate-500">
-      Percentage of missing skills for the selected employee.
-    </p>
+      <h2 className="text-2xl font-bold text-text">
+        Overall Skill Gap
+      </h2>
 
-  </div>
+      <p className="mt-2 text-sub">
+        Current employee skill gap based on assigned role.
+      </p>
 
-  <div className="w-full rounded-full bg-slate-200 h-5 overflow-hidden">
+    </div>
 
     <div
-      className="h-5 rounded-full bg-gradient-to-r from-red-500 to-orange-500 transition-all duration-500"
-      style={{
-        width: `${gapPercentage}%`,
-      }}
-    />
+      className={`rounded-full px-5 py-2 font-semibold text-white
+      ${
+        gapPercentage <= 20
+          ? "bg-green-500"
+          : gapPercentage <= 40
+          ? "bg-yellow-500"
+          : gapPercentage <= 60
+          ? "bg-orange-500"
+          : "bg-red-500"
+      }`}
+    >
+      {gapPercentage <= 20
+        ? "Low Risk"
+        : gapPercentage <= 40
+        ? "Moderate"
+        : gapPercentage <= 60
+        ? "High Risk"
+        : "Critical"}
+    </div>
 
   </div>
 
-  <div className="mt-4 flex justify-between text-sm font-semibold">
+  <div className="mt-8">
 
-    <span className="text-green-600">
-      Matched Skills : {matchedSkillCount}
-    </span>
+    <div className="h-6 overflow-hidden rounded-full bg-line">
 
-    <span className="text-red-600">
-      Gap {gapPercentage.toFixed(1)}%
-    </span>
+      <div
+        className="h-6 rounded-full bg-gradient-to-r from-green-500 via-yellow-400 to-red-500 transition-all duration-700"
+        style={{
+          width: `${gapPercentage}%`,
+        }}
+      />
+
+    </div>
 
   </div>
 
-  <div className="mt-2 flex justify-between text-sm text-slate-500">
+  <div className="mt-8 grid grid-cols-3 gap-6 text-center">
 
-    <span>
-      Required Skills : {totalRequiredSkills}
-    </span>
+    <div>
 
-    <span>
-      Missing Skills : {missingSkillCount}
-    </span>
+      <p className="text-4xl font-bold text-green-600">
+        {matchedSkillCount}
+      </p>
+
+      <p className="mt-2 text-sub">
+        Matched
+      </p>
+
+    </div>
+
+    <div>
+
+      <p className="text-4xl font-bold text-primary">
+        {totalRequiredSkills}
+      </p>
+
+      <p className="mt-2 text-sub">
+        Required
+      </p>
+
+    </div>
+
+    <div>
+
+      <p className="text-4xl font-bold text-red-600">
+        {missingSkillCount}
+      </p>
+
+      <p className="mt-2 text-sub">
+        Missing
+      </p>
+
+    </div>
 
   </div>
 
 </div>
+{/* =======================================================
+    Department Knowledge Gap Heatmap
+======================================================= */}
+
+
 
         {/* Skills Grid */}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
   {/* Matched Skills */}
-<div className="rounded-3xl bg-white shadow-lg p-6">
+<div className="rounded-3xl bg-panel shadow-lg p-6">
 
-  <h2 className="mb-5 text-xl font-bold text-slate-800">
+  <h2 className="mb-5 text-xl font-bold text-text">
     Matched Skills
   </h2>
 
   {!currentGap ? (
 
-    <p className="text-slate-400">
+    <p className="text-mute">
       Select an employee.
     </p>
 
   ) : matchedSkills.length === 0 ? (
 
-    <p className="text-slate-400">
+    <p className="text-mute">
       No matched skills found.
     </p>
 
@@ -444,9 +550,10 @@ export default function GapAnalysis() {
 
         <span
           key={skill.id}
-          className="rounded-full bg-green-100 px-4 py-2 text-sm font-medium text-green-700"
+          className="inline-flex items-center rounded-full bg-green-100 px-4 py-2 text-sm font-medium text-green-700"
         >
           {skill.skillName}
+          <RiskBadge skill={skill} />
         </span>
 
       ))}
@@ -459,9 +566,9 @@ export default function GapAnalysis() {
 
   {/* Required Skills */}
 
-  <div className="rounded-3xl bg-white shadow-lg p-6">
+  <div className="rounded-3xl bg-panel shadow-lg p-6">
 
-    <h2 className="mb-5 text-xl font-bold text-slate-800">
+    <h2 className="mb-5 text-xl font-bold text-text">
       Required Skills
     </h2>
 
@@ -469,11 +576,11 @@ export default function GapAnalysis() {
 
       <div className="text-center">
 
-        <p className="text-5xl font-bold text-blue-600">
+        <p className="text-5xl font-bold text-primary">
           {totalRequiredSkills}
         </p>
 
-        <p className="mt-3 text-slate-500">
+        <p className="mt-3 text-sub">
           Total Required Skills
         </p>
 
@@ -485,9 +592,9 @@ export default function GapAnalysis() {
 
   {/* Missing Skills */}
 
-  <div className="rounded-3xl bg-white shadow-lg p-6">
+  <div className="rounded-3xl bg-panel shadow-lg p-6">
 
-    <h2 className="mb-5 text-xl font-bold text-slate-800">
+    <h2 className="mb-5 text-xl font-bold text-text">
       Missing Skills
     </h2>
 
@@ -509,9 +616,10 @@ export default function GapAnalysis() {
 
           <span
             key={skill.id}
-            className="rounded-full bg-red-100 px-4 py-2 text-sm font-medium text-red-700"
+            className="inline-flex items-center rounded-full bg-red-100 px-4 py-2 text-sm font-medium text-red-700"
           >
             {skill.skillName}
+            <RiskBadge skill={skill} />
           </span>
 
         ))}
@@ -519,55 +627,6 @@ export default function GapAnalysis() {
       </div>
 
     )}
-
-  </div>
-
-</div>
-        {/* Summary Card */}
-
-        <div className="rounded-3xl bg-white p-6 shadow-lg">
-
-  <h2 className="text-2xl font-bold text-slate-800 mb-4">
-    Gap Analysis Summary
-  </h2>
-
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-    <div className="rounded-2xl bg-green-50 p-5 text-center">
-
-      <h3 className="text-4xl font-bold text-green-600">
-        {matchedSkillCount}
-      </h3>
-
-      <p className="mt-2 text-slate-600">
-        Matched Skills
-      </p>
-
-    </div>
-
-    <div className="rounded-2xl bg-blue-50 p-5 text-center">
-
-      <h3 className="text-4xl font-bold text-blue-600">
-        {totalRequiredSkills}
-      </h3>
-
-      <p className="mt-2 text-slate-600">
-        Required Skills
-      </p>
-
-    </div>
-
-    <div className="rounded-2xl bg-red-50 p-5 text-center">
-
-      <h3 className="text-4xl font-bold text-red-600">
-        {missingSkillCount}
-      </h3>
-
-      <p className="mt-2 text-slate-600">
-        Missing Skills
-      </p>
-
-    </div>
 
   </div>
 
@@ -611,14 +670,14 @@ export default function GapAnalysis() {
 
 {/* Analysis Table */}
 
-<div className="overflow-hidden rounded-3xl bg-white shadow-lg">
+<div className="overflow-hidden rounded-3xl bg-panel shadow-lg">
 
   <div className="border-b p-6">
-    <h2 className="text-2xl font-bold text-slate-800">
+    <h2 className="text-2xl font-bold text-text">
       Gap Analysis Details
     </h2>
 
-    <p className="mt-2 text-slate-500">
+    <p className="mt-2 text-sub">
       Comparison between employee skills and required skills.
     </p>
   </div>
@@ -627,7 +686,7 @@ export default function GapAnalysis() {
 
     <table className="min-w-full">
 
-      <thead className="bg-slate-100">
+      <thead className="bg-bg">
 
         <tr>
           <th className="px-6 py-4 text-left text-sm font-semibold uppercase">
@@ -645,6 +704,10 @@ export default function GapAnalysis() {
           <th className="px-6 py-4 text-left text-sm font-semibold uppercase">
             Status
           </th>
+
+          <th className="px-6 py-4 text-left text-sm font-semibold uppercase">
+            Risk
+          </th>
         </tr>
 
       </thead>
@@ -656,8 +719,8 @@ export default function GapAnalysis() {
           <tr>
 
             <td
-              colSpan={4}
-              className="py-12 text-center text-slate-400"
+              colSpan={5}
+              className="py-12 text-center text-mute"
             >
               Select an employee to view gap analysis.
             </td>
@@ -672,7 +735,7 @@ export default function GapAnalysis() {
 
               <tr
                 key={`matched-${skill.id}`}
-                className="border-b hover:bg-slate-50"
+                className="border-b hover:bg-bg"
               >
 
                 <td className="px-6 py-4 font-semibold">
@@ -693,6 +756,10 @@ export default function GapAnalysis() {
                   </span>
                 </td>
 
+                <td className="px-6 py-4">
+                  <RiskBadge skill={skill} />
+                </td>
+
               </tr>
 
             ))}
@@ -701,7 +768,7 @@ export default function GapAnalysis() {
 
               <tr
                 key={`missing-${skill.id}`}
-                className="border-b hover:bg-slate-50"
+                className="border-b hover:bg-bg"
               >
 
                 <td className="px-6 py-4 font-semibold">
@@ -722,6 +789,10 @@ export default function GapAnalysis() {
                   </span>
                 </td>
 
+                <td className="px-6 py-4">
+                  <RiskBadge skill={skill} />
+                </td>
+
               </tr>
 
             ))}
@@ -737,7 +808,17 @@ export default function GapAnalysis() {
   </div>
 
 </div>
-
+{heatmapLoading ? (
+  <div className="rounded-3xl bg-panel p-8 shadow-lg text-center">
+    Loading department heatmap...
+  </div>
+) : heatmapError ? (
+  <div className="rounded-3xl border border-red-300 bg-red-50 p-6 text-red-700 shadow-lg">
+    {heatmapError}
+  </div>
+) : (
+  <GapHeatmapChart data={heatmapData} />
+)}
 </div>
 
 </DashboardLayout>
