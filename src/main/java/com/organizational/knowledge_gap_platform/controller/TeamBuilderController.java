@@ -15,7 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/team-builder")
-@PreAuthorize("hasAnyRole('ADMIN', 'HR')")
+@PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_HR SPECIALIST')")
 public class TeamBuilderController {
 
     private final TeamBuilderService teamBuilderService;

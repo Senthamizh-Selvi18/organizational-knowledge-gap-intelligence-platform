@@ -57,6 +57,30 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleAccessDenied(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody(ex.getMessage()));
     }
+    @ExceptionHandler(MentorProfileNotFoundException.class)
+public ResponseEntity<Map<String, Object>> handleMentorProfileNotFound(MentorProfileNotFoundException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorBody(ex.getMessage()));
+}
+
+@ExceptionHandler(MentorshipRequestNotFoundException.class)
+public ResponseEntity<Map<String, Object>> handleMentorshipRequestNotFound(MentorshipRequestNotFoundException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorBody(ex.getMessage()));
+}
+
+@ExceptionHandler(MentorshipSessionNotFoundException.class)
+public ResponseEntity<Map<String, Object>> handleMentorshipSessionNotFound(MentorshipSessionNotFoundException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorBody(ex.getMessage()));
+}
+
+@ExceptionHandler(KnowledgeArticleNotFoundException.class)
+public ResponseEntity<Map<String, Object>> handleKnowledgeArticleNotFound(KnowledgeArticleNotFoundException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorBody(ex.getMessage()));
+}
+
+@ExceptionHandler(InvalidMentorshipActionException.class)
+public ResponseEntity<Map<String, Object>> handleInvalidMentorshipAction(InvalidMentorshipActionException ex) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody(ex.getMessage()));
+}
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
