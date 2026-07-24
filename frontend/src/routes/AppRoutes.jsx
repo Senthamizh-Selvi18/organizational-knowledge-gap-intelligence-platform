@@ -26,6 +26,7 @@ import ExternalCourseManagement from "../pages/ExternalCourseManagement/External
 import InternalTrainingCatalog from "../pages/InternalTrainingCatalog/InternalTrainingCatalog";
 import Notifications from "../pages/Notifications/Notifications";
 import Certification from "../pages/Certification/Certification";
+import AITeamBuilder from "../pages/AITeamBuilder/AITeamBuilder";
 import LearningProgress from "../pages/LearningProgress/LearningProgress";
 import Assessment from "../pages/Assessment/Assessment";
 import MentorDirectory from "../pages/MentorDirectory/MentorDirectory";
@@ -102,6 +103,14 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+  <Route
+  path="/dashboard/ai-team-builder"
+  element={
+    <ProtectedRoute allowedRoles={["admin", "hr specialist"]}>
+      <AITeamBuilder />
+    </ProtectedRoute>
+  }
+/>
 
       {/* Required Skill Levels (Risk Badges) */}
       <Route

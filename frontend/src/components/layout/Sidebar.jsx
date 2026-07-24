@@ -86,11 +86,21 @@ const overviewItems = [
     icon: FiCpu,
     to: "/dashboard/recommendation",
   },
-  {
-    label: "Assessments",
-    icon: FiClipboard,
-    to: "/dashboard/assessments",
-  },
+...(role === "admin" || role === "hr specialist"
+  ? [
+      {
+        label: "AI Team Builder",
+        icon: FiUsers,
+        to: "/dashboard/ai-team-builder",
+      },
+    ]
+  : []),
+
+{
+  label: "Assessments",
+  icon: FiClipboard,
+  to: "/dashboard/assessments",
+},
   ...(role === "admin"
     ? [
         {
