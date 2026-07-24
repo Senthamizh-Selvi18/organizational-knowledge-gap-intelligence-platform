@@ -8,4 +8,5 @@ import java.util.List;
 public interface CompetencyRepository extends JpaRepository<Competency, Long> {
 
     List<Competency> findByEmployeeId(Long employeeId);
+    boolean existsBySkillId(Long skillId);
 }
