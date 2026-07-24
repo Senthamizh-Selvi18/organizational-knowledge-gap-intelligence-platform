@@ -16,6 +16,8 @@
   padding: 22px 16px;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   transition: background .35s ease, border-color .35s ease;
 }
 .kg-brand { display: flex; align-items: center; gap: 11px; margin-bottom: 22px; padding: 0 2px; }
