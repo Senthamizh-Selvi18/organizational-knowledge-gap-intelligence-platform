@@ -68,7 +68,7 @@ public GapAnalysisServiceImpl(
                 .orElseThrow(() -> new RoleNotFoundException("Role not found with id: " + roleId));
 
         GapAnalysisResponseDTO result = buildGapAnalysis(employee, role);
-        notificationService.notifyGapAnalysisCompleted(employee, role.getRoleName());
+        notifyGapAnalysisCompletedSafely(employee, role.getRoleName());
         return result;
     }
 
@@ -90,7 +90,7 @@ public GapAnalysisServiceImpl(
         String roleNames = assignedRoles.stream()
                 .map(Role::getRoleName)
                 .collect(Collectors.joining(", "));
-        notificationService.notifyGapAnalysisCompleted(employee, roleNames);
+        notifyGapAnalysisCompletedSafely(employee, roleNames);
 
         return results;
     }
@@ -190,12 +190,18 @@ public GapAnalysisServiceImpl(
 
         GapAnalysisResponseDTO result = buildGapAnalysis(employee, role);
 
-        notificationService.notifyGapAnalysisCompleted(
-                employee,
-                role.getRoleName()
-        );
+        notifyGapAnalysisCompletedSafely(employee, role.getRoleName());
 
         return result;
+    }
+
+    private void notifyGapAnalysisCompletedSafely(Employee employee, String roleName) {
+        try {
+            notificationService.notifyGapAnalysisCompleted(employee, roleName);
+        } catch (Exception ex) {
+            System.err.println("Failed to send gap-analysis-completed notification for employeeId="
+                    + employee.getId() + ": " + ex.getMessage());
+        }
     }
     @Override
     public List<GapHeatmapResponseDTO> getGapHeatmap() {

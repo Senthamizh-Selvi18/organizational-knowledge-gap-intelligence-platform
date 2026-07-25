@@ -1,5 +1,6 @@
 package com.organizational.knowledge_gap_platform.exception;
 
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -81,6 +82,13 @@ public ResponseEntity<Map<String, Object>> handleKnowledgeArticleNotFound(Knowle
 public ResponseEntity<Map<String, Object>> handleInvalidMentorshipAction(InvalidMentorshipActionException ex) {
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody(ex.getMessage()));
 }
+
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<Map<String, Object>> handleDataAccessException(DataAccessException ex) {
+        ex.printStackTrace();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(errorBody("A database error occurred while processing your request. Please try again, and contact support if the problem persists."));
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
