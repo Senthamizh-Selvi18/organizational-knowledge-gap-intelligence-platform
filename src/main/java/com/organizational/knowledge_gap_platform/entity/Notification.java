@@ -2,6 +2,7 @@ package com.organizational.knowledge_gap_platform.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDateTime;
 
@@ -39,6 +40,7 @@ public class Notification {
 
     // NEW: priority level, defaults to MEDIUM so existing rows/inserts keep working
     @Enumerated(EnumType.STRING)
+    @ColumnDefault("'MEDIUM'")
     @Column(nullable = false, length = 20)
     private NotificationPriority priority = NotificationPriority.MEDIUM;
 
