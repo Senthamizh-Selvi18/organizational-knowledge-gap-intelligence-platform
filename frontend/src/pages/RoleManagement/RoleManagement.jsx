@@ -421,7 +421,7 @@ export default function RoleManagement() {
                                 loadRoles();
                                 toast.success("Role deleted");
                               } catch {
-                                toast.error("Unable to delete role");
+                                toast.error("Cannot delete role. It is assigned to one or more users.");
                               }
                             }}
                             className="text-rust hover:text-rust"

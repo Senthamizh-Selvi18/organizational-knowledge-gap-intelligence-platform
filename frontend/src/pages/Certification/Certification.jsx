@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, Component } from "react";
+import { createPortal } from "react-dom";
 import axios from "axios";
 import {
   FiAward,
@@ -392,193 +393,198 @@ function CertificationsPage() {
       </div>
 
       {/* ===========================
-            UPLOAD MODAL
+            UPLOAD MODAL (portaled to document.body)
       ============================ */}
-      {showUploadModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-3xl bg-white shadow-2xl">
-            <div className="flex items-center justify-between rounded-t-3xl bg-primary px-8 py-6 text-white">
-              <div>
-                <h2 className="text-xl font-bold">Upload Certification</h2>
-                <p className="mt-1 text-sm text-white/80">
-                  PDF, JPG, or PNG — max 5 MB
-                </p>
-              </div>
-              <button
-                onClick={() => setShowUploadModal(false)}
-                className="rounded-full bg-white/20 p-2 hover:bg-white/30"
-              >
-                <FiX size={20} />
-              </button>
-            </div>
-
-            <div className="space-y-4 p-8">
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-600">
-                  Certification File
-                </label>
-                <input
-                  type="file"
-                  accept=".pdf,.png,.jpg,.jpeg"
-                  onChange={handleFileChange}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-primary-tint file:px-3 file:py-1.5 file:text-primary"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-600">
-                  Certification Name
-                </label>
-                <input
-                  type="text"
-                  value={uploadForm.certificationName}
-                  onChange={(e) =>
-                    setUploadForm({
-                      ...uploadForm,
-                      certificationName: e.target.value,
-                    })
-                  }
-                  placeholder="e.g. AWS Certified Solutions Architect"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-tint"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-600">
-                  Issuing Organization
-                </label>
-                <input
-                  type="text"
-                  value={uploadForm.issuingOrganization}
-                  onChange={(e) =>
-                    setUploadForm({
-                      ...uploadForm,
-                      issuingOrganization: e.target.value,
-                    })
-                  }
-                  placeholder="e.g. Amazon Web Services"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-tint"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+      {showUploadModal &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+            <div className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+              <div className="flex shrink-0 items-center justify-between bg-primary px-8 py-6 text-white">
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-600">
-                    Issue Date
-                  </label>
-                  <input
-                    type="date"
-                    max={new Date().toISOString().split("T")[0]}
-                    value={uploadForm.issueDate}
-                    onChange={(e) =>
-                      setUploadForm({ ...uploadForm, issueDate: e.target.value })
-                    }
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-tint"
-                  />
-                </div>
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-600">
-                    Expiry Date (optional)
-                  </label>
-                  <input
-                    type="date"
-                    min={uploadForm.issueDate || undefined}
-                    value={uploadForm.expiryDate}
-                    onChange={(e) =>
-                      setUploadForm({ ...uploadForm, expiryDate: e.target.value })
-                    }
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-tint"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 border-t border-slate-200 p-6">
-              <button
-                onClick={() => setShowUploadModal(false)}
-                disabled={uploading}
-                className="rounded-xl bg-slate-200 px-6 py-3 font-semibold text-slate-700 transition hover:bg-slate-300 disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUpload}
-                disabled={uploading}
-                className="rounded-xl bg-primary px-6 py-3 font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {uploading ? "Uploading..." : "Upload"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ===========================
-            DELETE MODAL
-      ============================ */}
-      {showDeleteModal && selectedCert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl">
-            <div className="rounded-t-3xl bg-gradient-to-r from-red-600 to-rose-600 px-8 py-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold">Delete Certification</h2>
-                  <p className="mt-1 text-red-100">This action cannot be undone.</p>
+                  <h2 className="text-xl font-bold">Upload Certification</h2>
+                  <p className="mt-1 text-sm text-white/80">
+                    PDF, JPG, or PNG — max 5 MB
+                  </p>
                 </div>
                 <button
-                  onClick={() => setShowDeleteModal(false)}
+                  onClick={() => setShowUploadModal(false)}
                   className="rounded-full bg-white/20 p-2 hover:bg-white/30"
                 >
-                  <FiX size={22} />
+                  <FiX size={20} />
+                </button>
+              </div>
+
+              <div className="space-y-4 overflow-y-auto p-8">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-600">
+                    Certification File
+                  </label>
+                  <input
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    onChange={handleFileChange}
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-primary-tint file:px-3 file:py-1.5 file:text-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-600">
+                    Certification Name
+                  </label>
+                  <input
+                    type="text"
+                    value={uploadForm.certificationName}
+                    onChange={(e) =>
+                      setUploadForm({
+                        ...uploadForm,
+                        certificationName: e.target.value,
+                      })
+                    }
+                    placeholder="e.g. AWS Certified Solutions Architect"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-tint"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-600">
+                    Issuing Organization
+                  </label>
+                  <input
+                    type="text"
+                    value={uploadForm.issuingOrganization}
+                    onChange={(e) =>
+                      setUploadForm({
+                        ...uploadForm,
+                        issuingOrganization: e.target.value,
+                      })
+                    }
+                    placeholder="e.g. Amazon Web Services"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-tint"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-slate-600">
+                      Issue Date
+                    </label>
+                    <input
+                      type="date"
+                      max={new Date().toISOString().split("T")[0]}
+                      value={uploadForm.issueDate}
+                      onChange={(e) =>
+                        setUploadForm({ ...uploadForm, issueDate: e.target.value })
+                      }
+                      className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-tint"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-slate-600">
+                      Expiry Date (optional)
+                    </label>
+                    <input
+                      type="date"
+                      min={uploadForm.issueDate || undefined}
+                      value={uploadForm.expiryDate}
+                      onChange={(e) =>
+                        setUploadForm({ ...uploadForm, expiryDate: e.target.value })
+                      }
+                      className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-tint"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex shrink-0 items-center justify-end gap-3 border-t border-slate-200 p-6">
+                <button
+                  onClick={() => setShowUploadModal(false)}
+                  disabled={uploading}
+                  className="rounded-xl bg-slate-200 px-6 py-3 font-semibold text-slate-700 transition hover:bg-slate-300 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUpload}
+                  disabled={uploading}
+                  className="rounded-xl bg-primary px-6 py-3 font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {uploading ? "Uploading..." : "Upload"}
                 </button>
               </div>
             </div>
+          </div>,
+          document.body
+        )}
 
-            <div className="p-8">
-              <div className="mb-6 flex justify-center">
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-red-100">
-                  <FiTrash2 size={36} className="text-red-600" />
+      {/* ===========================
+            DELETE MODAL (portaled to document.body)
+      ============================ */}
+      {showDeleteModal &&
+        selectedCert &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+            <div className="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+              <div className="shrink-0 bg-gradient-to-r from-red-600 to-rose-600 px-8 py-6 text-white">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold">Delete Certification</h2>
+                    <p className="mt-1 text-red-100">This action cannot be undone.</p>
+                  </div>
+                  <button
+                    onClick={() => setShowDeleteModal(false)}
+                    className="rounded-full bg-white/20 p-2 hover:bg-white/30"
+                  >
+                    <FiX size={22} />
+                  </button>
                 </div>
               </div>
-              <h3 className="text-center text-xl font-bold text-slate-800">
-                Are you sure?
-              </h3>
-              <p className="mt-4 text-center text-slate-500">
-                You are about to permanently delete
-              </p>
-              <p className="mt-2 text-center text-lg font-semibold text-slate-800">
-                {selectedCert.certificationName}
-              </p>
-              <p className="mt-1 text-center text-sm text-slate-500">
-                ({selectedCert.issuingOrganization})
-              </p>
-              <div className="mt-8 rounded-2xl bg-red-50 p-4">
-                <p className="text-sm text-red-700">
-                  <strong>Warning:</strong> The uploaded file will also be
-                  removed. This action cannot be undone.
+
+              <div className="overflow-y-auto p-8">
+                <div className="mb-6 flex justify-center">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-red-100">
+                    <FiTrash2 size={36} className="text-red-600" />
+                  </div>
+                </div>
+                <h3 className="text-center text-xl font-bold text-slate-800">
+                  Are you sure?
+                </h3>
+                <p className="mt-4 text-center text-slate-500">
+                  You are about to permanently delete
                 </p>
+                <p className="mt-2 text-center text-lg font-semibold text-slate-800">
+                  {selectedCert.certificationName}
+                </p>
+                <p className="mt-1 text-center text-sm text-slate-500">
+                  ({selectedCert.issuingOrganization})
+                </p>
+                <div className="mt-8 rounded-2xl bg-red-50 p-4">
+                  <p className="text-sm text-red-700">
+                    <strong>Warning:</strong> The uploaded file will also be
+                    removed. This action cannot be undone.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex shrink-0 items-center justify-end gap-3 border-t border-slate-200 p-6">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={deleting}
+                  className="rounded-xl bg-slate-200 px-6 py-3 font-semibold text-slate-700 transition hover:bg-slate-300 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  disabled={deleting}
+                  className="rounded-xl bg-red-600 px-6 py-3 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {deleting ? "Deleting..." : "Delete Certification"}
+                </button>
               </div>
             </div>
-
-            <div className="flex items-center justify-end gap-3 border-t border-slate-200 p-6">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                disabled={deleting}
-                className="rounded-xl bg-slate-200 px-6 py-3 font-semibold text-slate-700 transition hover:bg-slate-300 disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDelete}
-                disabled={deleting}
-                className="rounded-xl bg-red-600 px-6 py-3 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {deleting ? "Deleting..." : "Delete Certification"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </DashboardLayout>
   );
 }
