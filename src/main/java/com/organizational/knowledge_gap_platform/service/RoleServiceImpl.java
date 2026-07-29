@@ -94,18 +94,32 @@ public List<RoleDetailsResponse> getAllRoles() {
     }
 
     @Override
-    public boolean deleteRole(Long id) {
+    public boolean deleteRole(Long id, boolean force) {
 
-        if (!roleRepository.existsById(id)) {
+        Role role = roleRepository.findById(id).orElse(null);
+
+        if (role == null) {
             return false;
         }
 
-        if (userRepository.findAll().stream()
-                .anyMatch(user -> user.getRoles().stream()
-                        .anyMatch(role -> role.getId().equals(id)))) {
+        List<User> assignedUsers = userRepository.findAll()
+                .stream()
+                .filter(user -> user.getRoles().stream()
+                        .anyMatch(r -> r.getId().equals(id)))
+                .toList();
 
-            throw new RuntimeException(
-                    "Cannot delete role. It is assigned to one or more users.");
+        if (!assignedUsers.isEmpty()) {
+
+            if (!force) {
+                // Don't delete yet — let the caller confirm with the admin first.
+                throw new RoleInUseException(assignedUsers.size());
+            }
+
+            // Confirmed: unassign the role from every affected user before deleting it.
+            for (User user : assignedUsers) {
+                user.getRoles().removeIf(r -> r.getId().equals(id));
+                userRepository.save(user);
+            }
         }
 
         roleRepository.deleteById(id);
