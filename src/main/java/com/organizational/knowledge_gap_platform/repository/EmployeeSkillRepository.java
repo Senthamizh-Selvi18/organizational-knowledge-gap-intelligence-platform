@@ -27,4 +27,5 @@ public interface EmployeeSkillRepository extends JpaRepository<EmployeeSkill, Lo
     void deleteByEmployeeId(@Param("employeeId") Long employeeId);
 
     boolean existsByEmployeeAndSkill(Employee employee, Skill skill);
+    boolean existsBySkillId(Long skillId);
 }

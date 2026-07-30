@@ -12,7 +12,11 @@ import {
   FiBookOpen,
   FiMessageCircle,
   FiAward,
+  FiClipboard,
   FiX,
+  FiUserCheck,
+  FiCalendar,
+  FiBook,
 } from "react-icons/fi";
 
 export default function Sidebar({ open, onClose }) {
@@ -82,6 +86,21 @@ const overviewItems = [
     icon: FiCpu,
     to: "/dashboard/recommendation",
   },
+...(role === "admin" || role === "hr specialist"
+  ? [
+      {
+        label: "AI Team Builder",
+        icon: FiUsers,
+        to: "/dashboard/ai-team-builder",
+      },
+    ]
+  : []),
+
+{
+  label: "Assessments",
+  icon: FiClipboard,
+  to: "/dashboard/assessments",
+},
   ...(role === "admin"
     ? [
         {
@@ -96,6 +115,26 @@ const overviewItems = [
     icon: FiBookOpen,
     to: "/dashboard/internal-trainings",
   },
+  {
+  label: "Expert Directory",
+  icon: FiUserCheck,
+  to: "/dashboard/mentor-directory",
+},
+{
+  label: "Mentor Matching",
+  icon: FiUsers,
+  to: "/dashboard/mentorship-requests",
+},
+{
+  label: "Session Booking",
+  icon: FiCalendar,
+  to: "/dashboard/mentorship-sessions",
+},
+{
+  label: "Knowledge Base",
+  icon: FiBook,
+  to: "/dashboard/knowledge-base",
+},
 ];
   const manageItems = [
     ...(role === "admin"

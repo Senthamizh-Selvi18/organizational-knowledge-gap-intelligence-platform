@@ -24,9 +24,7 @@ public class AssessmentController {
         this.assessmentService = assessmentService;
     }
 
-    // Assign a Self, Peer, or Manager assessment. HR/Admin can assign any
-    // type; Managers can assign assessments for their own team.
-    @PreAuthorize("hasAnyRole('ADMIN', 'HR', 'MANAGER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_HR SPECIALIST', 'ROLE_MANAGER')")
     @PostMapping("/assign")
     public ResponseEntity<List<AssessmentSummaryDTO>> assignAssessment(
             @Valid @RequestBody AssessmentAssignRequest request) {
@@ -73,7 +71,7 @@ public class AssessmentController {
     }
 
     // Full assessment list (any status) for an employee, for HR/manager review.
-    @PreAuthorize("hasAnyRole('ADMIN', 'HR', 'MANAGER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_HR SPECIALIST', 'ROLE_MANAGER')")
     @GetMapping("/employee/{employeeId}")
     public ResponseEntity<List<AssessmentSummaryDTO>> getAssessmentsForEmployee(@PathVariable Long employeeId) {
         return ResponseEntity.ok(assessmentService.getAssessmentsForEmployee(employeeId));

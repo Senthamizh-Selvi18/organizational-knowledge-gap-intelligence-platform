@@ -25,40 +25,40 @@ public class AssessmentTemplateController {
         this.assessmentTemplateService = assessmentTemplateService;
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'HR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_HR SPECIALIST')")
     @GetMapping
     public ResponseEntity<List<AssessmentTemplateDTO>> getAllTemplates() {
         return ResponseEntity.ok(assessmentTemplateService.getAllTemplates());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'HR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_HR SPECIALIST')")
     @GetMapping("/{id}")
     public ResponseEntity<AssessmentTemplateDTO> getTemplateById(@PathVariable Long id) {
         return ResponseEntity.ok(assessmentTemplateService.getTemplateById(id));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'HR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_HR SPECIALIST')")
     @PostMapping
     public ResponseEntity<AssessmentTemplateDTO> createTemplate(@Valid @RequestBody AssessmentTemplateRequest request) {
         AssessmentTemplateDTO created = assessmentTemplateService.createTemplate(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'HR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_HR SPECIALIST')")
     @PutMapping("/{id}")
     public ResponseEntity<AssessmentTemplateDTO> updateTemplate(
             @PathVariable Long id, @Valid @RequestBody AssessmentTemplateRequest request) {
         return ResponseEntity.ok(assessmentTemplateService.updateTemplate(id, request));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'HR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_HR SPECIALIST')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTemplate(@PathVariable Long id) {
         assessmentTemplateService.deleteTemplate(id);
         return ResponseEntity.noContent().build();
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'HR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_HR SPECIALIST')")
     @PostMapping("/{id}/questions")
     public ResponseEntity<AssessmentQuestionDTO> addQuestion(
             @PathVariable Long id, @Valid @RequestBody AssessmentQuestionRequest request) {
@@ -66,7 +66,7 @@ public class AssessmentTemplateController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'HR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_HR SPECIALIST')")
     @PutMapping("/{id}/questions/{questionId}")
     public ResponseEntity<AssessmentQuestionDTO> updateQuestion(
             @PathVariable Long id, @PathVariable Long questionId,
@@ -74,7 +74,7 @@ public class AssessmentTemplateController {
         return ResponseEntity.ok(assessmentTemplateService.updateQuestion(id, questionId, request));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'HR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_HR SPECIALIST')")
     @DeleteMapping("/{id}/questions/{questionId}")
     public ResponseEntity<Void> deleteQuestion(@PathVariable Long id, @PathVariable Long questionId) {
         assessmentTemplateService.deleteQuestion(id, questionId);

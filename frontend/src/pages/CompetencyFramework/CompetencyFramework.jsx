@@ -44,6 +44,7 @@ import {
   FiClock,
   FiX,
 } from "react-icons/fi";
+import { confirmDialog } from "../../components/ui/ConfirmDialog.jsx";
 
 const LEVELS = ["BEGINNER", "INTERMEDIATE", "ADVANCED", "EXPERT"];
 const PRIORITIES = ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
@@ -453,7 +454,7 @@ function FrameworkDetail({ frameworkId, skills, flash, onChanged, onDeleted, onV
   };
 
   const handleDelete = async () => {
-    if (!window.confirm("Delete this draft framework?")) return;
+    if (!(await confirmDialog("Delete this draft framework?"))) return;
     try {
       await deleteFramework(frameworkId);
       flash("success", "Framework deleted.");
@@ -766,7 +767,7 @@ function TaxonomyTab({ skills, flash }) {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this taxonomy node?")) return;
+    if (!(await confirmDialog("Delete this taxonomy node?"))) return;
     try {
       await deleteSkillTaxonomy(id);
       flash("success", "Taxonomy node deleted.");
@@ -898,7 +899,7 @@ function GoalsTab({ flash }) {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this strategic goal?")) return;
+    if (!(await confirmDialog("Delete this strategic goal?"))) return;
     try {
       await deleteStrategicGoal(id);
       flash("success", "Strategic goal deleted.");
@@ -1042,7 +1043,7 @@ function BenchmarksTab({ flash }) {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this benchmark?")) return;
+    if (!(await confirmDialog("Delete this benchmark?"))) return;
     try {
       await deleteIndustryBenchmark(id);
       flash("success", "Benchmark deleted.");
