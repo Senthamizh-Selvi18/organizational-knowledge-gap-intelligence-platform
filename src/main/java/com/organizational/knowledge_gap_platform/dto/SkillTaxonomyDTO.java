@@ -1,5 +1,6 @@
 package com.organizational.knowledge_gap_platform.dto;
 
+import com.organizational.knowledge_gap_platform.entity.Skill;
 import com.organizational.knowledge_gap_platform.entity.SkillTaxonomy;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,8 +19,8 @@ public class SkillTaxonomyDTO {
     private String description;
     private Long parentId;
     private String parentName;
-    private Long linkedSkillId;
-    private String linkedSkillName;
+    private List<Long> linkedSkillIds;
+    private List<String> linkedSkillNames;
     private Boolean active;
     private LocalDateTime createdAt;
     private List<SkillTaxonomyDTO> children;
@@ -42,9 +43,17 @@ public class SkillTaxonomyDTO {
             dto.setParentName(entity.getParent().getName());
         }
 
-        if (entity.getLinkedSkill() != null) {
-            dto.setLinkedSkillId(entity.getLinkedSkill().getId());
-            dto.setLinkedSkillName(entity.getLinkedSkill().getSkillName());
+        if (entity.getLinkedSkills() != null && !entity.getLinkedSkills().isEmpty()) {
+            dto.setLinkedSkillIds(
+                    entity.getLinkedSkills().stream()
+                            .map(Skill::getId)
+                            .collect(Collectors.toList())
+            );
+            dto.setLinkedSkillNames(
+                    entity.getLinkedSkills().stream()
+                            .map(Skill::getSkillName)
+                            .collect(Collectors.toList())
+            );
         }
 
         if (includeChildren && entity.getChildren() != null) {

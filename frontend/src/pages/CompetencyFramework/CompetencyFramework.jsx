@@ -731,7 +731,19 @@ function FrameworkDetail({ frameworkId, skills, flash, onChanged, onDeleted, onV
 
 function TaxonomyTab({ skills, flash }) {
   const [taxonomy, setTaxonomy] = useState([]);
-  const [form, setForm] = useState({ name: "", category: "", parentId: "", linkedSkillId: "", description: "" });
+  const [form, setForm] = useState({ name: "", category: "", parentId: "", linkedSkillIds: [], description: "" });
+
+  const toggleLinkedSkill = (skillId) => {
+    setForm((prev) => {
+      const alreadySelected = prev.linkedSkillIds.includes(skillId);
+      return {
+        ...prev,
+        linkedSkillIds: alreadySelected
+          ? prev.linkedSkillIds.filter((id) => id !== skillId)
+          : [...prev.linkedSkillIds, skillId],
+      };
+    });
+  };
 
   const load = async () => {
     try {
@@ -756,9 +768,9 @@ function TaxonomyTab({ skills, flash }) {
         category: form.category,
         description: form.description,
         parentId: form.parentId || null,
-        linkedSkillId: form.linkedSkillId || null,
+        linkedSkillIds: form.linkedSkillIds,
       });
-      setForm({ name: "", category: "", parentId: "", linkedSkillId: "", description: "" });
+      setForm({ name: "", category: "", parentId: "", linkedSkillIds: [], description: "" });
       flash("success", "Taxonomy node created.");
       load();
     } catch (err) {
@@ -813,18 +825,26 @@ function TaxonomyTab({ skills, flash }) {
             </option>
           ))}
         </select>
-        <select
-          value={form.linkedSkillId}
-          onChange={(e) => setForm({ ...form, linkedSkillId: e.target.value })}
-          className="border rounded-xl px-4 py-2 outline-none"
-        >
-          <option value="">-- Link existing skill (optional) --</option>
-          {skills.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.skillName}
-            </option>
-          ))}
-        </select>
+        <div className="md:col-span-2 border rounded-xl px-4 py-3">
+          <p className="text-xs text-mute mb-2">
+            Link one or more existing skills to this category (optional)
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-40 overflow-y-auto">
+            {skills.map((s) => (
+              <label key={s.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.linkedSkillIds.includes(s.id)}
+                  onChange={() => toggleLinkedSkill(s.id)}
+                />
+                {s.skillName}
+              </label>
+            ))}
+            {skills.length === 0 && (
+              <p className="text-mute text-xs">No skills available yet.</p>
+            )}
+          </div>
+        </div>
         <textarea
           placeholder="Description"
           value={form.description}
@@ -848,7 +868,7 @@ function TaxonomyTab({ skills, flash }) {
               <p className="text-xs text-mute">
                 {t.category || "Uncategorized"}
                 {t.parentName ? ` · under ${t.parentName}` : ""}
-                {t.linkedSkillName ? ` · linked to ${t.linkedSkillName}` : ""}
+                {t.linkedSkillNames?.length ? ` · skills: ${t.linkedSkillNames.join(", ")}` : ""}
               </p>
             </div>
             <button onClick={() => handleDelete(t.id)} className="text-red-500">
