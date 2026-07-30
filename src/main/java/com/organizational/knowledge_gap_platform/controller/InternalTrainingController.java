@@ -2,6 +2,7 @@ package com.organizational.knowledge_gap_platform.controller;
 
 import com.organizational.knowledge_gap_platform.dto.InternalTrainingDto;
 import com.organizational.knowledge_gap_platform.service.InternalTrainingService;
+import com.organizational.knowledge_gap_platform.service.InternalTrainingServiceImpl;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,14 @@ public class InternalTrainingController {
 
     public InternalTrainingController(InternalTrainingService internalTrainingService) {
         this.internalTrainingService = internalTrainingService;
+    }
+
+    @PostMapping("/{id}/recheck-link")
+    public ResponseEntity<InternalTrainingDto> recheckLink(@PathVariable Long id) {
+        if (internalTrainingService instanceof InternalTrainingServiceImpl impl) {
+            return ResponseEntity.ok(impl.recheckLinkStatus(id));
+        }
+        return ResponseEntity.ok(internalTrainingService.getTrainingById(id));
     }
 
     @GetMapping

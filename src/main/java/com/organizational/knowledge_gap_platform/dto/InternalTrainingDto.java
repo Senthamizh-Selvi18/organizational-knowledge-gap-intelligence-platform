@@ -46,4 +46,8 @@ public class InternalTrainingDto {
     private boolean mandatory = false;
 
     private boolean active = true;
+
+    @Size(max = 500, message = "Link must be at most 500 characters")
+    @Pattern(regexp = "^$|^https?://.+", message = "Link must be a valid http(s) URL")
+    private String link;
 }

@@ -1,11 +1,13 @@
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import { useEffect, useState } from "react";
-import { FiX } from "react-icons/fi";
+import { createPortal } from "react-dom";
+import { FiX, FiExternalLink, FiRefreshCw } from "react-icons/fi";
 import {
   getAllInternalTrainings,
   createInternalTraining,
   updateInternalTraining,
   deleteInternalTraining,
+  recheckLinkStatus,
 } from "../../services/internalTrainingService";
 import {
   enroll,
@@ -50,6 +52,7 @@ const EMPTY_FORM = {
   description: "",
   mandatory: false,
   active: true,
+  link: "",
 };
 
 // Small horizontal 4-step tracker: Not Started -> In Progress -> Completed -> Certified
@@ -137,6 +140,8 @@ export default function InternalTrainingCatalog() {
 
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
+
+  const [checkingLinkId, setCheckingLinkId] = useState(null);
 
   const loadTrainings = () => {
 
@@ -263,6 +268,7 @@ export default function InternalTrainingCatalog() {
       description: training.description || "",
       mandatory: training.mandatory ?? false,
       active: training.active ?? true,
+      link: training.link || "",
     });
     setIsEditing(true);
     setFormError(null);
@@ -288,6 +294,10 @@ export default function InternalTrainingCatalog() {
     if (!formData.trainer.trim()) return "Trainer is required.";
     if (!formData.mode) return "Mode is required.";
     if (!formData.duration.trim()) return "Duration is required.";
+
+    if (formData.link.trim() && !/^https?:\/\/.+/i.test(formData.link.trim())) {
+      return "Link must be a valid URL starting with http:// or https://";
+    }
 
     return null;
 
@@ -317,6 +327,7 @@ export default function InternalTrainingCatalog() {
       description: formData.description.trim(),
       mandatory: formData.mandatory,
       active: formData.active,
+      link: formData.link.trim(),
     };
 
     const request = isEditing
@@ -442,6 +453,29 @@ export default function InternalTrainingCatalog() {
     }
 
   };
+
+  const handleRecheckLink = async (trainingId) => {
+
+    setCheckingLinkId(trainingId);
+
+    try {
+
+      await recheckLinkStatus(trainingId);
+      await loadTrainings();
+
+    } catch (err) {
+
+      console.error(err);
+      toast.error("Unable to check the course link right now.");
+
+    } finally {
+
+      setCheckingLinkId(null);
+
+    }
+
+  };
+
   return (
     <DashboardLayout>
 
@@ -543,6 +577,7 @@ export default function InternalTrainingCatalog() {
                   <th className="py-3 pr-4">Trainer</th>
                   <th className="py-3 pr-4">Mode</th>
                   <th className="py-3 pr-4">Duration</th>
+                  <th className="py-3 pr-4">Link</th>
                   <th className="py-3 pr-4">Mandatory</th>
                   <th className="py-3 pr-4">Status</th>
                   {isAdmin && <th className="py-3 pr-4">Actions</th>}
@@ -576,6 +611,23 @@ export default function InternalTrainingCatalog() {
                     <td className="py-4 pr-4">{training.duration}</td>
 
                     <td className="py-4 pr-4">
+                      {training.link ? (
+                        <a
+                          href={training.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-primary hover:underline font-medium whitespace-nowrap"
+                          title={training.link}
+                        >
+                          <FiExternalLink size={14} />
+                          View course
+                        </a>
+                      ) : (
+                        <span className="text-mute">—</span>
+                      )}
+                    </td>
+
+                    <td className="py-4 pr-4">
                       <span
                         className={
                           "text-xs font-semibold px-2 py-1 rounded-xl whitespace-nowrap " +
@@ -589,16 +641,38 @@ export default function InternalTrainingCatalog() {
                     </td>
 
                     <td className="py-4 pr-4">
-                      <span
-                        className={
-                          "text-xs font-semibold px-2 py-1 rounded-xl whitespace-nowrap " +
-                          (training.active
-                            ? "bg-green-50 text-green-700"
-                            : "bg-gray-100 text-gray-500")
-                        }
-                      >
-                        {training.active ? "Active" : "Inactive"}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span
+                          title={
+                            training.link
+                              ? "Live status of the course link on the source portal"
+                              : undefined
+                          }
+                          className={
+                            "text-xs font-semibold px-2 py-1 rounded-xl whitespace-nowrap " +
+                            (training.active
+                              ? "bg-green-50 text-green-700"
+                              : "bg-gray-100 text-gray-500")
+                          }
+                        >
+                          {training.active ? "Active" : "Inactive"}
+                        </span>
+
+                        {training.link && (
+                          <button
+                            type="button"
+                            onClick={() => handleRecheckLink(training.id)}
+                            disabled={checkingLinkId === training.id}
+                            title="Re-check course link now"
+                            className="text-mute hover:text-primary transition disabled:opacity-50"
+                          >
+                            <FiRefreshCw
+                              size={14}
+                              className={checkingLinkId === training.id ? "animate-spin" : ""}
+                            />
+                          </button>
+                        )}
+                      </div>
                     </td>
                     {isAdmin && (
                       <td className="py-4 pr-4">
@@ -855,7 +929,7 @@ export default function InternalTrainingCatalog() {
       )}
 
       {/* Add/Edit Modal */}
-      {isAdmin && showModal && (
+      {isAdmin && showModal && createPortal(
 
         <div
           className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
@@ -952,6 +1026,22 @@ export default function InternalTrainingCatalog() {
                 />
               </div>
 
+              <div>
+                <label className="block text-sub text-sm mb-1">
+                  Link <span className="text-mute font-normal">(optional — e.g. an Infosys Springboard course URL)</span>
+                </label>
+                <input
+                  type="url"
+                  value={formData.link}
+                  onChange={(e) => handleFormChange("link", e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="https://infyspringboard.onwingspan.com/web/en/app/toc/..."
+                />
+                <p className="text-mute text-xs mt-1">
+                  If set, the training's status is checked live against this link instead of the toggle below.
+                </p>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
 
                 <div>
@@ -999,10 +1089,14 @@ export default function InternalTrainingCatalog() {
                   id="active"
                   checked={formData.active}
                   onChange={(e) => handleFormChange("active", e.target.checked)}
-                  className="w-4 h-4"
+                  disabled={!!formData.link.trim()}
+                  className="w-4 h-4 disabled:opacity-50"
                 />
                 <label htmlFor="active" className="text-sub text-sm">
                   Active (visible in the catalog)
+                  {formData.link.trim() && (
+                    <span className="text-mute"> — determined automatically from the link above</span>
+                  )}
                 </label>
               </div>
 
@@ -1034,12 +1128,14 @@ export default function InternalTrainingCatalog() {
 
           </div>
 
-        </div>
+        </div>,
+
+        document.body
 
       )}
 
-      {/* Delete confirmation modal */}
-      {isAdmin && deleteTarget && (
+      {/* Delete confirmation modal  */}
+      {isAdmin && deleteTarget && createPortal(
 
         <div
           className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
@@ -1095,7 +1191,9 @@ export default function InternalTrainingCatalog() {
 
           </div>
 
-        </div>
+        </div>,
+
+        document.body
 
       )}
 

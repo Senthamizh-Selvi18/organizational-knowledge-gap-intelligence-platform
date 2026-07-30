@@ -6,22 +6,33 @@ import com.organizational.knowledge_gap_platform.repository.InternalTrainingRepo
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 public class InternalTrainingServiceImpl implements InternalTrainingService {
 
     private final InternalTrainingRepository internalTrainingRepository;
+    private final LinkAvailabilityService linkAvailabilityService;
 
-    public InternalTrainingServiceImpl(InternalTrainingRepository internalTrainingRepository) {
+    public InternalTrainingServiceImpl(InternalTrainingRepository internalTrainingRepository,
+                                        LinkAvailabilityService linkAvailabilityService) {
         this.internalTrainingRepository = internalTrainingRepository;
+        this.linkAvailabilityService = linkAvailabilityService;
     }
 
     @Override
     public List<InternalTrainingDto> getAllTrainings() {
-        return internalTrainingRepository.findAll()
-                .stream()
-                .map(this::toDto)
+        List<InternalTraining> trainings = internalTrainingRepository.findAll();
+
+        // Check every distinct external link once, in parallel, instead of
+        // making a blocking HTTP call per row.
+        Map<String, Boolean> linkStatus = linkAvailabilityService.isLinkActiveBulk(
+                trainings.stream().map(InternalTraining::getLink).collect(Collectors.toList())
+        );
+
+        return trainings.stream()
+                .map(training -> toDto(training, linkStatus))
                 .collect(Collectors.toList());
     }
 
@@ -38,6 +49,16 @@ public class InternalTrainingServiceImpl implements InternalTrainingService {
                 .stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
+    }
+
+    /** Re-checks a single training's link right now, bypassing the cache. */
+    public InternalTrainingDto recheckLinkStatus(Long id) {
+        InternalTraining training = internalTrainingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Internal training not found for id: " + id));
+        if (training.getLink() != null && !training.getLink().isBlank()) {
+            linkAvailabilityService.refresh(training.getLink());
+        }
+        return toDto(training);
     }
 
     @Override
@@ -62,6 +83,7 @@ public class InternalTrainingServiceImpl implements InternalTrainingService {
         existing.setDescription(dto.getDescription());
         existing.setMandatory(dto.isMandatory());
         existing.setActive(dto.isActive());
+        existing.setLink(dto.getLink());
 
         InternalTraining saved = internalTrainingRepository.save(existing);
         return toDto(saved);
@@ -76,6 +98,24 @@ public class InternalTrainingServiceImpl implements InternalTrainingService {
     }
 
     private InternalTrainingDto toDto(InternalTraining training) {
+        boolean effectiveActive = hasLink(training)
+                ? linkAvailabilityService.isLinkActive(training.getLink())
+                : training.isActive();
+        return buildDto(training, effectiveActive);
+    }
+
+    private InternalTrainingDto toDto(InternalTraining training, Map<String, Boolean> linkStatus) {
+        boolean effectiveActive = hasLink(training)
+                ? linkStatus.getOrDefault(training.getLink(), false)
+                : training.isActive();
+        return buildDto(training, effectiveActive);
+    }
+
+    private boolean hasLink(InternalTraining training) {
+        return training.getLink() != null && !training.getLink().isBlank();
+    }
+
+    private InternalTrainingDto buildDto(InternalTraining training, boolean effectiveActive) {
         return new InternalTrainingDto(
                 training.getId(),
                 training.getTitle(),
@@ -86,7 +126,8 @@ public class InternalTrainingServiceImpl implements InternalTrainingService {
                 training.getDuration(),
                 training.getDescription(),
                 training.isMandatory(),
-                training.isActive()
+                effectiveActive,
+                training.getLink()
         );
     }
 
@@ -102,6 +143,7 @@ public class InternalTrainingServiceImpl implements InternalTrainingService {
         training.setDescription(dto.getDescription());
         training.setMandatory(dto.isMandatory());
         training.setActive(dto.isActive());
+        training.setLink(dto.getLink());
         return training;
     }
 }
