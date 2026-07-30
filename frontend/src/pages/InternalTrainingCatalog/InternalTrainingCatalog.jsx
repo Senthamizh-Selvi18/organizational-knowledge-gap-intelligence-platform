@@ -11,12 +11,35 @@ import {
 } from "../../services/internalTrainingService";
 import {
   enroll,
-  getEnrolledTrainingIds,
+  getEmployeeLearning,
   getAllEnrollments,
+  startTraining,
   completeTraining,
 } from "../../services/learningService";
 import { toast } from "../../components/ui/Toast.jsx";
 const MODE_OPTIONS = ["Online", "Offline", "Hybrid"];
+
+// Ordered stages for the progress tracker. CERTIFIED is reached the moment
+// an admin marks a training complete, so it always implies "Completed" too.
+// The backend stores the first stage as "ENROLLED" - we just display it as
+// "Not Started".
+const STAGE_ORDER = ["ENROLLED", "IN_PROGRESS", "COMPLETED", "CERTIFIED"];
+
+const STAGE_LABELS = {
+  ENROLLED: "Not Started",
+  IN_PROGRESS: "In Progress",
+  COMPLETED: "Completed",
+  CERTIFIED: "Certified",
+};
+
+const stageIndex = (status) => {
+  // Certification happens together with completion, so a CERTIFIED
+  // enrollment should visually fill both the "Completed" and
+  // "Certified" steps.
+  if (status === "CERTIFIED") return 3;
+  const idx = STAGE_ORDER.indexOf(status);
+  return idx === -1 ? 0 : idx;
+};
 
 const EMPTY_FORM = {
   id: null,
@@ -32,12 +55,75 @@ const EMPTY_FORM = {
   link: "",
 };
 
+// Small horizontal 4-step tracker: Not Started -> In Progress -> Completed -> Certified
+function ProgressTracker({ status }) {
+
+  const currentIndex = stageIndex(status);
+
+  return (
+    <div className="flex items-center">
+
+      {STAGE_ORDER.map((stage, idx) => {
+
+        const reached = idx <= currentIndex;
+        const isLast = idx === STAGE_ORDER.length - 1;
+
+        return (
+          <div key={stage} className="flex items-center">
+
+            <div className="flex flex-col items-center w-20">
+
+              <div
+                className={
+                  "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold border-2 " +
+                  (reached
+                    ? "bg-indigo-600 border-indigo-600 text-white"
+                    : "bg-white border-gray-300 text-gray-400")
+                }
+                title={STAGE_LABELS[stage]}
+              >
+                {idx + 1}
+              </div>
+
+              <span
+                className={
+                  "text-[10px] mt-1 text-center leading-tight " +
+                  (reached ? "text-indigo-700 font-semibold" : "text-gray-400")
+                }
+              >
+                {STAGE_LABELS[stage]}
+              </span>
+
+            </div>
+
+            {!isLast && (
+              <div
+                className={
+                  "h-0.5 w-6 -mt-4 " +
+                  (idx < currentIndex ? "bg-indigo-600" : "bg-gray-300")
+                }
+              />
+            )}
+
+          </div>
+        );
+
+      })}
+
+    </div>
+  );
+}
+
 export default function InternalTrainingCatalog() {
 
   const role = localStorage.getItem("role")?.toLowerCase();
   const isAdmin = role === "admin";
   const employeeId = Number(localStorage.getItem("employeeId"));
-  const [enrolledTrainingIds, setEnrolledTrainingIds] = useState([]);
+
+  // Keyed by trainingId -> enrollment dto, for the logged-in employee only.
+  const [myEnrollments, setMyEnrollments] = useState({});
+  const [startingId, setStartingId] = useState(null);
+
   const [enrollments, setEnrollments] = useState([]);
   const [trainings, setTrainings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -76,54 +162,61 @@ export default function InternalTrainingCatalog() {
 
   };
 
-  const loadEnrollments = async () => {
+  const loadMyEnrollments = async () => {
 
-  if (!employeeId) return;
+    if (!employeeId) return;
 
-  try {
+    try {
 
-    const response = await getEnrolledTrainingIds(employeeId);
+      const response = await getEmployeeLearning(employeeId);
+      const data = response.data;
 
-    setEnrolledTrainingIds(response.data);
+      const map = {};
+      (data || []).forEach((enrollment) => {
+        map[enrollment.trainingId] = enrollment;
+      });
 
-  } catch (err) {
+      setMyEnrollments(map);
 
-    console.error(err);
+    } catch (err) {
 
-  }
+      console.error(err);
 
-};
-const loadAllEnrollments = async () => {
+    }
 
-  try {
+  };
 
-    const response = await getAllEnrollments();
+  const loadAllEnrollments = async () => {
 
-    setEnrollments(response.data);
+    try {
 
-  } catch (err) {
+      const response = await getAllEnrollments();
 
-    console.error(err);
+      setEnrollments(response.data || []);
 
-  }
+    } catch (err) {
 
-};
+      console.error(err);
 
-useEffect(() => {
+    }
 
-  loadTrainings();
+  };
 
-  if (isAdmin) {
+  useEffect(() => {
 
-    loadAllEnrollments();
+    loadTrainings();
 
-  } else {
+    if (isAdmin) {
 
-    loadEnrollments();
+      loadAllEnrollments();
 
-  }
+    } else {
 
-}, []);
+      loadMyEnrollments();
+
+    }
+
+  }, []);
   useEffect(() => {
 
     if (showModal || deleteTarget) {
@@ -291,71 +384,98 @@ useEffect(() => {
 
   const handleEnroll = async (trainingId) => {
 
-  if (!employeeId) {
-    toast.error("Employee not found.");
-    return;
-  }
+    if (!employeeId) {
+      toast.error("Employee not found.");
+      return;
+    }
 
-  try {
+    try {
 
-    await enroll(employeeId, trainingId);
+      await enroll(employeeId, trainingId);
 
-    toast.success("Training enrolled successfully.");
+      toast.success("Training enrolled successfully.");
 
-    // Update button immediately
-    setEnrolledTrainingIds(prev => [...prev, trainingId]);
+      loadMyEnrollments();
 
-  } catch (err) {
+    } catch (err) {
 
-    console.error(err);
+      console.error(err);
 
-    toast.error("Unable to enroll.");
+      toast.error("Unable to enroll.");
 
-  }
+    }
 
-};
-const handleComplete = async (enrollmentId) => {
+  };
 
-  try {
+  const handleStart = async (trainingId, enrollmentId) => {
 
-    await completeTraining(enrollmentId);
+    setStartingId(enrollmentId);
 
-    toast.success("Training marked as completed.");
+    try {
 
-    loadAllEnrollments();   // Refresh Admin table
-    loadTrainings();        // Refresh training list if needed
+      await startTraining(enrollmentId);
 
-  } catch (err) {
+      toast.success("Training started. Good luck!");
 
-    console.error(err);
+      loadMyEnrollments();
 
-    toast.error("Unable to update training.");
+    } catch (err) {
 
-  }
+      console.error(err);
 
-};
+      toast.error("Unable to start training.");
 
-const handleRecheckLink = async (trainingId) => {
+    } finally {
 
-  setCheckingLinkId(trainingId);
+      setStartingId(null);
 
-  try {
+    }
 
-    await recheckLinkStatus(trainingId);
-    await loadTrainings();
+  };
 
-  } catch (err) {
+  const handleComplete = async (enrollmentId) => {
 
-    console.error(err);
-    toast.error("Unable to check the course link right now.");
+    try {
 
-  } finally {
+      await completeTraining(enrollmentId);
 
-    setCheckingLinkId(null);
+      toast.success("Training marked as completed and certified.");
 
-  }
+      loadAllEnrollments();   // Refresh Admin table
+      loadTrainings();        // Refresh training list if needed
 
-};
+    } catch (err) {
+
+      console.error(err);
+
+      toast.error("Unable to update training.");
+
+    }
+
+  };
+
+  const handleRecheckLink = async (trainingId) => {
+
+    setCheckingLinkId(trainingId);
+
+    try {
+
+      await recheckLinkStatus(trainingId);
+      await loadTrainings();
+
+    } catch (err) {
+
+      console.error(err);
+      toast.error("Unable to check the course link right now.");
+
+    } finally {
+
+      setCheckingLinkId(null);
+
+    }
+
+  };
+
   return (
     <DashboardLayout>
 
@@ -461,7 +581,7 @@ const handleRecheckLink = async (trainingId) => {
                   <th className="py-3 pr-4">Mandatory</th>
                   <th className="py-3 pr-4">Status</th>
                   {isAdmin && <th className="py-3 pr-4">Actions</th>}
-                  {!isAdmin && <th className="py-3 pr-4">Enroll</th>}
+                  {!isAdmin && <th className="py-3 pr-4">Progress</th>}
                 </tr>
               </thead>
               <tbody>
@@ -578,31 +698,57 @@ const handleRecheckLink = async (trainingId) => {
                       </td>
                     )}
                     {!isAdmin && (
-  <td className="py-4 pr-4">
+                      <td className="py-4 pr-4">
 
-    {enrolledTrainingIds.includes(training.id) ? (
+                        {(() => {
 
-      <button
-        disabled
-        className="inline-flex items-center gap-2 bg-green-50 text-green-700 border border-green-200 px-5 py-2.5 rounded-xl font-semibold shadow-sm cursor-not-allowed"
-      >
-        <span className="text-lg">✅</span>
-        Enrolled
-      </button>
+                          const enrollment = myEnrollments[training.id];
 
-    ) : (
+                          if (!enrollment) {
+                            return (
+                              <button
+                                onClick={() => handleEnroll(training.id)}
+                                className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+                              >
+                                📚 Enroll Now
+                              </button>
+                            );
+                          }
 
-      <button
-        onClick={() => handleEnroll(training.id)}
-        className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
-      >
-        📚 Enroll Now
-      </button>
+                          return (
+                            <div className="flex flex-col gap-2 min-w-[280px]">
 
-    )}
+                              <ProgressTracker status={enrollment.status} />
 
-  </td>
-)}
+                              {enrollment.status === "ENROLLED" && (
+                                <button
+                                  onClick={() => handleStart(training.id, enrollment.id)}
+                                  disabled={startingId === enrollment.id}
+                                  className="self-start bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-xs font-semibold transition disabled:opacity-60"
+                                >
+                                  {startingId === enrollment.id ? "Starting..." : "▶ Start Training"}
+                                </button>
+                              )}
+
+                              {enrollment.status === "IN_PROGRESS" && (
+                                <span className="text-[11px] text-amber-600 font-medium">
+                                  ⏳ Waiting for admin to mark as completed
+                                </span>
+                              )}
+
+                              {enrollment.status === "CERTIFIED" && (
+                                <span className="text-[11px] text-green-700 font-semibold">
+                                  🎓 Certified
+                                </span>
+                              )}
+
+                            </div>
+                          );
+
+                        })()}
+
+                      </td>
+                    )}
 
                   </tr>
                 ))}
@@ -616,196 +762,171 @@ const handleRecheckLink = async (trainingId) => {
       </div>
 
       {isAdmin && (
-  <div className="bg-panel rounded-3xl shadow-xl p-6 mt-8 overflow-x-auto">
+        <div className="bg-panel rounded-3xl shadow-xl p-6 mt-8 overflow-x-auto">
 
-   <div className="mb-6">
+          <div className="mb-6">
 
-  <h2 className="text-3xl font-bold text-text">
-    Learning Progress Management
-  </h2>
+            <h2 className="text-3xl font-bold text-text">
+              Learning Progress Management
+            </h2>
 
-  <p className="text-sub mt-2">
-    Monitor employee enrollments and manage training completion.
-  </p>
+            <p className="text-sub mt-2">
+              Monitor employee enrollments and manage training completion.
+            </p>
 
-</div>
-<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
 
-  <div className="bg-white rounded-2xl shadow-md p-5">
+            <div className="bg-white rounded-2xl shadow-md p-5">
 
-    <p className="text-sub text-sm">
-      Total Enrollments
-    </p>
+              <p className="text-sub text-sm">
+                Total Enrollments
+              </p>
 
-    <h2 className="text-3xl font-bold mt-2">
-      {enrollments.length}
-    </h2>
+              <h2 className="text-3xl font-bold mt-2">
+                {enrollments.length}
+              </h2>
 
-  </div>
+            </div>
 
-  <div className="bg-white rounded-2xl shadow-md p-5">
+            <div className="bg-white rounded-2xl shadow-md p-5">
 
-    <p className="text-sub text-sm">
-      Completed
-    </p>
+              <p className="text-sub text-sm">
+                Not Started
+              </p>
 
-    <h2 className="text-3xl font-bold text-green-600 mt-2">
+              <h2 className="text-3xl font-bold text-gray-500 mt-2">
 
-      {
-        enrollments.filter(
-          e => e.status === "COMPLETED"
-        ).length
-      }
+                {
+                  enrollments.filter(
+                    e => e.status === "ENROLLED"
+                  ).length
+                }
 
-    </h2>
+              </h2>
 
-  </div>
+            </div>
 
-  <div className="bg-white rounded-2xl shadow-md p-5">
+            <div className="bg-white rounded-2xl shadow-md p-5">
 
-    <p className="text-sub text-sm">
-      Pending
-    </p>
+              <p className="text-sub text-sm">
+                In Progress
+              </p>
 
-    <h2 className="text-3xl font-bold text-orange-500 mt-2">
+              <h2 className="text-3xl font-bold text-amber-500 mt-2">
 
-      {
-        enrollments.filter(
-          e => e.status !== "COMPLETED"
-        ).length
-      }
+                {
+                  enrollments.filter(
+                    e => e.status === "IN_PROGRESS"
+                  ).length
+                }
 
-    </h2>
+              </h2>
 
-  </div>
+            </div>
 
-</div>
+            <div className="bg-white rounded-2xl shadow-md p-5">
 
-    {enrollments.length === 0 ? (
+              <p className="text-sub text-sm">
+                Certified
+              </p>
 
-      <p>No employee enrollments found.</p>
+              <h2 className="text-3xl font-bold text-green-600 mt-2">
 
-    ) : (
+                {
+                  enrollments.filter(
+                    e => e.status === "CERTIFIED"
+                  ).length
+                }
 
-      <table className="min-w-full text-left border-separate border-spacing-y-2">
+              </h2>
 
-     <thead className="bg-gray-50">
+            </div>
 
-          <tr className="border-b">
+          </div>
 
-            <th className="py-3">Employee</th>
+          {enrollments.length === 0 ? (
 
-            <th className="py-3">Training</th>
+            <p>No employee enrollments found.</p>
 
-            <th className="py-3">Status</th>
+          ) : (
 
-            <th className="py-3">Progress</th>
+            <table className="min-w-full text-left border-separate border-spacing-y-2">
 
-            <th className="py-3">Action</th>
+              <thead className="bg-gray-50">
 
-          </tr>
+                <tr className="border-b">
 
-        </thead>
+                  <th className="py-3">Employee</th>
 
-        <tbody>
+                  <th className="py-3">Training</th>
 
-          {enrollments.map((enrollment) => (
+                  <th className="py-3">Progress</th>
 
-            <tr
-            key={enrollment.id}
-            className="border-b border-gray-100 hover:bg-gray-50 transition"
-          >
+                  <th className="py-3">Action</th>
 
-              <td className="py-3">
-                {enrollment.employeeName}
-              </td>
+                </tr>
 
-              <td className="py-3">
-                {enrollment.trainingTitle}
-              </td>
+              </thead>
 
-              <td className="py-4">
+              <tbody>
 
-  {enrollment.status === "COMPLETED" ? (
+                {enrollments.map((enrollment) => (
 
-    <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">
-      ✓ Completed
-    </span>
-
-  ) : enrollment.status === "IN_PROGRESS" ? (
-
-    <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-semibold">
-      ⏳ In Progress
-    </span>
-
-  ) : (
-
-    <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">
-      📘 Enrolled
-    </span>
-
-  )}
-
-</td>
-
-             <td className="py-4">
-
-  <div className="w-36">
-
-    <div className="w-full bg-gray-200 rounded-full h-2">
-
-      <div
-        className="bg-indigo-600 h-2 rounded-full"
-        style={{
-          width: `${enrollment.progress}%`
-        }}
-      />
-
-    </div>
-
-    <p className="text-xs text-gray-500 mt-1">
-      {enrollment.progress}%
-    </p>
-
-  </div>
-
-</td>
-
-              <td className="py-3">
-
-                {enrollment.status === "ENROLLED" ? (
-
-                  <button
-                    onClick={() =>
-                      handleComplete(enrollment.id)
-                    }
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition"
+                  <tr
+                    key={enrollment.id}
+                    className="border-b border-gray-100 hover:bg-gray-50 transition"
                   >
-                    Mark as Completed
-                  </button>
 
-                ) : (
+                    <td className="py-3">
+                      {enrollment.employeeName || `Employee #${enrollment.employeeId}`}
+                    </td>
 
-                  <span className="bg-green-100 text-green-700 px-4 py-2 rounded-xl text-sm font-semibold">
-                  ✓ Completed
-                </span>
+                    <td className="py-3">
+                      {enrollment.trainingTitle}
+                    </td>
 
-                )}
+                    <td className="py-4">
 
-              </td>
+                      <ProgressTracker status={enrollment.status} />
 
-            </tr>
+                    </td>
 
-          ))}
+                    <td className="py-3">
 
-        </tbody>
+                      {enrollment.status !== "CERTIFIED" ? (
 
-      </table>
+                        <button
+                          onClick={() =>
+                            handleComplete(enrollment.id)
+                          }
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition"
+                        >
+                          Mark Completed &amp; Certify
+                        </button>
 
-    )}
+                      ) : (
 
-  </div>
-)}
+                        <span className="bg-green-100 text-green-700 px-4 py-2 rounded-xl text-sm font-semibold">
+                          🎓 Certified
+                        </span>
+
+                      )}
+
+                    </td>
+
+                  </tr>
+
+                ))}
+
+              </tbody>
+
+            </table>
+
+          )}
+
+        </div>
+      )}
 
       {/* Add/Edit Modal */}
       {isAdmin && showModal && createPortal(
