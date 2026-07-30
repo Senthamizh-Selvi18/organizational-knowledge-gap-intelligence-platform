@@ -1,3 +1,4 @@
+
 package com.organizational.knowledge_gap_platform.security;
 
 import com.organizational.knowledge_gap_platform.repository.UserRepository;

@@ -25,6 +25,14 @@ import Settings from "../pages/Settings/Settings";
 import ExternalCourseManagement from "../pages/ExternalCourseManagement/ExternalCourseManagement";
 import InternalTrainingCatalog from "../pages/InternalTrainingCatalog/InternalTrainingCatalog";
 import Notifications from "../pages/Notifications/Notifications";
+import Certification from "../pages/Certification/Certification";
+import AITeamBuilder from "../pages/AITeamBuilder/AITeamBuilder";
+import LearningProgress from "../pages/LearningProgress/LearningProgress";
+import Assessment from "../pages/Assessment/Assessment";
+import MentorDirectory from "../pages/MentorDirectory/MentorDirectory";
+import MentorshipRequests from "../pages/MentorshipRequests/MentorshipRequests";
+import SessionBooking from "../pages/SessionBooking/SessionBooking";
+import KnowledgeBase from "../pages/KnowledgeBase/KnowledgeBase";
 
 function AppRoutes() {
   return (
@@ -40,7 +48,7 @@ function AppRoutes() {
       <Route
         path="/dashboard"
         element={
-          <ProtectedRoute allowedRoles={["admin", "hr", "manager", "team lead"]}>
+          <ProtectedRoute allowedRoles={["admin", "hr specialist", "manager", "department head", "l&d admin"]}>
             <DashboardPage />
           </ProtectedRoute>
         }
@@ -95,6 +103,14 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+  <Route
+  path="/dashboard/ai-team-builder"
+  element={
+    <ProtectedRoute allowedRoles={["admin", "hr specialist"]}>
+      <AITeamBuilder />
+    </ProtectedRoute>
+  }
+/>
 
       {/* Required Skill Levels (Risk Badges) */}
       <Route
@@ -110,7 +126,7 @@ function AppRoutes() {
       <Route
         path="/dashboard/employees"
         element={
-          <ProtectedRoute allowedRoles={["admin", "hr"]}>
+          <ProtectedRoute allowedRoles={["admin", "hr specialist"]}>
             <EmployeeManagement />
           </ProtectedRoute>
         }
@@ -120,7 +136,7 @@ function AppRoutes() {
       <Route
         path="/dashboard/roles"
         element={
-          <ProtectedRoute allowedRoles={["admin", "hr"]}>
+          <ProtectedRoute allowedRoles={["admin", "hr specialist"]}>
             <RoleManagement />
           </ProtectedRoute>
         }
@@ -140,7 +156,7 @@ function AppRoutes() {
       <Route
         path="/dashboard/employee-skills"
         element={
-          <ProtectedRoute allowedRoles={["admin", "hr"]}>
+          <ProtectedRoute allowedRoles={["admin", "hr specialist"]}>
             <EmployeeSkillManagement />
           </ProtectedRoute>
         }
@@ -160,8 +176,18 @@ function AppRoutes() {
       <Route
         path="/dashboard/gap-analysis"
         element={
-          <ProtectedRoute allowedRoles={["admin", "hr", "manager", "team lead"]}>
+          <ProtectedRoute allowedRoles={["admin", "hr specialist", "manager", "department head"]}>
             <GapAnalysis />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Performance Assessments (Self/Peer/Manager) */}
+      <Route
+        path="/dashboard/assessments"
+        element={
+          <ProtectedRoute>
+            <Assessment />
           </ProtectedRoute>
         }
       />
@@ -215,6 +241,14 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+     <Route
+  path="/employee/learning-progress"
+  element={
+    <ProtectedRoute allowedRoles={["employee", "intern"]}>
+        <LearningProgress />
+    </ProtectedRoute>
+  }
+/>
 
       {/* Settings */}
       <Route
@@ -225,6 +259,55 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      {/* Certifications */}
+      <Route
+        path="/dashboard/certifications"
+        element={
+          <ProtectedRoute>
+            <Certification />
+          </ProtectedRoute>
+        }
+      />
+      {/* Mentorship & Knowledge Sharing: Expert Directory */}
+<Route
+  path="/dashboard/mentor-directory"
+  element={
+    <ProtectedRoute>
+      <MentorDirectory />
+    </ProtectedRoute>
+  }
+/>
+
+{/* Mentorship & Knowledge Sharing: Mentor Matching */}
+<Route
+  path="/dashboard/mentorship-requests"
+  element={
+    <ProtectedRoute>
+      <MentorshipRequests />
+    </ProtectedRoute>
+  }
+/>
+
+{/* Mentorship & Knowledge Sharing: Session Booking */}
+<Route
+  path="/dashboard/mentorship-sessions"
+  element={
+    <ProtectedRoute>
+      <SessionBooking />
+    </ProtectedRoute>
+  }
+/>
+
+{/* Mentorship & Knowledge Sharing: Knowledge Base */}
+<Route
+  path="/dashboard/knowledge-base"
+  element={
+    <ProtectedRoute>
+      <KnowledgeBase />
+    </ProtectedRoute>
+  }
+/>
 
       {/* OAuth2 Redirect */}
       <Route

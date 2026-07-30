@@ -20,4 +20,9 @@ public class NotificationResponseDTO {
     private boolean read;
     private LocalDateTime createdAt;
     private String timeAgo;
+
+    // NEW fields
+    private String priority;
+    private String actionUrl;
+    private Long relatedEntityId;
 }

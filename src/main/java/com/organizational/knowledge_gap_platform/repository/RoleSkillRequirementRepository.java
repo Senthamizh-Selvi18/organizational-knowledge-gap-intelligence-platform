@@ -13,4 +13,5 @@ public interface RoleSkillRequirementRepository extends JpaRepository<RoleSkillR
     List<RoleSkillRequirement> findByRole(Role role);
 
     Optional<RoleSkillRequirement> findByRoleAndSkill(Role role, Skill skill);
+    boolean existsBySkillId(Long skillId);
 }

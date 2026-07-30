@@ -216,6 +216,27 @@ input:focus, select:focus, textarea:focus {
 ::-webkit-scrollbar-thumb { background: var(--color-line); border-radius: 8px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-mute); }
 
+.layout-compact { transition: padding .25s ease; }
+.layout-compact .p-8 { padding: 1.25rem; }
+.layout-compact .p-6 { padding: 1rem; }
+.layout-compact .px-6 { padding-left: 1rem; padding-right: 1rem; }
+.layout-compact .py-6 { padding-top: 1rem; padding-bottom: 1rem; }
+.layout-compact .p-4 { padding: 0.75rem; }
+.layout-compact .gap-6 { gap: 0.75rem; }
+.layout-compact .gap-4 { gap: 0.5rem; }
+.layout-compact .gap-3 { gap: 0.5rem; }
+.layout-compact .space-y-6 > * + * { margin-top: 0.85rem; }
+.layout-compact .space-y-4 > * + * { margin-top: 0.6rem; }
+.layout-compact .mb-6 { margin-bottom: 1rem; }
+.layout-compact .mb-5 { margin-bottom: 0.75rem; }
+.layout-compact [class*="rounded-2xl"] { border-radius: 0.85rem; }
+.layout-compact .text-4xl { font-size: 1.75rem; }
+.layout-compact .text-3xl { font-size: 1.5rem; }
+.layout-compact div[class*="rounded-2xl"][class*="shadow"]:hover,
+.layout-compact div[class*="rounded-xl"][class*="shadow"]:hover {
+  transform: translateY(-1px);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: .001ms !important;

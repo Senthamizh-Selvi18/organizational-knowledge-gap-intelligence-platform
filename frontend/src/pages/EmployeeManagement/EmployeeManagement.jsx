@@ -25,7 +25,7 @@ import {
   updateEmployee,
   deleteEmployee,
 } from "../../services/EmployeeManagementService";
-
+import { getRoles, assignRole } from "../../services/roleService";
 export default function EmployeeManagement() {
 
   /* ===========================
@@ -51,6 +51,8 @@ export default function EmployeeManagement() {
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+  const [roles, setRoles] = useState([]);
+
   const [editForm, setEditForm] = useState({
 
     department: "",
@@ -66,6 +68,8 @@ export default function EmployeeManagement() {
     experience: "",
 
     manager: "",
+
+    roleId: "",
 
   });
 
@@ -86,6 +90,8 @@ export default function EmployeeManagement() {
       const response = await getEmployees();
 
       const employeeList = response.data || [];
+      const roleResponse = await getRoles();
+      setRoles(roleResponse.data || []);
 
       setEmployees(employeeList);
 
@@ -309,6 +315,8 @@ behavior:"smooth",
 
       manager: employee.manager || "",
 
+      roleId: employee.roleId || "",
+
     });
 
     setShowEditModal(true);
@@ -337,6 +345,11 @@ behavior:"smooth",
 
         editForm
 
+      );
+
+      await assignRole(
+    selectedEmployee.userId,
+    editForm.roleId
       );
 
       setMessage(
@@ -1371,6 +1384,29 @@ className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-gree
 </select>
 
               </div>
+
+              <div>
+  <label className="mb-2 block text-sm font-semibold text-slate-600">
+    Role
+  </label>
+
+  <select
+    value={editForm.roleId}
+    onChange={(e) =>
+      setEditForm({
+        ...editForm,
+        roleId: Number(e.target.value),
+      })
+    }
+    className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200"
+  >
+    {roles.map((role) => (
+      <option key={role.id} value={role.id}>
+        {role.roleName}
+      </option>
+    ))}
+  </select>
+</div>
 
               {/* Phone */}
 

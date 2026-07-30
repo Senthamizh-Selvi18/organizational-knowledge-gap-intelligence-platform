@@ -5,7 +5,10 @@ import com.organizational.knowledge_gap_platform.dto.EmployeeUpdateDTO;
 import com.organizational.knowledge_gap_platform.entity.Employee;
 import com.organizational.knowledge_gap_platform.entity.Role;
 import com.organizational.knowledge_gap_platform.exception.EmployeeNotFoundException;
+import com.organizational.knowledge_gap_platform.repository.ActivityLogRepository;
 import com.organizational.knowledge_gap_platform.repository.EmployeeRepository;
+import com.organizational.knowledge_gap_platform.repository.EmployeeSkillRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,9 +21,16 @@ import java.util.stream.Collectors;
 public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeRepository employeeRepository;
+    private final EmployeeSkillRepository employeeSkillRepository;
+    private final ActivityLogRepository activityLogRepository;
 
-    public EmployeeServiceImpl(EmployeeRepository employeeRepository) {
+    public EmployeeServiceImpl(EmployeeRepository employeeRepository,
+                               EmployeeSkillRepository employeeSkillRepository,
+                               ActivityLogRepository activityLogRepository) {
+
         this.employeeRepository = employeeRepository;
+        this.employeeSkillRepository = employeeSkillRepository;
+        this.activityLogRepository = activityLogRepository;
     }
 
     @Override
@@ -65,6 +75,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    @Transactional
     public void deleteEmployee(Long id) {
 
         Employee employee = employeeRepository.findById(id)
@@ -72,17 +83,23 @@ public class EmployeeServiceImpl implements EmployeeService {
                         new EmployeeNotFoundException(
                                 "Employee not found with id : " + id));
 
+        // Delete activity logs
+        activityLogRepository.deleteByEmployeeId(id);
+
+        // Delete employee skills
+        employeeSkillRepository.deleteByEmployeeId(id);
+
+        // Delete employee
         employeeRepository.delete(employee);
     }
 
     private EmployeeResponseDTO mapToDTO(Employee employee) {
 
-        String role = employee.getUser()
+        Role role = employee.getUser()
                 .getRoles()
                 .stream()
                 .findFirst()
-                .map(Role::getRoleName)
-                .orElse("");
+                .orElse(null);
 
         return new EmployeeResponseDTO(
                 employee.getId(),
@@ -96,12 +113,15 @@ public class EmployeeServiceImpl implements EmployeeService {
                 employee.getJoiningDate(),
                 employee.getExperience(),
                 employee.getManager(),
-                role
+                role != null ? role.getRoleName() : "",
+                employee.getUser().getId(),
+                role != null ? role.getId() : null
         );
     }
 
     @Override
     public EmployeeSummaryDTO getEmployeeByUserId(Long userId) {
+
         Employee employee = employeeRepository.findByUserId(userId)
                 .orElseThrow(() -> new EmployeeNotFoundException(
                         "Employee not found for user id: " + userId));
@@ -110,7 +130,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         String loggedInUserEmail = authentication.getName();
 
         if (!employee.getUser().getEmail().equals(loggedInUserEmail)) {
-            throw new AccessDeniedException("You are not authorized to access this employee record.");
+            throw new AccessDeniedException(
+                    "You are not authorized to access this employee record.");
         }
 
         return new EmployeeSummaryDTO(

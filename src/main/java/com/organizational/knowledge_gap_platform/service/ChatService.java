@@ -78,12 +78,15 @@ public class ChatService {
 
     /**
      * Sending a message is the primary action here and must succeed independently
-     * of anything notification-related. The message is saved in its own transaction
-     * first (see saveMessage below); the notification is fired afterwards and any
-     * failure there is caught and logged, never allowed to fail the request or
-     * roll back the saved message.
+     * of anything notification-related. The message is saved first; the notification
+     * is fired after commit and any failure there is caught and logged, never allowed
+     * to fail the request or roll back the saved message.
      */
+    
     public ChatMessageResponse sendMessage(ChatSendRequest request) {
+        System.out.println("### sendMessage() ENTERED");
+        System.out.println("!!!!!!!!!!!!! SENDMESSAGE HIT !!!!!!!!!!!!!!!");
+
         if (request == null || request.getReceiverId() == null
                 || request.getMessage() == null || request.getMessage().isBlank()) {
             throw new IllegalArgumentException("receiverId and message are required");
@@ -93,12 +96,15 @@ public class ChatService {
         User receiver = userRepository.findById(request.getReceiverId())
                 .orElseThrow(() -> new RuntimeException("Receiver not found"));
 
+        System.out.println("### sendMessage(): senderId=" + me.getId() + " receiverId=" + receiver.getId());
+
         ChatMessage message = new ChatMessage();
         message.setSender(me);
         message.setReceiver(receiver);
         message.setMessage(request.getMessage());
 
         ChatMessage saved = chatMessageRepository.save(message);
+        System.out.println("### CHAT MESSAGE SAVED: id=" + saved.getId());
 
         // IMPORTANT: notifyNewMessage must NOT be called here, in-line.
         // If it runs inside this same transaction (which it does by default,
@@ -118,13 +124,20 @@ public class ChatService {
         final Long receiverId = receiver.getId();
         final String messageText = saved.getMessage();
 
+        System.out.println("### CHAT SEND: isSynchronizationActive="
+                + TransactionSynchronizationManager.isSynchronizationActive());
+
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
+                    System.out.println("### AFTER COMMIT FIRED: calling notifyNewMessage for messageId=" + saved.getId());
                     try {
                         notificationService.notifyNewMessage(me, receiver, messageText);
+                        System.out.println("### notifyNewMessage RETURNED SUCCESSFULLY");
                     } catch (Exception ex) {
+                        System.out.println("### notifyNewMessage THREW: " + ex.getClass().getName() + " - " + ex.getMessage());
+                        ex.printStackTrace();
                         log.error("notifyNewMessage failed for message id={} sender={} receiver={} "
                                         + "— message was already committed successfully and is unaffected",
                                 saved.getId(), meId, receiverId, ex);
@@ -132,13 +145,12 @@ public class ChatService {
                 }
             });
         } else {
-            // No active transaction synchronization (shouldn't normally happen
-            // given @Transactional on this class) — fall back to a direct,
-            // still-guarded call so a notification bug can never surface as
-            // a failure to the caller.
+            System.out.println("### NO ACTIVE TRANSACTION SYNC - falling back to direct call");
             try {
                 notificationService.notifyNewMessage(me, receiver, messageText);
             } catch (Exception ex) {
+                System.out.println("### DIRECT notifyNewMessage THREW: " + ex.getMessage());
+                ex.printStackTrace();
                 log.error("notifyNewMessage failed for message id={} sender={} receiver={}",
                         saved.getId(), meId, receiverId, ex);
             }

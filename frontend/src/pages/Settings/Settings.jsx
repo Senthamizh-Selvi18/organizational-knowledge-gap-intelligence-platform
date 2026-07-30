@@ -118,6 +118,10 @@ export default function Settings() {
     document.documentElement.classList.toggle("dark", draft.theme === "dark");
   }, [draft.theme]);
 
+useEffect(() => {
+  window.dispatchEvent(new CustomEvent("layoutchange", { detail: draft.dashboardLayout }));
+}, [draft.dashboardLayout]);
+
   useEffect(() => {
     if (!showSavedBanner) return;
     const t = setTimeout(() => setShowSavedBanner(false), 2500);
@@ -139,18 +143,20 @@ export default function Settings() {
   };
 
   const handleSave = () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
-    localStorage.setItem("theme", draft.theme);
-    document.documentElement.classList.toggle("dark", draft.theme === "dark");
-    window.dispatchEvent(new Event("themechange"));
-    setSaved(draft);
-    setShowSavedBanner(true);
-  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
+  localStorage.setItem("theme", draft.theme);
+  document.documentElement.classList.toggle("dark", draft.theme === "dark");
+  window.dispatchEvent(new Event("themechange"));
+  window.dispatchEvent(new CustomEvent("layoutchange", { detail: draft.dashboardLayout })); // ← নতুন লাইন
+  setSaved(draft);
+  setShowSavedBanner(true);
+};
 
-  const handleCancel = () => {
-    setDraft(saved);
-    document.documentElement.classList.toggle("dark", saved.theme === "dark");
-  };
+const handleCancel = () => {
+  setDraft(saved);
+  document.documentElement.classList.toggle("dark", saved.theme === "dark");
+  window.dispatchEvent(new CustomEvent("layoutchange", { detail: saved.dashboardLayout })); // ← নতুন লাইন
+};
 
   return (
     <DashboardLayout>

@@ -1,173 +1,422 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import { toast } from "../../components/ui/Toast.jsx";
 import {
-  getRecentNotifications,
+  getAllNotifications,
   markAsRead,
   markAllAsRead,
+  searchNotifications,
+  deleteNotification,
+  clearAllNotifications,
 } from "../../services/notificationService";
-import {
-  FiBell,
-  FiCheckCircle,
-  FiUserPlus,
-  FiRefreshCw,
-  FiBarChart2,
-  FiUser,
-  FiCheck,
-  FiInbox,
-} from "react-icons/fi";
+import "./Notifications.css";
 
-const TYPE_META = {
-  SKILL_ASSIGNED: { icon: FiUserPlus, color: "bg-blue-100 text-blue-700" },
-  SKILL_UPDATED: { icon: FiRefreshCw, color: "bg-purple-100 text-purple-700" },
-  GAP_ANALYSIS_COMPLETED: { icon: FiBarChart2, color: "bg-green-100 text-green-700" },
-  PROFILE_UPDATED: { icon: FiUser, color: "bg-amber-100 text-amber-700" },
+const SEARCH_DEBOUNCE_MS = 350;
+
+// NOTE: adjust how you read the logged-in user's id to match your auth setup
+// (e.g. from context, redux, or a decoded JWT). This assumes it's stored
+// in localStorage as "userId".
+function useCurrentUserId() {
+  return localStorage.getItem("userId");
+}
+
+const TYPE_ICON = {
+  SKILL_ASSIGNED: "📌",
+  SKILL_UPDATED: "🛠️",
+  GAP_ANALYSIS_COMPLETED: "📊",
+  PROFILE_UPDATED: "👤",
+  NEW_MESSAGE: "💬",
+  AI_RECOMMENDATION: "✨",
+  TRAINING_ASSIGNED: "🎓",
+  TRAINING_DEADLINE: "⏰",
+  TRAINING_COMPLETED: "✅",
+  CERTIFICATION_EXPIRING: "⚠️",
+  CERTIFICATION_EXPIRED: "❌",
+  NEW_CHAT_MESSAGE: "💬",
+  MENTORSHIP: "🤝",
+  SYSTEM: "⚙️",
+  ANNOUNCEMENT: "📢",
+  SKILL_GAP: "📉",
+  ASSESSMENT: "📝",
+  ASSESSMENT_ASSIGNED: "📝",
+  ASSESSMENT_REMINDER: "⏰",
+  ASSESSMENT_COMPLETED: "✅",
 };
 
-function iconFor(type) {
-  return TYPE_META[type]?.icon || FiBell;
+const TYPE_OPTIONS = [
+  "SKILL_ASSIGNED", "SKILL_UPDATED", "GAP_ANALYSIS_COMPLETED", "PROFILE_UPDATED",
+  "NEW_MESSAGE", "AI_RECOMMENDATION", "TRAINING_ASSIGNED", "TRAINING_DEADLINE",
+  "TRAINING_COMPLETED", "CERTIFICATION_EXPIRING", "CERTIFICATION_EXPIRED",
+  "NEW_CHAT_MESSAGE", "MENTORSHIP", "SYSTEM", "ANNOUNCEMENT", "SKILL_GAP",
+  "ASSESSMENT", "ASSESSMENT_ASSIGNED", "ASSESSMENT_REMINDER", "ASSESSMENT_COMPLETED",
+];
+
+const PRIORITY_OPTIONS = ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
+
+/**
+ * Small in-app confirmation modal, styled to match the Notifications page's
+ * own design tokens (see Notifications.css). Replaces window.confirm(),
+ * which renders as a generic unstyled browser dialog that breaks the app's
+ * visual language.
+ *
+ * The app also has a shared confirmDialog() in components/ui/ConfirmDialog.jsx
+ * mounted globally — swap to that instead if you'd rather not keep this
+ * page-local copy around. Left as-is here to avoid unrelated churn.
+ */
+function ConfirmDialog({ open, title, message, confirmLabel = "Confirm", onConfirm, onCancel }) {
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") onCancel();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open, onCancel]);
+
+  if (!open) return null;
+
+  return (
+    <div className="confirm-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onCancel(); }}>
+      <div className="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-dialog-title">
+        <h2 id="confirm-dialog-title" className="confirm-title">{title}</h2>
+        <p className="confirm-message">{message}</p>
+        <div className="confirm-actions">
+          <button type="button" className="confirm-cancel-btn" onClick={onCancel}>
+            Cancel
+          </button>
+          <button type="button" className="confirm-danger-btn" onClick={onConfirm}>
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-function colorFor(type) {
-  return TYPE_META[type]?.color || "bg-primary-tint text-primary";
-}
+function Notifications() {
+  const userId = useCurrentUserId();
 
-export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [markingId, setMarkingId] = useState(null);
+  const [error, setError] = useState(null); // page-level load failure (shows the retry banner)
+  const [errorDetail, setErrorDetail] = useState(null); // raw backend message, shown in dev-friendly way
   const [markingAll, setMarkingAll] = useState(false);
+  const [clearing, setClearing] = useState(false);
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
 
-  const load = useCallback(async () => {
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+
+  // Raw input value (updates every keystroke, so the box always feels responsive)
+  const [keyword, setKeyword] = useState("");
+  // Debounced value actually used to hit the API
+  const [debouncedKeyword, setDebouncedKeyword] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [priorityFilter, setPriorityFilter] = useState("");
+  const [readFilter, setReadFilter] = useState(""); // "", "true", "false"
+
+  // Guards against out-of-order responses: if the user types fast, an older
+  // (slower) request can resolve after a newer one and silently overwrite it.
+  const latestRequestId = useRef(0);
+
+  // Debounce the keyword so we don't fire a network request per keystroke.
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      setDebouncedKeyword(keyword);
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(handle);
+  }, [keyword]);
+
+  const hasActiveFilters = Boolean(debouncedKeyword || typeFilter || priorityFilter || readFilter !== "");
+
+  const loadNotifications = useCallback(async (targetPage = 0) => {
+    if (!userId) {
+      setError("You need to be signed in to view notifications.");
+      setErrorDetail(null);
+      setLoading(false);
+      return;
+    }
+
+    const requestId = ++latestRequestId.current;
+    setLoading(true);
+    setError(null);
+    setErrorDetail(null);
     try {
-      setLoading(true);
-      const data = await getRecentNotifications(50);
+      const data = hasActiveFilters
+        ? await searchNotifications(
+            userId,
+            {
+              keyword: debouncedKeyword || undefined,
+              type: typeFilter || undefined,
+              priority: priorityFilter || undefined,
+              isRead: readFilter === "" ? undefined : readFilter === "true",
+            },
+            targetPage,
+            20
+          )
+        : await getAllNotifications(userId, targetPage, 20);
+
+      // A newer request has already started (or finished) — drop this stale result.
+      if (requestId !== latestRequestId.current) return;
+
       setNotifications(data.notifications || []);
       setUnreadCount(data.unreadCount || 0);
+      setTotalPages(data.totalPages || 1);
+      setPage(data.currentPage || 0);
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to load notifications.");
+      if (requestId !== latestRequestId.current) return;
+      console.error("[Notifications] failed to load:", err);
+      setError("We couldn't load your notifications.");
+      // Show the real backend/network message so the actual cause is visible
+      // instead of guessing. Safe to remove once the root cause is confirmed fixed.
+      setErrorDetail(err?.message || String(err));
     } finally {
-      setLoading(false);
+      if (requestId === latestRequestId.current) setLoading(false);
     }
-  }, []);
+  }, [userId, debouncedKeyword, typeFilter, priorityFilter, readFilter, hasActiveFilters]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    loadNotifications(0);
+  }, [loadNotifications]);
 
-  const handleMarkAsRead = async (id) => {
-    try {
-      setMarkingId(id);
-      await markAsRead(id);
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-      );
-      setUnreadCount((c) => Math.max(0, c - 1));
-    } catch (err) {
-      console.error(err);
-      toast.error("Could not mark notification as read.");
-    } finally {
-      setMarkingId(null);
+  const handleMarkAsRead = async (notification) => {
+    if (notification.read) {
+      if (notification.actionUrl) window.location.href = notification.actionUrl;
+      return;
     }
+
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notification.id ? { ...n, read: true } : n))
+    );
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+
+    try {
+      await markAsRead(userId, notification.id);
+    } catch (err) {
+      console.error("[Notifications] markAsRead failed:", err);
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notification.id ? { ...n, read: false } : n))
+      );
+      setUnreadCount((prev) => prev + 1);
+      toast.error("Could not mark notification as read.");
+      return;
+    }
+
+    if (notification.actionUrl) window.location.href = notification.actionUrl;
   };
 
   const handleMarkAllAsRead = async () => {
+    if (unreadCount === 0) return;
+
+    setMarkingAll(true);
+    const previous = notifications;
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    setUnreadCount(0);
+
     try {
-      setMarkingAll(true);
-      await markAllAsRead();
-      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-      setUnreadCount(0);
+      await markAllAsRead(userId);
       toast.success("All notifications marked as read.");
     } catch (err) {
-      console.error(err);
+      console.error("[Notifications] markAllAsRead failed:", err);
+      setNotifications(previous);
       toast.error("Could not mark all notifications as read.");
     } finally {
       setMarkingAll(false);
     }
   };
 
+  const handleDelete = async (notification, e) => {
+    e.stopPropagation();
+    const previous = notifications;
+    setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
+    if (!notification.read) setUnreadCount((prev) => Math.max(0, prev - 1));
+
+    try {
+      await deleteNotification(userId, notification.id);
+    } catch (err) {
+      console.error("[Notifications] deleteNotification failed:", err);
+      setNotifications(previous);
+      toast.error("Could not delete that notification.");
+    }
+  };
+
+  const handleClearAll = () => {
+    if (notifications.length === 0) return;
+    setConfirmClearOpen(true);
+  };
+
+  const confirmClearAll = async () => {
+    setConfirmClearOpen(false);
+    setClearing(true);
+    const previous = notifications;
+    setNotifications([]);
+    setUnreadCount(0);
+
+    try {
+      await clearAllNotifications(userId);
+    } catch (err) {
+      console.error("[Notifications] clearAllNotifications failed:", err);
+      setNotifications(previous);
+      toast.error("Could not clear notifications.");
+    } finally {
+      setClearing(false);
+    }
+  };
+
+  const resetFilters = () => {
+    setKeyword("");
+    setDebouncedKeyword("");
+    setTypeFilter("");
+    setPriorityFilter("");
+    setReadFilter("");
+  };
+
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-3">
-              <FiBell className="text-primary" />
-              Notifications
-            </h1>
-            <p className="text-sub">
+      <div className="notifications-page">
+        <header className="notifications-header">
+          <div className="notifications-heading">
+            <h1>Notifications</h1>
+            <p className="notifications-subtext">
               {unreadCount > 0
-                ? `You have ${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}.`
-                : "You're all caught up."}
+                ? `${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}`
+                : "You're all caught up"}
             </p>
           </div>
+          <div className="notifications-header-actions">
+            <button
+              className="mark-all-btn"
+              onClick={handleMarkAllAsRead}
+              disabled={unreadCount === 0 || markingAll}
+            >
+              {markingAll ? "Marking..." : "Mark all as read"}
+            </button>
+            <button
+              className="clear-all-btn"
+              onClick={handleClearAll}
+              disabled={notifications.length === 0 || clearing}
+            >
+              {clearing ? "Clearing..." : "Clear all"}
+            </button>
+          </div>
+        </header>
 
-          <button
-            type="button"
-            onClick={handleMarkAllAsRead}
-            disabled={markingAll || unreadCount === 0}
-            className="flex items-center gap-2 rounded-xl border border-line bg-panel px-4 py-2 text-sm font-medium text-sub transition-colors hover:bg-primary-tint hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <FiCheck className="h-4 w-4" />
-            Mark all as read
-          </button>
-        </div>
-
-        <div className="rounded-3xl border border-line bg-panel shadow-xl">
-          {loading ? (
-            <div className="p-10 text-center text-sub">Loading notifications…</div>
-          ) : notifications.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 p-14 text-center text-sub">
-              <FiInbox className="h-8 w-8" />
-              <p className="font-medium text-text">No notifications yet</p>
-              <p className="text-sm">We'll let you know when something needs your attention.</p>
-            </div>
-          ) : (
-            <ul className="divide-y divide-line">
-              {notifications.map((n) => {
-                const Icon = iconFor(n.type);
-                return (
-                  <li
-                    key={n.id}
-                    className={`flex items-start gap-4 px-5 py-4 transition-colors ${
-                      n.read ? "" : "bg-primary-tint/40"
-                    }`}
-                  >
-                    <div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${colorFor(n.type)}`}>
-                      <Icon className="h-4.5 w-4.5" />
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="truncate font-semibold text-text">{n.title}</p>
-                        {!n.read && (
-                          <span className="h-2 w-2 shrink-0 rounded-full bg-rust" aria-label="Unread" />
-                        )}
-                      </div>
-                      <p className="mt-0.5 text-sm text-sub">{n.message}</p>
-                      <p className="mt-1 text-xs text-mute">{n.timeAgo}</p>
-                    </div>
-
-                    {!n.read && (
-                      <button
-                        type="button"
-                        onClick={() => handleMarkAsRead(n.id)}
-                        disabled={markingId === n.id}
-                        className="flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary-tint disabled:opacity-50"
-                      >
-                        <FiCheckCircle className="h-3.5 w-3.5" />
-                        Mark as read
-                      </button>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+        <div className="notifications-filters">
+          <input
+            type="text"
+            placeholder="Search notifications..."
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            className="filter-input"
+          />
+          <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="filter-select">
+            <option value="">All types</option>
+            {TYPE_OPTIONS.map((t) => (
+              <option key={t} value={t}>{t.replaceAll("_", " ")}</option>
+            ))}
+          </select>
+          <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} className="filter-select">
+            <option value="">All priorities</option>
+            {PRIORITY_OPTIONS.map((p) => (
+              <option key={p} value={p}>{p}</option>
+            ))}
+          </select>
+          <select value={readFilter} onChange={(e) => setReadFilter(e.target.value)} className="filter-select">
+            <option value="">All</option>
+            <option value="false">Unread</option>
+            <option value="true">Read</option>
+          </select>
+          {hasActiveFilters && (
+            <button type="button" className="reset-filters-btn" onClick={resetFilters}>
+              Reset filters
+            </button>
           )}
         </div>
+
+        {loading && <div className="notifications-state">Loading notifications...</div>}
+
+        {!loading && error && (
+          <div className="notifications-state notifications-error">
+            <p className="error-summary">{error}</p>
+            {errorDetail && <p className="error-detail">{errorDetail}</p>}
+            <button onClick={() => loadNotifications(page)} className="retry-btn">
+              Retry
+            </button>
+          </div>
+        )}
+
+        {!loading && !error && notifications.length === 0 && (
+          <div className="notifications-state">
+            {hasActiveFilters
+              ? "No notifications match your filters."
+              : "No notifications yet. We'll let you know when something needs your attention."}
+          </div>
+        )}
+
+        {!loading && !error && notifications.length > 0 && (
+          <>
+            <ul className="notifications-list">
+              {notifications.map((n) => (
+                <li
+                  key={n.id}
+                  className={`notification-item ${n.read ? "read" : "unread"}`}
+                  onClick={() => handleMarkAsRead(n)}
+                >
+                  <span className="notification-icon">
+                    {TYPE_ICON[n.type] || "🔔"}
+                  </span>
+                  <div className="notification-body">
+                    <div className="notification-title-row">
+                      <p className="notification-title">{n.title}</p>
+                      {n.priority && (
+                        <span className={`priority-badge priority-${n.priority.toLowerCase()}`}>
+                          {n.priority}
+                        </span>
+                      )}
+                    </div>
+                    <p className="notification-message">{n.message}</p>
+                    <p className="notification-time">{n.timeAgo}</p>
+                  </div>
+                  <div className="notification-actions">
+                    {!n.read && <span className="unread-dot" aria-label="Unread" />}
+                    <button
+                      className="delete-btn"
+                      onClick={(e) => handleDelete(n, e)}
+                      aria-label="Delete notification"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            {totalPages > 1 && (
+              <div className="notifications-pagination">
+                <button disabled={page === 0} onClick={() => loadNotifications(page - 1)}>
+                  Previous
+                </button>
+                <span>Page {page + 1} of {totalPages}</span>
+                <button disabled={page + 1 >= totalPages} onClick={() => loadNotifications(page + 1)}>
+                  Next
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
+        <ConfirmDialog
+          open={confirmClearOpen}
+          title="Clear all notifications?"
+          message="This can't be undone. All notifications in your list will be permanently removed."
+          confirmLabel="Clear all"
+          onConfirm={confirmClearAll}
+          onCancel={() => setConfirmClearOpen(false)}
+        />
       </div>
     </DashboardLayout>
   );
 }
+
+export default Notifications;

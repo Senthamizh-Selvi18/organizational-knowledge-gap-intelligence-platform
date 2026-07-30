@@ -2,6 +2,7 @@ package com.organizational.knowledge_gap_platform.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDateTime;
 
@@ -37,6 +38,16 @@ public class Notification {
     @Column(name = "is_read", nullable = false)
     private boolean isRead = false;
 
+    // NEW: priority level, defaults to MEDIUM so existing rows/inserts keep working
+    @Enumerated(EnumType.STRING)
+    @ColumnDefault("'MEDIUM'")
+    @Column(nullable = false, length = 20)
+    private NotificationPriority priority = NotificationPriority.MEDIUM;
+
+    // NEW: optional deep link the frontend can navigate to when the notification is clicked
+    @Column(name = "action_url", length = 500)
+    private String actionUrl;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -44,6 +55,9 @@ public class Notification {
     public void prePersist() {
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
+        }
+        if (priority == null) {
+            priority = NotificationPriority.MEDIUM;
         }
     }
 }

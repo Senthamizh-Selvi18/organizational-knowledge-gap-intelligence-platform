@@ -9,7 +9,14 @@ import com.organizational.knowledge_gap_platform.repository.EmployeeRepository;
 import com.organizational.knowledge_gap_platform.repository.EmployeeSkillRepository;
 import com.organizational.knowledge_gap_platform.repository.SkillRepository;
 import org.springframework.stereotype.Service;
+import com.organizational.knowledge_gap_platform.dto.CompetencyAnalyticsResponse;
+import com.organizational.knowledge_gap_platform.dto.RecentActivityResponse;
 
+import com.organizational.knowledge_gap_platform.entity.Competency;
+import com.organizational.knowledge_gap_platform.entity.ActivityLog;
+
+import com.organizational.knowledge_gap_platform.repository.CompetencyRepository;
+import com.organizational.knowledge_gap_platform.repository.ActivityLogRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -22,13 +29,20 @@ public class DashboardServiceImpl implements DashboardService {
     private final SkillRepository skillRepository;
     private final EmployeeRepository employeeRepository;
     private final EmployeeSkillRepository employeeSkillRepository;
+    private final CompetencyRepository competencyRepository;
+    private final ActivityLogRepository activityLogRepository;
+    public DashboardServiceImpl(
+            SkillRepository skillRepository,
+            EmployeeRepository employeeRepository,
+            EmployeeSkillRepository employeeSkillRepository,
+            CompetencyRepository competencyRepository,
+            ActivityLogRepository activityLogRepository) {
 
-    public DashboardServiceImpl(SkillRepository skillRepository,
-                                 EmployeeRepository employeeRepository,
-                                 EmployeeSkillRepository employeeSkillRepository) {
         this.skillRepository = skillRepository;
         this.employeeRepository = employeeRepository;
         this.employeeSkillRepository = employeeSkillRepository;
+        this.competencyRepository = competencyRepository;
+        this.activityLogRepository = activityLogRepository;
     }
 
     @Override
@@ -57,14 +71,17 @@ public class DashboardServiceImpl implements DashboardService {
             List<EmployeeSkill> ownedSkills =
                     employeeSkillRepository.findByEmployeeId(employee.getId());
 
-            Map<Long, Integer> proficiencyBySkillId = ownedSkills.stream()
-                    .collect(Collectors.toMap(
-                            es -> es.getSkill().getId(),
-                            es -> es.getProficiencyLevel() != null ? es.getProficiencyLevel() : 0
-                    ));
+            Map<Long, Integer> proficiencyBySkillId = new java.util.HashMap<>();
+
+            for (EmployeeSkill employeeSkill : ownedSkills) {
+                proficiencyBySkillId.put(
+                        employeeSkill.getSkill().getId(),
+                        employeeSkill.getProficiencyLevel()
+                );
+            }
 
             List<Integer> values = allSkills.stream()
-                    .map(skill -> proficiencyBySkillId.getOrDefault(skill.getId(), 0))
+                    .map(skill -> proficiencyBySkillId.get(skill.getId()))
                     .collect(Collectors.toList());
 
             String displayName = employee.getUser() != null
@@ -75,5 +92,47 @@ public class DashboardServiceImpl implements DashboardService {
         }
 
         return new HeatmapResponse(skillNames, rows);
+    }
+    @Override
+    public CompetencyAnalyticsResponse getEmployeeCompetencies(Long employeeId) {
+
+        List<Competency> competencies =
+                competencyRepository.findByEmployeeId(employeeId);
+
+        List<CompetencyAnalyticsResponse.CompetencyItem> items =
+                competencies.stream()
+                        .map(competency ->
+                                new CompetencyAnalyticsResponse.CompetencyItem(
+                                        competency.getId(),
+                                        competency.getSkill().getId(),
+                                        competency.getSkill().getSkillName(),
+                                        competency.getLevel()
+                                )
+                        )
+                        .collect(Collectors.toList());
+
+        return new CompetencyAnalyticsResponse(
+                items.size(),
+                items
+        );
+    }
+
+    @Override
+    public List<RecentActivityResponse> getEmployeeRecentActivity(
+            Long employeeId) {
+
+        List<ActivityLog> activities =
+                activityLogRepository
+                        .findTop10ByEmployeeIdOrderByCreatedAtDesc(employeeId);
+
+        return activities.stream()
+                .map(activity ->
+                        new RecentActivityResponse(
+                                activity.getId(),
+                                activity.getDescription(),
+                                activity.getCreatedAt()
+                        )
+                )
+                .collect(Collectors.toList());
     }
 }

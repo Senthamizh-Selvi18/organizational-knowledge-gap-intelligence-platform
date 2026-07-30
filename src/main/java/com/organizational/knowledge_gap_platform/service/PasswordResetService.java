@@ -1,5 +1,6 @@
 package com.organizational.knowledge_gap_platform.service;
 
+import com.organizational.knowledge_gap_platform.entity.NotificationType;
 import com.organizational.knowledge_gap_platform.entity.PasswordResetToken;
 import com.organizational.knowledge_gap_platform.entity.User;
 import com.organizational.knowledge_gap_platform.exception.EmailDeliveryException;
@@ -34,6 +35,7 @@ public class PasswordResetService {
     private final PasswordResetTokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JavaMailSender mailSender;
+    private final NotificationService notificationService;
 
     @Value("${app.password-reset.token-expiry-minutes}")
     private int expiryMinutes;
@@ -47,11 +49,13 @@ public class PasswordResetService {
     public PasswordResetService(UserRepository userRepository,
                                  PasswordResetTokenRepository tokenRepository,
                                  PasswordEncoder passwordEncoder,
-                                 JavaMailSender mailSender) {
+                                 JavaMailSender mailSender,
+                                 NotificationService notificationService) {
         this.userRepository = userRepository;
         this.tokenRepository = tokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.mailSender = mailSender;
+        this.notificationService = notificationService;
     }
     
     @Transactional
@@ -108,6 +112,29 @@ public class PasswordResetService {
         tokenRepository.save(token);
 
         log.info("Password successfully reset for user id: {}", user.getId());
+
+        notifyPasswordChanged(user);
+    }
+
+    /**
+     * Fires a PASSWORD_CHANGED security notification to the user themselves after a
+     * successful reset, so they're alerted even if they weren't the one who did it.
+     * Never allowed to break the reset flow if notification creation fails.
+     */
+    private void notifyPasswordChanged(User user) {
+        try {
+            notificationService.createNotification(
+                    user.getId(),
+                    NotificationType.PASSWORD_CHANGED.name(),
+                    "Your password was changed",
+                    "Your password was successfully reset. If you didn't do this, contact your administrator immediately.",
+                    "HIGH",
+                    "/profile",
+                    user.getId()
+            );
+        } catch (Exception ex) {
+            log.error("Failed to create PASSWORD_CHANGED notification for user {}", user.getId(), ex);
+        }
     }
 
     @Scheduled(cron = "0 0 * * * *")

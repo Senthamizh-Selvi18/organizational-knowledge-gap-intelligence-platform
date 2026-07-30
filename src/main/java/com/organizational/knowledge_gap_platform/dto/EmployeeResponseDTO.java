@@ -36,4 +36,8 @@ public class EmployeeResponseDTO {
     private String manager;
 
     private String role;
+
+    private Long userId;
+
+    private Long roleId;
 }

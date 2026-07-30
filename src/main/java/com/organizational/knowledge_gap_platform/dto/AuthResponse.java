@@ -10,6 +10,7 @@ public class AuthResponse {
     private String token;
     private String role;
     private Long userId;
+    private Long employeeId;
     private String name;
     private boolean firstLogin;
 }
