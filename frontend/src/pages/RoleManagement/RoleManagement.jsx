@@ -188,6 +188,50 @@ export default function RoleManagement() {
     }
   };
 
+  // Handles the two-step delete flow:
+  // 1. Normal confirm ("Delete this role?").
+  // 2. If the backend reports the role is still assigned to users (409),
+  //    show a second confirm naming the number of affected users, then
+  //    retry the delete with force=true so the backend unassigns first.
+  const handleDeleteRole = async (item) => {
+    const ok = await confirmDialog("Delete this role? This can't be undone.", {
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (!ok) return;
+
+    try {
+      await deleteRole(item.id);
+      loadRoles();
+      toast.success("Role deleted");
+      return;
+    } catch (err) {
+      const status = err.response?.status;
+      const assignedUserCount = err.response?.data?.assignedUserCount;
+
+      if (status !== 409 || !assignedUserCount) {
+        toast.error(err.response?.data?.message || "Unable to delete role");
+        return;
+      }
+
+      const confirmForce = await confirmDialog(
+        `"${item.roleName}" is currently assigned to ${assignedUserCount} ` +
+          `${assignedUserCount === 1 ? "user" : "users"}. Deleting it will ` +
+          `remove this role from ${assignedUserCount === 1 ? "that user" : "those users"}. Continue?`,
+        { confirmLabel: "Delete anyway", danger: true }
+      );
+      if (!confirmForce) return;
+
+      try {
+        await deleteRole(item.id, true);
+        loadRoles();
+        toast.success("Role deleted and unassigned from affected users");
+      } catch (err2) {
+        toast.error(err2.response?.data?.message || "Unable to delete role");
+      }
+    }
+  };
+
   useEffect(() => {
     loadRoles();
     loadPendingCount();
@@ -406,24 +450,7 @@ export default function RoleManagement() {
                           </button>
 
                           <button
-                            onClick={async () => {
-                              const ok = await confirmDialog(
-                                "Delete this role? This can't be undone.",
-                                {
-                                  confirmLabel: "Delete",
-                                  danger: true,
-                                }
-                              );
-                              if (!ok) return;
-
-                              try {
-                                await deleteRole(item.id);
-                                loadRoles();
-                                toast.success("Role deleted");
-                              } catch {
-                                toast.error("Unable to delete role");
-                              }
-                            }}
+                            onClick={() => handleDeleteRole(item)}
                             className="text-rust hover:text-rust"
                           >
                             <FiTrash2 />

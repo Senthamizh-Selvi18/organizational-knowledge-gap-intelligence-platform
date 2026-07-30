@@ -1,5 +1,6 @@
 package com.organizational.knowledge_gap_platform.exception;
 
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -56,6 +57,37 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, Object>> handleAccessDenied(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody(ex.getMessage()));
+    }
+    @ExceptionHandler(MentorProfileNotFoundException.class)
+public ResponseEntity<Map<String, Object>> handleMentorProfileNotFound(MentorProfileNotFoundException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorBody(ex.getMessage()));
+}
+
+@ExceptionHandler(MentorshipRequestNotFoundException.class)
+public ResponseEntity<Map<String, Object>> handleMentorshipRequestNotFound(MentorshipRequestNotFoundException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorBody(ex.getMessage()));
+}
+
+@ExceptionHandler(MentorshipSessionNotFoundException.class)
+public ResponseEntity<Map<String, Object>> handleMentorshipSessionNotFound(MentorshipSessionNotFoundException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorBody(ex.getMessage()));
+}
+
+@ExceptionHandler(KnowledgeArticleNotFoundException.class)
+public ResponseEntity<Map<String, Object>> handleKnowledgeArticleNotFound(KnowledgeArticleNotFoundException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorBody(ex.getMessage()));
+}
+
+@ExceptionHandler(InvalidMentorshipActionException.class)
+public ResponseEntity<Map<String, Object>> handleInvalidMentorshipAction(InvalidMentorshipActionException ex) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody(ex.getMessage()));
+}
+
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<Map<String, Object>> handleDataAccessException(DataAccessException ex) {
+        ex.printStackTrace();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(errorBody("A database error occurred while processing your request. Please try again, and contact support if the problem persists."));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

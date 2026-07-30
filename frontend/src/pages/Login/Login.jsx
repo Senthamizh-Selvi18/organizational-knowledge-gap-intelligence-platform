@@ -13,11 +13,19 @@ import { login, sendOtp, verifyOtp } from "../../services/authService";
 import { useNavigate } from "react-router-dom";
 import { toast } from "../../components/ui/Toast.jsx";
 
+const REMEMBERED_EMAIL_KEY = "knowgap_remembered_email"
+
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
+  const [email, setEmail] = useState(
+    () => localStorage.getItem(REMEMBERED_EMAIL_KEY) || ""
+  )
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  const [remember, setRemember] = useState(false)
+  // Pre-check "Remember Me" and pre-fill the email field whenever a
+  // previous login left a remembered email behind.
+  const [remember, setRemember] = useState(
+    () => !!localStorage.getItem(REMEMBERED_EMAIL_KEY)
+  )
 
   const [step, setStep] = useState("login") // "login" | "otp"
   const [userId, setUserId] = useState(null)
@@ -59,6 +67,12 @@ const handleSubmit = async (e) => {
     localStorage.setItem("userId", data.userId);
     localStorage.setItem("employeeId", data.employeeId);
     localStorage.setItem("name", data.name);
+
+    if (remember) {
+      localStorage.setItem(REMEMBERED_EMAIL_KEY, email);
+    } else {
+      localStorage.removeItem(REMEMBERED_EMAIL_KEY);
+    }
 
     if (data.firstLogin) {
       setUserId(data.userId);

@@ -1,6 +1,7 @@
 package com.organizational.knowledge_gap_platform.controller;
 
 import com.organizational.knowledge_gap_platform.entity.Role;
+import com.organizational.knowledge_gap_platform.service.RoleInUseException;
 import com.organizational.knowledge_gap_platform.service.RoleServiceImpl;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -9,7 +10,9 @@ import org.springframework.web.bind.annotation.*;
 import com.organizational.knowledge_gap_platform.dto.AssignRoleRequest;
 import com.organizational.knowledge_gap_platform.dto.RoleDetailsResponse;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
@@ -72,15 +75,31 @@ public ResponseEntity<?> updateRole(@PathVariable Long id,
 }
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-public ResponseEntity<Void> deleteRole(@PathVariable Long id) {
+public ResponseEntity<?> deleteRole(
+        @PathVariable Long id,
+        @RequestParam(name = "force", defaultValue = "false") boolean force) {
 
-    boolean deleted = roleService.deleteRole(id);
+    try {
 
-    if (!deleted) {
-        return ResponseEntity.notFound().build();
+        boolean deleted = roleService.deleteRole(id, force);
+
+        if (!deleted) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.noContent().build();
+
+    } catch (RoleInUseException ex) {
+
+        // Role can't be deleted yet — the frontend should ask the admin to
+        // confirm, then retry the same request with ?force=true.
+        Map<String, Object> body = new HashMap<>();
+        body.put("message", "This role is assigned to " + ex.getUserCount()
+                + " user(s). Confirm to unassign and delete.");
+        body.put("assignedUserCount", ex.getUserCount());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
-
-    return ResponseEntity.noContent().build();
 }
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/assign/{userId}")

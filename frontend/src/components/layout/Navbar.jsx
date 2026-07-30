@@ -31,6 +31,11 @@ const CRUMBS = [
   { match: /^\/dashboard/, title: "Dashboard", sub: "organizational overview" },
 ]
 
+// How often to refresh the chat / notification unread badges.
+// 30s keeps badges reasonably fresh without hammering the backend —
+// a few seconds of staleness on a badge count is imperceptible to users.
+const POLL_INTERVAL_MS = 30000
+
 function useCrumb() {
   const { pathname } = useLocation()
   const found = CRUMBS.find((c) => c.match.test(pathname))
@@ -38,76 +43,88 @@ function useCrumb() {
 }
 
 export default function Navbar({ onMenuClick }) {
-const [darkMode, setDarkMode] = useState(() => {
-  const storedTheme = localStorage.getItem("theme");
-  return storedTheme
-    ? storedTheme === "dark"
-    : document.documentElement.classList.contains("dark");
-});
+  const [darkMode, setDarkMode] = useState(() => {
+    const storedTheme = localStorage.getItem("theme");
+    return storedTheme
+      ? storedTheme === "dark"
+      : document.documentElement.classList.contains("dark");
+  });
 
-useEffect(() => {
-  document.documentElement.classList.toggle("dark", darkMode);
-  localStorage.setItem("theme", darkMode ? "dark" : "light");
-}, [darkMode]);
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", darkMode);
+    localStorage.setItem("theme", darkMode ? "dark" : "light");
+  }, [darkMode]);
 
-useEffect(() => {
-  const syncFromStorage = () => {
-    setDarkMode(document.documentElement.classList.contains("dark"));
-  };
-  window.addEventListener("themechange", syncFromStorage);
-  return () => window.removeEventListener("themechange", syncFromStorage);
-}, []);
+  useEffect(() => {
+    const syncFromStorage = () => {
+      setDarkMode(document.documentElement.classList.contains("dark"));
+    };
+    window.addEventListener("themechange", syncFromStorage);
+    return () => window.removeEventListener("themechange", syncFromStorage);
+  }, []);
+
   const [menuOpen, setMenuOpen] = useState(false)
   const dropdownRef = useRef(null)
   const navigate = useNavigate()
-  const location = useLocation()
   const crumb = useCrumb()
 
   const userName = localStorage.getItem("name") || "User";
-const role = localStorage.getItem("role") || "";
+  const role = localStorage.getItem("role") || "";
+
+  // ⬇️ THE FIX: read the logged-in user's id from localStorage
+  const userId = localStorage.getItem("userId");
 
   const [unreadCount, setUnreadCount] = useState(0);
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
 
+  // Consolidated badge polling: one interval fetches both the chat and
+  // notification unread counts together, instead of two separate
+  // setIntervals. This halves background request volume for the same
+  // freshness, and skips work entirely while the tab is backgrounded
+  // (e.g. switched away during a demo) via the Page Visibility API.
+  //
+  // Deliberately depends on [userId] only — NOT location.pathname.
+  // Depending on the route was tearing the interval down and firing an
+  // extra immediate fetch on every single navigation, which is wasted
+  // work since the logged-in user doesn't change when you switch pages.
   useEffect(() => {
+    if (!userId) return; // ⬅️ guard: skip the call instead of hitting "/undefined/"
+
     let cancelled = false;
 
-    const fetchUnreadNotifs = async () => {
+    const fetchBadgeCounts = async () => {
+      if (document.hidden) return; // skip while tab is backgrounded
+
       try {
-        const count = await getUnreadNotifCount();
-        if (!cancelled) setUnreadNotifCount(count);
+        const [chatCount, notifCount] = await Promise.all([
+          getUnreadCount(userId),
+          getUnreadNotifCount(userId),
+        ]);
+        if (!cancelled) {
+          setUnreadCount(chatCount || 0);
+          setUnreadNotifCount(notifCount || 0);
+        }
       } catch (e) {
-        // silent — bell badge shouldn't break the navbar
+        // silent — badge counts shouldn't break the navbar
       }
     };
 
-    fetchUnreadNotifs();
-    const id = setInterval(fetchUnreadNotifs, 6000);
+    fetchBadgeCounts();
+    const id = setInterval(fetchBadgeCounts, POLL_INTERVAL_MS);
+
+    // Also refresh immediately when the tab becomes visible again,
+    // so badges aren't stale for up to 30s after switching back.
+    const handleVisibility = () => {
+      if (!document.hidden) fetchBadgeCounts();
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
     return () => {
       cancelled = true;
       clearInterval(id);
+      document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, [location.pathname]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const fetchUnread = async () => {
-      try {
-        const count = await getUnreadCount();
-        if (!cancelled) setUnreadCount(count);
-      } catch (e) {
-        // silent — chat badge shouldn't break the navbar
-      }
-    };
-
-    fetchUnread();
-    const id = setInterval(fetchUnread, 6000);
-    return () => {
-      cancelled = true;
-      clearInterval(id);
-    };
-  }, [location.pathname]);
+  }, [userId]);
 
   useEffect(() => {
     function handleClickOutside(e) {

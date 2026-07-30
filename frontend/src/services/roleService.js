@@ -28,8 +28,11 @@ export const updateRole = (id, role) => {
   return axios.put(`${API_URL}/${id}`, role, authHeader());
 };
 
-export const deleteRole = (id) => {
-  return axios.delete(`${API_URL}/${id}`, authHeader());
+export const deleteRole = (id, force = false) => {
+  return axios.delete(
+    `${API_URL}/${id}${force ? "?force=true" : ""}`,
+    authHeader()
+  );
 };
 
 export const assignRole = (userId, roleId) => {
