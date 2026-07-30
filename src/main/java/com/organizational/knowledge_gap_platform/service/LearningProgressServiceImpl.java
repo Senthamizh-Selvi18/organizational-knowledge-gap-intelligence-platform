@@ -10,7 +10,6 @@ import com.organizational.knowledge_gap_platform.repository.EmployeeRepository;
 import com.organizational.knowledge_gap_platform.repository.InternalTrainingRepository;
 import com.organizational.knowledge_gap_platform.repository.LearningEnrollmentRepository;
 import org.springframework.stereotype.Service;
-import com.organizational.knowledge_gap_platform.entity.LearningEnrollment;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -18,6 +17,9 @@ import java.util.Map;
 
 @Service
 public class LearningProgressServiceImpl implements LearningProgressService {
+
+    private static final int PROGRESS_IN_PROGRESS = 50;
+    private static final int PROGRESS_CERTIFIED = 100;
 
     private final LearningEnrollmentRepository learningEnrollmentRepository;
     private final EmployeeRepository employeeRepository;
@@ -63,6 +65,7 @@ public class LearningProgressServiceImpl implements LearningProgressService {
 
         return mapToDTO(saved);
     }
+
     @Override
     public List<LearningEnrollmentDTO> getEmployeeLearning(Long employeeId) {
 
@@ -78,6 +81,28 @@ public class LearningProgressServiceImpl implements LearningProgressService {
     }
 
     @Override
+    public LearningEnrollmentDTO startTraining(Long enrollmentId) {
+
+        LearningEnrollment enrollment = learningEnrollmentRepository
+                .findById(enrollmentId)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Enrollment not found with id : " + enrollmentId));
+
+        if (!"ENROLLED".equals(enrollment.getStatus())) {
+            throw new RuntimeException("Training has already been started.");
+        }
+
+        enrollment.setStatus("IN_PROGRESS");
+        enrollment.setProgress(PROGRESS_IN_PROGRESS);
+
+        LearningEnrollment saved =
+                learningEnrollmentRepository.save(enrollment);
+
+        return mapToDTO(saved);
+    }
+
+    @Override
     public LearningEnrollmentDTO updateProgress(Long enrollmentId,
                                                 ProgressUpdateDTO request) {
 
@@ -90,9 +115,11 @@ public class LearningProgressServiceImpl implements LearningProgressService {
         enrollment.setProgress(request.getProgress());
 
         if (request.getProgress() >= 100) {
-            enrollment.setProgress(100);
-            enrollment.setStatus("COMPLETED");
-            enrollment.setCompletedDate(java.time.LocalDate.now());
+            // Progress alone does not certify a training - only the admin
+            // completeTraining() action does that. Cap at 99 here so an
+            // arbitrary progress update can't silently mark it certified.
+            enrollment.setProgress(99);
+            enrollment.setStatus("IN_PROGRESS");
         } else if (request.getProgress() > 0) {
             enrollment.setStatus("IN_PROGRESS");
         } else {
@@ -112,12 +139,12 @@ public class LearningProgressServiceImpl implements LearningProgressService {
                 learningEnrollmentRepository.findByEmployeeId(employeeId);
 
         long completed = enrollments.stream()
-                .filter(e -> "COMPLETED".equals(e.getStatus()))
+                .filter(e -> "CERTIFIED".equals(e.getStatus()))
                 .count();
 
         long pending = enrollments.stream()
                 .filter(e ->
-                        !"COMPLETED".equals(e.getStatus()))
+                        !"CERTIFIED".equals(e.getStatus()))
                 .count();
 
         long enrolled = enrollments.size();
@@ -133,12 +160,13 @@ public class LearningProgressServiceImpl implements LearningProgressService {
                 "completionRate", completionRate
         );
     }
+
     private LearningEnrollmentDTO mapToDTO(LearningEnrollment enrollment) {
 
         return new LearningEnrollmentDTO(
                 enrollment.getId(),
                 enrollment.getEmployee().getId(),
-                enrollment.getEmployee().getUser().getName(),   // NEW
+                enrollment.getEmployee().getUser().getName(),
                 enrollment.getTraining().getId(),
                 enrollment.getTraining().getTitle(),
                 enrollment.getTraining().getTrainer(),
@@ -146,9 +174,11 @@ public class LearningProgressServiceImpl implements LearningProgressService {
                 enrollment.getProgress(),
                 enrollment.getStatus(),
                 enrollment.getEnrolledDate(),
-                enrollment.getCompletedDate()
+                enrollment.getCompletedDate(),
+                enrollment.getCertifiedDate()
         );
     }
+
     @Override
     public List<Long> getEnrolledTrainingIds(Long employeeId) {
 
@@ -159,6 +189,7 @@ public class LearningProgressServiceImpl implements LearningProgressService {
                 .toList();
 
     }
+
     @Override
     public LearningEnrollmentDTO completeTraining(Long enrollmentId) {
 
@@ -167,15 +198,25 @@ public class LearningProgressServiceImpl implements LearningProgressService {
                 .orElseThrow(() ->
                         new RuntimeException("Enrollment not found"));
 
-        enrollment.setStatus("COMPLETED");
+        if ("CERTIFIED".equals(enrollment.getStatus())) {
+            throw new RuntimeException("Training is already completed and certified.");
+        }
+
+        LocalDate today = LocalDate.now();
+
+        // Admin marks the training complete; certification is automatic and
+        // happens in the same action (no separate certifying step).
+        enrollment.setStatus("CERTIFIED");
         enrollment.setProgress(100);
-        enrollment.setCompletedDate(LocalDate.now());
+        enrollment.setCompletedDate(today);
+        enrollment.setCertifiedDate(today);
 
         LearningEnrollment saved =
                 learningEnrollmentRepository.save(enrollment);
 
         return mapToDTO(saved);
     }
+
     @Override
     public List<LearningEnrollmentDTO> getAllEnrollments() {
 

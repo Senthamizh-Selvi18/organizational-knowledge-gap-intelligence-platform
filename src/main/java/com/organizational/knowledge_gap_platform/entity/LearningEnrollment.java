@@ -28,6 +28,9 @@ public class LearningEnrollment {
     @Column(nullable = false)
     private Integer progress = 0;
 
+    // ENROLLED (shown as "Not Started") -> IN_PROGRESS -> CERTIFIED
+    // (CERTIFIED is set together with completedDate; there is no separately
+    // persisted "COMPLETED" state - certification is automatic.)
     @Column(nullable = false)
     private String status = "ENROLLED";
 
@@ -36,6 +39,9 @@ public class LearningEnrollment {
 
     @Column(name = "completed_date")
     private LocalDate completedDate;
+
+    @Column(name = "certified_date")
+    private LocalDate certifiedDate;
 
     @PrePersist
     public void onCreate() {
