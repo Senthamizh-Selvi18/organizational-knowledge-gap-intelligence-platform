@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
-import { FiBookOpen, FiCalendar, FiClock, FiCheckCircle } from "react-icons/fi";
+import { FiBookOpen, FiCalendar, FiClock, FiCheckCircle, FiAward } from "react-icons/fi";
 import {
   getEmployeeLearning,
+  startTraining,
   completeTraining,
 } from "../../services/learningService";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 
 const LearningProgress = () => {
   const [courses, setCourses] = useState([]);
+  const [startingId, setStartingId] = useState(null);
 
   const employeeId = Number(localStorage.getItem("employeeId"));
 
@@ -28,6 +30,19 @@ const LearningProgress = () => {
       console.error(error);
     }
   };
+
+  const handleStart = async (enrollmentId) => {
+    setStartingId(enrollmentId);
+    try {
+      await startTraining(enrollmentId);
+      loadCourses();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setStartingId(null);
+    }
+  };
+
   const handleComplete = async (enrollmentId) => {
   try {
     await completeTraining(enrollmentId);
@@ -132,14 +147,27 @@ const LearningProgress = () => {
 
                   </div>
 
+                  {course.status === "CERTIFIED" && (
+                    <div className="flex items-center gap-3">
+
+                      <FiAward className="text-emerald-600" />
+
+                      <span>
+                        <strong>Certified :</strong>{" "}
+                        {course.certifiedDate || "-"}
+                      </span>
+
+                    </div>
+                  )}
+
                   {/* Status */}
 
                   <div className="mt-4">
                     <h3 className="font-semibold mb-2">Status</h3>
 
-                    {course.status === "COMPLETED" && (
-                        <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
-                        ✅ Completed
+                    {course.status === "CERTIFIED" && (
+                        <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-sm font-medium">
+                        🎓 Certified
                         </span>
                     )}
 
@@ -151,7 +179,7 @@ const LearningProgress = () => {
 
                     {course.status === "ENROLLED" && (
                         <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
-                        📘 Enrolled
+                        📘 Not Started
                         </span>
                     )}
                     </div>
@@ -184,6 +212,24 @@ const LearningProgress = () => {
                     </div>
 
                   </div>
+
+                  {/* Start Training action - only while Not Started */}
+
+                  {course.status === "ENROLLED" && (
+                    <button
+                      onClick={() => handleStart(course.id)}
+                      disabled={startingId === course.id}
+                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-semibold transition disabled:opacity-60"
+                    >
+                      {startingId === course.id ? "Starting..." : "▶ Start Training"}
+                    </button>
+                  )}
+
+                  {course.status === "IN_PROGRESS" && (
+                    <p className="text-center text-sm text-amber-600 font-medium">
+                      ⏳ Waiting for admin to mark this as completed
+                    </p>
+                  )}
 
                 </div>
 
