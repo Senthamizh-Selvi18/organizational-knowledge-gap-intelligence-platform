@@ -124,6 +124,29 @@ export const updateInternalTraining = async (id, trainingData) => {
     }
 };
 
+export const recheckLinkStatus = async (id) => {
+
+    try {
+
+        const response = await axios.post(
+            `${API_URL}/${id}/recheck-link`,
+            {},
+            authHeader()
+        );
+
+        return response.data;
+
+    } catch (error) {
+
+        console.error(
+            "Error rechecking training link status:",
+            error
+        );
+
+        throw error;
+    }
+};
+
 export const deleteInternalTraining = async (id) => {
 
     try {
