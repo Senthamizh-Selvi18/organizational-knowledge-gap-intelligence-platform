@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import {
   getAllSkills,
@@ -46,6 +47,7 @@ export default function SkillManagement() {
 
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   const loadSkills = async () => {
     setLoading(true);
@@ -65,6 +67,20 @@ export default function SkillManagement() {
   useEffect(() => {
     loadSkills();
   }, []);
+
+  // Lock body scroll while any modal is open so the page can't scroll
+  // behind the overlay, and the modal stays centered instead of being
+  // clipped by fixed/sticky headers.
+  useEffect(() => {
+    const anyModalOpen = showModal || Boolean(deleteTarget);
+    if (anyModalOpen) {
+      const previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = previousOverflow;
+      };
+    }
+  }, [showModal, deleteTarget]);
 
   const openAddModal = () => {
     setEditingSkill(null);
@@ -119,16 +135,30 @@ export default function SkillManagement() {
     }
   };
 
+  const openDeleteModal = (skill) => {
+    setDeleteTarget(skill);
+    setDeleteError("");
+  };
+
+  const closeDeleteModal = () => {
+    if (deleting) return;
+    setDeleteTarget(null);
+    setDeleteError("");
+  };
+
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
 
     setDeleting(true);
+    setDeleteError("");
     try {
       await deleteSkill(deleteTarget.id);
       setSkills((prev) => prev.filter((s) => s.id !== deleteTarget.id));
       setDeleteTarget(null);
     } catch (err) {
-      setErrorMsg(
+      // Show the error inside the modal itself, rather than in the
+      // page-level banner which ends up hidden behind the dark overlay.
+      setDeleteError(
         err.response?.data?.message || "Failed to delete skill."
       );
     } finally {
@@ -191,7 +221,7 @@ export default function SkillManagement() {
           </div>
         </div>
 
-        {/* Error banner */}
+        {/* Error banner (load errors only; save/delete errors show inside their modals) */}
         {errorMsg && (
           <div className="bg-red-50 border border-red-200 text-red-700 rounded-2xl p-4 flex items-center justify-between">
             <span>{errorMsg}</span>
@@ -242,7 +272,7 @@ export default function SkillManagement() {
                           </button>
 
                           <button
-                            onClick={() => setDeleteTarget(item)}
+                            onClick={() => openDeleteModal(item)}
                             className="text-red-600 hover:text-red-800"
                             aria-label={`Delete ${item.skillName}`}
                           >
@@ -259,81 +289,97 @@ export default function SkillManagement() {
         </div>
       </div>
 
-      {/* Add / Edit Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-          <div className="bg-panel p-6 rounded-2xl w-96">
-            <h2 className="text-xl font-bold mb-5">
-              {editingSkill ? "Edit Skill" : "Add New Skill"}
-            </h2>
+      {/* Add / Edit Modal — rendered via portal so it always covers the
+          full viewport, regardless of any transformed/scrollable ancestor
+          inside DashboardLayout (sidebar, sticky header, etc.). */}
+      {showModal &&
+        createPortal(
+          <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-[100] p-4 overflow-y-auto">
+            <div className="bg-panel p-6 rounded-2xl w-full max-w-sm shadow-2xl max-h-[90vh] overflow-y-auto my-auto">
+              <h2 className="text-xl font-bold mb-5">
+                {editingSkill ? "Edit Skill" : "Add New Skill"}
+              </h2>
 
-            <input
-              type="text"
-              placeholder="Enter Skill Name"
-              value={skillNameInput}
-              onChange={(e) => {
-                setSkillNameInput(e.target.value);
-                if (formError) setFormError("");
-              }}
-              className={`border w-full p-3 rounded-lg outline-none ${
-                formError ? "border-red-400" : ""
-              }`}
-              autoFocus
-            />
-            {formError && (
-              <p className="text-red-600 text-sm mt-2">{formError}</p>
-            )}
+              <input
+                type="text"
+                placeholder="Enter Skill Name"
+                value={skillNameInput}
+                onChange={(e) => {
+                  setSkillNameInput(e.target.value);
+                  if (formError) setFormError("");
+                }}
+                className={`border w-full p-3 rounded-lg outline-none ${
+                  formError ? "border-red-400" : ""
+                }`}
+                autoFocus
+              />
+              {formError && (
+                <p className="text-red-600 text-sm mt-2">{formError}</p>
+              )}
 
-            <div className="flex justify-end gap-3 mt-5">
-              <button
-                onClick={closeModal}
-                disabled={saving}
-                className="border px-4 py-2 rounded-lg disabled:opacity-50"
-              >
-                Cancel
-              </button>
+              <div className="flex justify-end gap-3 mt-5">
+                <button
+                  onClick={closeModal}
+                  disabled={saving}
+                  className="border px-4 py-2 rounded-lg disabled:opacity-50"
+                >
+                  Cancel
+                </button>
 
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="bg-primary text-text px-4 py-2 rounded-lg hover:bg-primary-dark disabled:opacity-50"
-              >
-                {saving ? "Saving..." : "Save"}
-              </button>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="bg-primary text-text px-4 py-2 rounded-lg hover:bg-primary-dark disabled:opacity-50"
+                >
+                  {saving ? "Saving..." : "Save"}
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
 
-      {/* Delete Confirm Modal */}
-      {deleteTarget && (
-        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-          <div className="bg-panel p-6 rounded-2xl w-96">
-            <h2 className="text-xl font-bold mb-3">Delete this skill?</h2>
-            <p className="text-sub">
-              "{deleteTarget.skillName}" will be permanently removed. This can't be undone.
-            </p>
+      {/* Delete Confirm Modal — also portaled to document.body for the
+          same reason. */}
+      {deleteTarget &&
+        createPortal(
+          <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-[100] p-4 overflow-y-auto">
+            <div className="bg-panel p-6 rounded-2xl w-full max-w-sm shadow-2xl max-h-[90vh] overflow-y-auto my-auto">
+              <h2 className="text-xl font-bold mb-3">Delete this skill?</h2>
+              <p className="text-sub">
+                "{deleteTarget.skillName}" will be permanently removed. This
+                can't be undone.
+              </p>
 
-            <div className="flex justify-end gap-3 mt-5">
-              <button
-                onClick={() => setDeleteTarget(null)}
-                disabled={deleting}
-                className="border px-4 py-2 rounded-lg disabled:opacity-50"
-              >
-                Cancel
-              </button>
+              {/* Shown inline in the modal so it's visible instead of being
+                  hidden behind the dark overlay in the page-level banner. */}
+              {deleteError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 mt-4 text-sm">
+                  {deleteError}
+                </div>
+              )}
 
-              <button
-                onClick={handleDeleteConfirm}
-                disabled={deleting}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50"
-              >
-                {deleting ? "Deleting..." : "Delete"}
-              </button>
+              <div className="flex justify-end gap-3 mt-5">
+                <button
+                  onClick={closeDeleteModal}
+                  disabled={deleting}
+                  className="border px-4 py-2 rounded-lg disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={handleDeleteConfirm}
+                  disabled={deleting}
+                  className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                >
+                  {deleting ? "Deleting..." : "Delete"}
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </DashboardLayout>
   );
 }
