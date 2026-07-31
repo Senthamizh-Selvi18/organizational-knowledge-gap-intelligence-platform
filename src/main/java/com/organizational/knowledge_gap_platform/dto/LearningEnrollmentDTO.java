@@ -29,9 +29,12 @@ public class LearningEnrollmentDTO {
 
     private Integer progress;
 
+    // ENROLLED (shown as "Not Started") | IN_PROGRESS | CERTIFIED
     private String status;
 
     private LocalDate enrolledDate;
 
     private LocalDate completedDate;
+
+    private LocalDate certifiedDate;
 }

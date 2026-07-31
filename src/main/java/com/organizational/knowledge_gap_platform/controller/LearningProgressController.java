@@ -38,6 +38,15 @@ public class LearningProgressController {
         );
     }
 
+    @PutMapping("/{enrollmentId}/start")
+    public ResponseEntity<LearningEnrollmentDTO> startTraining(
+            @PathVariable Long enrollmentId) {
+
+        return ResponseEntity.ok(
+                learningProgressService.startTraining(enrollmentId)
+        );
+    }
+
     @PutMapping("/{enrollmentId}/progress")
     public ResponseEntity<LearningEnrollmentDTO> updateProgress(
             @PathVariable Long enrollmentId,

@@ -14,6 +14,9 @@ public interface LearningProgressService {
     // Get all enrolled trainings of an employee
     List<LearningEnrollmentDTO> getEmployeeLearning(Long employeeId);
 
+    // Employee moves their own enrollment from ENROLLED (Not Started) to IN_PROGRESS
+    LearningEnrollmentDTO startTraining(Long enrollmentId);
+
     // Update employee learning progress
     LearningEnrollmentDTO updateProgress(Long enrollmentId,
                                          ProgressUpdateDTO request);
@@ -21,6 +24,8 @@ public interface LearningProgressService {
     // Dashboard summary
     Map<String, Object> getDashboard(Long employeeId);
     List<Long> getEnrolledTrainingIds(Long employeeId);
+
+    // Admin marks a training complete; certification happens automatically in the same action
     LearningEnrollmentDTO completeTraining(Long enrollmentId);
     List<LearningEnrollmentDTO> getAllEnrollments();
 }

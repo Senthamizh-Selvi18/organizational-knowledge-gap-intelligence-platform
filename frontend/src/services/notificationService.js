@@ -1,5 +1,10 @@
 // notificationService.js
 // Talks to NotificationController.java (/api/notifications/**)
+//
+// NOTE: If your app already has a shared axios instance (e.g. api/axiosInstance.js)
+// with auth headers/interceptors baked in, use that instead of the raw fetch calls
+// below — just swap the fetchJson() internals to `axiosInstance.get(...)` etc.
+// This version assumes a JWT is stored in localStorage under "token".
 
 const API_BASE = "http://localhost:8080/api/notifications";
 
