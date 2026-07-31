@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 public class SkillTaxonomyRequest {
@@ -17,5 +19,5 @@ public class SkillTaxonomyRequest {
 
     private Long parentId;
 
-    private Long linkedSkillId;
+    private List<Long> linkedSkillIds;
 }

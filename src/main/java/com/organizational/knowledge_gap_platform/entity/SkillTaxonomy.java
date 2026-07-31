@@ -6,7 +6,9 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "skill_taxonomy")
@@ -37,9 +39,13 @@ public class SkillTaxonomy {
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = false)
     private List<SkillTaxonomy> children = new ArrayList<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "linked_skill_id")
-    private Skill linkedSkill;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "skill_taxonomy_linked_skills",
+            joinColumns = @JoinColumn(name = "taxonomy_id"),
+            inverseJoinColumns = @JoinColumn(name = "skill_id")
+    )
+    private Set<Skill> linkedSkills = new HashSet<>();
 
     @Column(name = "active")
     private Boolean active = true;

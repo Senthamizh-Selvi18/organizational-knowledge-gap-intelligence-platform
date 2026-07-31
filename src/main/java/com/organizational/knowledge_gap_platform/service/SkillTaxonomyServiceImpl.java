@@ -9,6 +9,7 @@ import com.organizational.knowledge_gap_platform.repository.SkillRepository;
 import com.organizational.knowledge_gap_platform.repository.SkillTaxonomyRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -90,13 +91,14 @@ public class SkillTaxonomyServiceImpl implements SkillTaxonomyService {
             taxonomy.setParent(null);
         }
 
-        if (request.getLinkedSkillId() != null) {
-            Skill skill = skillRepository.findById(request.getLinkedSkillId())
-                    .orElseThrow(() -> new RuntimeException(
-                            "Skill not found with id: " + request.getLinkedSkillId()));
-            taxonomy.setLinkedSkill(skill);
+        if (request.getLinkedSkillIds() != null && !request.getLinkedSkillIds().isEmpty()) {
+            List<Skill> skills = skillRepository.findAllById(request.getLinkedSkillIds());
+            if (skills.size() != request.getLinkedSkillIds().size()) {
+                throw new RuntimeException("One or more linked skills could not be found");
+            }
+            taxonomy.setLinkedSkills(new HashSet<>(skills));
         } else {
-            taxonomy.setLinkedSkill(null);
+            taxonomy.setLinkedSkills(new HashSet<>());
         }
     }
 

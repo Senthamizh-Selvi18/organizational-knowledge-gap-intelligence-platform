@@ -13,7 +13,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/competency/skill-taxonomy")
-@PreAuthorize("hasRole('ADMIN')")
 public class SkillTaxonomyController {
 
     private final SkillTaxonomyService skillTaxonomyService;
@@ -22,6 +21,7 @@ public class SkillTaxonomyController {
         this.skillTaxonomyService = skillTaxonomyService;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<SkillTaxonomyDTO> create(@Valid @RequestBody SkillTaxonomyRequest request) {
         return new ResponseEntity<>(skillTaxonomyService.create(request), HttpStatus.CREATED);
@@ -42,18 +42,21 @@ public class SkillTaxonomyController {
         return ResponseEntity.ok(skillTaxonomyService.getTree());
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<SkillTaxonomyDTO> update(@PathVariable Long id,
                                                      @Valid @RequestBody SkillTaxonomyRequest request) {
         return ResponseEntity.ok(skillTaxonomyService.update(id, request));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}/deactivate")
     public ResponseEntity<Void> deactivate(@PathVariable Long id) {
         skillTaxonomyService.deactivate(id);
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         skillTaxonomyService.delete(id);

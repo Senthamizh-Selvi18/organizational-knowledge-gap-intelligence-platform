@@ -101,15 +101,11 @@ const overviewItems = [
   icon: FiClipboard,
   to: "/dashboard/assessments",
 },
-  ...(role === "admin"
-    ? [
-        {
-          label: "Competencies",
-          icon: FiBarChart2,
-          to: "/dashboard/competencies",
-        },
-      ]
-    : []),
+  {
+    label: "Competencies",
+    icon: FiBarChart2,
+    to: "/dashboard/competencies",
+  },
   {
     label: "Internal Trainings",
     icon: FiBookOpen,
