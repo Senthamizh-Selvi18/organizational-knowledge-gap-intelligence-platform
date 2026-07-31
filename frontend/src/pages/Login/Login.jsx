@@ -12,8 +12,10 @@ import { FcGoogle } from "react-icons/fc"
 import { login, sendOtp, verifyOtp } from "../../services/authService";
 import { useNavigate } from "react-router-dom";
 import { toast } from "../../components/ui/Toast.jsx";
+import { encryptForStorage, decryptFromStorage } from "../../utils/credentialVault";
 
 const REMEMBERED_EMAIL_KEY = "knowgap_remembered_email"
+const REMEMBERED_PASSWORD_KEY = "knowgap_remembered_password"
 
 export default function LoginPage() {
   const [email, setEmail] = useState(
@@ -21,8 +23,8 @@ export default function LoginPage() {
   )
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  // Pre-check "Remember Me" and pre-fill the email field whenever a
-  // previous login left a remembered email behind.
+  // Pre-check "Remember Me" and pre-fill email + password whenever a
+  // previous login left remembered credentials behind.
   const [remember, setRemember] = useState(
     () => !!localStorage.getItem(REMEMBERED_EMAIL_KEY)
   )
@@ -43,6 +45,31 @@ export default function LoginPage() {
     }, 1000);
     return () => clearInterval(timer);
   }, [resendCooldown]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadRememberedPassword() {
+      const stored = localStorage.getItem(REMEMBERED_PASSWORD_KEY);
+      if (!stored) return;
+
+      const plain = await decryptFromStorage(stored);
+      if (cancelled) return;
+
+      if (plain) {
+        setPassword(plain);
+      } else {
+        localStorage.removeItem(REMEMBERED_PASSWORD_KEY);
+        localStorage.removeItem(REMEMBERED_EMAIL_KEY);
+        setRemember(false);
+      }
+    }
+
+    loadRememberedPassword();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const proceedToDashboard = (role) => {
     const normalizedRole = (role || "employee").toLowerCase();
@@ -70,8 +97,16 @@ const handleSubmit = async (e) => {
 
     if (remember) {
       localStorage.setItem(REMEMBERED_EMAIL_KEY, email);
+      try {
+        const encryptedPassword = await encryptForStorage(password);
+        localStorage.setItem(REMEMBERED_PASSWORD_KEY, encryptedPassword);
+      } catch (vaultError) {
+        console.error("[Login] could not encrypt remembered password:", vaultError);
+        localStorage.removeItem(REMEMBERED_PASSWORD_KEY);
+      }
     } else {
       localStorage.removeItem(REMEMBERED_EMAIL_KEY);
+      localStorage.removeItem(REMEMBERED_PASSWORD_KEY);
     }
 
     if (data.firstLogin) {
@@ -246,6 +281,7 @@ const handleSubmit = async (e) => {
                       <FiMail className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-mute transition-colors group-focus-within:text-primary" />
                       <input
                         id="email"
+                        name="email"
                         type="email"
                         autoComplete="email"
                         value={email}
@@ -268,6 +304,7 @@ const handleSubmit = async (e) => {
                       <FiLock className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-mute transition-colors group-focus-within:text-primary" />
                       <input
                         id="password"
+                        name="password"
                         type={showPassword ? "text" : "password"}
                         autoComplete="current-password"
                         value={password}
