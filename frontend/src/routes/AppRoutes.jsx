@@ -192,11 +192,11 @@ function AppRoutes() {
         }
       />
 
-      {/* Competency Framework */}
+      {/* Competency Framework (view for everyone, CRUD gated to admin in-page) */}
       <Route
         path="/dashboard/competencies"
         element={
-          <ProtectedRoute allowedRoles={["admin"]}>
+          <ProtectedRoute>
             <CompetencyFramework />
           </ProtectedRoute>
         }

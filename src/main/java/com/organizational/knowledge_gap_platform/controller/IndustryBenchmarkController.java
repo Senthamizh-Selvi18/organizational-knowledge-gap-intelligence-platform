@@ -13,7 +13,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/competency/industry-benchmarks")
-@PreAuthorize("hasRole('ADMIN')")
 public class IndustryBenchmarkController {
 
     private final IndustryBenchmarkService industryBenchmarkService;
@@ -22,6 +21,7 @@ public class IndustryBenchmarkController {
         this.industryBenchmarkService = industryBenchmarkService;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<IndustryBenchmarkDTO> create(@Valid @RequestBody IndustryBenchmarkRequest request) {
         return new ResponseEntity<>(industryBenchmarkService.create(request), HttpStatus.CREATED);
@@ -41,12 +41,14 @@ public class IndustryBenchmarkController {
         return ResponseEntity.ok(industryBenchmarkService.getAll());
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<IndustryBenchmarkDTO> update(@PathVariable Long id,
                                                          @Valid @RequestBody IndustryBenchmarkRequest request) {
         return ResponseEntity.ok(industryBenchmarkService.update(id, request));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         industryBenchmarkService.delete(id);

@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Navigate } from "react-router-dom";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import { getRoles } from "../../services/roleService";
 import { getSkills } from "../../services/skillService";
@@ -79,9 +78,7 @@ function Banner({ status }) {
 
 export default function CompetencyFramework() {
   const role = localStorage.getItem("role")?.toLowerCase();
-  if (role !== "admin") {
-    return <Navigate to="/dashboard" replace />;
-  }
+  const isAdmin = role === "admin";
 
   const [activeTab, setActiveTab] = useState("frameworks");
   const [roles, setRoles] = useState([]);
@@ -112,6 +109,11 @@ export default function CompetencyFramework() {
           <h1 className="text-3xl font-bold flex items-center gap-3">
             <FiAward className="text-primary" />
             Competency Framework
+            {!isAdmin && (
+              <span className="text-xs font-normal px-2 py-1 rounded-lg bg-gray-100 text-gray-600">
+                View only
+              </span>
+            )}
           </h1>
           <p className="text-sub">
             Define role-specific competencies, required skill levels, strategic
@@ -142,17 +144,19 @@ export default function CompetencyFramework() {
         </div>
 
         {activeTab === "frameworks" && (
-          <FrameworksTab roles={roles} skills={skills} flash={flash} />
+          <FrameworksTab roles={roles} skills={skills} flash={flash} isAdmin={isAdmin} />
         )}
-        {activeTab === "taxonomy" && <TaxonomyTab skills={skills} flash={flash} />}
-        {activeTab === "goals" && <GoalsTab flash={flash} />}
-        {activeTab === "benchmarks" && <BenchmarksTab flash={flash} />}
+        {activeTab === "taxonomy" && (
+          <TaxonomyTab skills={skills} flash={flash} isAdmin={isAdmin} />
+        )}
+        {activeTab === "goals" && <GoalsTab flash={flash} isAdmin={isAdmin} />}
+        {activeTab === "benchmarks" && <BenchmarksTab flash={flash} isAdmin={isAdmin} />}
       </div>
     </DashboardLayout>
   );
 }
 
-function FrameworksTab({ roles, skills, flash }) {
+function FrameworksTab({ roles, skills, flash, isAdmin }) {
   const [frameworks, setFrameworks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState(null);
@@ -213,12 +217,14 @@ function FrameworksTab({ roles, skills, flash }) {
       <div className="bg-panel rounded-3xl shadow-xl p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold">Role-Specific Frameworks</h2>
-          <button
-            onClick={() => setShowNewForm((s) => !s)}
-            className="bg-primary text-text px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-primary-dark"
-          >
-            <FiPlus /> New Framework
-          </button>
+          {isAdmin && (
+            <button
+              onClick={() => setShowNewForm((s) => !s)}
+              className="bg-primary text-text px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-primary-dark"
+            >
+              <FiPlus /> New Framework
+            </button>
+          )}
         </div>
 
         {showNewForm && (
@@ -319,6 +325,7 @@ function FrameworksTab({ roles, skills, flash }) {
           frameworkId={selectedId}
           skills={skills}
           flash={flash}
+          isAdmin={isAdmin}
           onChanged={loadFrameworks}
           onDeleted={() => {
             setSelectedId(null);
@@ -331,7 +338,7 @@ function FrameworksTab({ roles, skills, flash }) {
   );
 }
 
-function FrameworkDetail({ frameworkId, skills, flash, onChanged, onDeleted, onVersioned }) {
+function FrameworkDetail({ frameworkId, skills, flash, isAdmin, onChanged, onDeleted, onVersioned }) {
   const [framework, setFramework] = useState(null);
   const [taxonomy, setTaxonomy] = useState([]);
   const [goals, setGoals] = useState([]);
@@ -510,7 +517,7 @@ function FrameworkDetail({ frameworkId, skills, flash, onChanged, onDeleted, onV
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {isDraft && (
+          {isAdmin && isDraft && (
             <button
               onClick={handlePublish}
               className="flex items-center gap-1 text-sm border border-line rounded-xl px-3 py-2 hover:bg-bg"
@@ -518,7 +525,7 @@ function FrameworkDetail({ frameworkId, skills, flash, onChanged, onDeleted, onV
               <FiSend /> Publish
             </button>
           )}
-          {framework.status !== "ARCHIVED" && (
+          {isAdmin && framework.status !== "ARCHIVED" && (
             <button
               onClick={handleArchive}
               className="flex items-center gap-1 text-sm border border-line rounded-xl px-3 py-2 hover:bg-bg"
@@ -526,19 +533,21 @@ function FrameworkDetail({ frameworkId, skills, flash, onChanged, onDeleted, onV
               <FiArchive /> Archive
             </button>
           )}
-          <button
-            onClick={handleNewVersion}
-            className="flex items-center gap-1 text-sm border border-line rounded-xl px-3 py-2 hover:bg-bg"
-          >
-            <FiGitBranch /> New Version
-          </button>
+          {isAdmin && (
+            <button
+              onClick={handleNewVersion}
+              className="flex items-center gap-1 text-sm border border-line rounded-xl px-3 py-2 hover:bg-bg"
+            >
+              <FiGitBranch /> New Version
+            </button>
+          )}
           <button
             onClick={handleShowHistory}
             className="flex items-center gap-1 text-sm border border-line rounded-xl px-3 py-2 hover:bg-bg"
           >
             <FiClock /> History
           </button>
-          {isDraft && (
+          {isAdmin && isDraft && (
             <button
               onClick={handleDelete}
               className="flex items-center gap-1 text-sm border border-red-200 text-red-600 rounded-xl px-3 py-2 hover:bg-red-50"
@@ -608,7 +617,7 @@ function FrameworkDetail({ frameworkId, skills, flash, onChanged, onDeleted, onV
                     Benchmark: {s.benchmarkLevel} (gap {s.gapVsBenchmark})
                   </span>
                 )}
-                {isDraft && (
+                {isAdmin && isDraft && (
                   <button onClick={() => handleRemoveSkill(s.id)} className="text-red-500">
                     <FiTrash2 />
                   </button>
@@ -621,7 +630,7 @@ function FrameworkDetail({ frameworkId, skills, flash, onChanged, onDeleted, onV
           )}
         </div>
 
-        {isDraft && (
+        {isAdmin && isDraft && (
           <div className="flex flex-wrap items-center gap-2 mt-3">
             <select
               value={newSkill.skillTaxonomyId}
@@ -677,12 +686,14 @@ function FrameworkDetail({ frameworkId, skills, flash, onChanged, onDeleted, onV
               <span className="text-sm font-medium">{g.goalName}</span>
               <div className="flex items-center gap-3 text-xs">
                 <span className="text-mute">Alignment: {g.alignmentWeight}%</span>
-                <button
-                  onClick={() => handleRemoveGoalMapping(g.strategicGoalId)}
-                  className="text-red-500"
-                >
-                  <FiTrash2 />
-                </button>
+                {isAdmin && (
+                  <button
+                    onClick={() => handleRemoveGoalMapping(g.strategicGoalId)}
+                    className="text-red-500"
+                  >
+                    <FiTrash2 />
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -691,45 +702,47 @@ function FrameworkDetail({ frameworkId, skills, flash, onChanged, onDeleted, onV
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 mt-3">
-          <select
-            value={newGoalMapping.strategicGoalId}
-            onChange={(e) =>
-              setNewGoalMapping({ ...newGoalMapping, strategicGoalId: e.target.value })
-            }
-            className="border rounded-xl px-3 py-2 text-sm outline-none"
-          >
-            <option value="">-- Select strategic goal --</option>
-            {goals.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.goalName}
-              </option>
-            ))}
-          </select>
-          <input
-            type="number"
-            min="0"
-            max="100"
-            value={newGoalMapping.alignmentWeight}
-            onChange={(e) =>
-              setNewGoalMapping({ ...newGoalMapping, alignmentWeight: e.target.value })
-            }
-            className="border rounded-xl px-3 py-2 text-sm w-24 outline-none"
-            placeholder="% alignment"
-          />
-          <button
-            onClick={handleAddGoalMapping}
-            className="bg-primary text-text px-3 py-2 rounded-xl text-sm flex items-center gap-1 hover:bg-primary-dark"
-          >
-            <FiPlus /> Map Goal
-          </button>
-        </div>
+        {isAdmin && (
+          <div className="flex flex-wrap items-center gap-2 mt-3">
+            <select
+              value={newGoalMapping.strategicGoalId}
+              onChange={(e) =>
+                setNewGoalMapping({ ...newGoalMapping, strategicGoalId: e.target.value })
+              }
+              className="border rounded-xl px-3 py-2 text-sm outline-none"
+            >
+              <option value="">-- Select strategic goal --</option>
+              {goals.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.goalName}
+                </option>
+              ))}
+            </select>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              value={newGoalMapping.alignmentWeight}
+              onChange={(e) =>
+                setNewGoalMapping({ ...newGoalMapping, alignmentWeight: e.target.value })
+              }
+              className="border rounded-xl px-3 py-2 text-sm w-24 outline-none"
+              placeholder="% alignment"
+            />
+            <button
+              onClick={handleAddGoalMapping}
+              className="bg-primary text-text px-3 py-2 rounded-xl text-sm flex items-center gap-1 hover:bg-primary-dark"
+            >
+              <FiPlus /> Map Goal
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function TaxonomyTab({ skills, flash }) {
+function TaxonomyTab({ skills, flash, isAdmin }) {
   const [taxonomy, setTaxonomy] = useState([]);
   const [form, setForm] = useState({ name: "", category: "", parentId: "", linkedSkillIds: [], description: "" });
 
@@ -800,65 +813,67 @@ function TaxonomyTab({ skills, flash }) {
         existing skill catalogue.
       </p>
 
-      <div className="border border-line rounded-xl p-4 grid md:grid-cols-2 gap-3">
-        <input
-          placeholder="Taxonomy name (e.g. Cloud Security)"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-          className="border rounded-xl px-4 py-2 outline-none"
-        />
-        <input
-          placeholder="Category (e.g. Technical, Behavioral)"
-          value={form.category}
-          onChange={(e) => setForm({ ...form, category: e.target.value })}
-          className="border rounded-xl px-4 py-2 outline-none"
-        />
-        <select
-          value={form.parentId}
-          onChange={(e) => setForm({ ...form, parentId: e.target.value })}
-          className="border rounded-xl px-4 py-2 outline-none"
-        >
-          <option value="">-- No parent (top level) --</option>
-          {taxonomy.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name}
-            </option>
-          ))}
-        </select>
-        <div className="md:col-span-2 border rounded-xl px-4 py-3">
-          <p className="text-xs text-mute mb-2">
-            Link one or more existing skills to this category (optional)
-          </p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-40 overflow-y-auto">
-            {skills.map((s) => (
-              <label key={s.id} className="flex items-center gap-2 text-sm cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={form.linkedSkillIds.includes(s.id)}
-                  onChange={() => toggleLinkedSkill(s.id)}
-                />
-                {s.skillName}
-              </label>
+      {isAdmin && (
+        <div className="border border-line rounded-xl p-4 grid md:grid-cols-2 gap-3">
+          <input
+            placeholder="Taxonomy name (e.g. Cloud Security)"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            className="border rounded-xl px-4 py-2 outline-none"
+          />
+          <input
+            placeholder="Category (e.g. Technical, Behavioral)"
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
+            className="border rounded-xl px-4 py-2 outline-none"
+          />
+          <select
+            value={form.parentId}
+            onChange={(e) => setForm({ ...form, parentId: e.target.value })}
+            className="border rounded-xl px-4 py-2 outline-none"
+          >
+            <option value="">-- No parent (top level) --</option>
+            {taxonomy.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
             ))}
-            {skills.length === 0 && (
-              <p className="text-mute text-xs">No skills available yet.</p>
-            )}
+          </select>
+          <div className="md:col-span-2 border rounded-xl px-4 py-3">
+            <p className="text-xs text-mute mb-2">
+              Link one or more existing skills to this category (optional)
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-40 overflow-y-auto">
+              {skills.map((s) => (
+                <label key={s.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.linkedSkillIds.includes(s.id)}
+                    onChange={() => toggleLinkedSkill(s.id)}
+                  />
+                  {s.skillName}
+                </label>
+              ))}
+              {skills.length === 0 && (
+                <p className="text-mute text-xs">No skills available yet.</p>
+              )}
+            </div>
           </div>
+          <textarea
+            placeholder="Description"
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            className="md:col-span-2 border rounded-xl px-4 py-2 outline-none"
+            rows={2}
+          />
+          <button
+            onClick={handleCreate}
+            className="bg-primary text-text px-4 py-2 rounded-xl w-fit flex items-center gap-2 hover:bg-primary-dark"
+          >
+            <FiPlus /> Add Taxonomy Node
+          </button>
         </div>
-        <textarea
-          placeholder="Description"
-          value={form.description}
-          onChange={(e) => setForm({ ...form, description: e.target.value })}
-          className="md:col-span-2 border rounded-xl px-4 py-2 outline-none"
-          rows={2}
-        />
-        <button
-          onClick={handleCreate}
-          className="bg-primary text-text px-4 py-2 rounded-xl w-fit flex items-center gap-2 hover:bg-primary-dark"
-        >
-          <FiPlus /> Add Taxonomy Node
-        </button>
-      </div>
+      )}
 
       <div className="grid md:grid-cols-2 gap-3">
         {taxonomy.map((t) => (
@@ -871,9 +886,11 @@ function TaxonomyTab({ skills, flash }) {
                 {t.linkedSkillNames?.length ? ` · skills: ${t.linkedSkillNames.join(", ")}` : ""}
               </p>
             </div>
-            <button onClick={() => handleDelete(t.id)} className="text-red-500">
-              <FiTrash2 />
-            </button>
+            {isAdmin && (
+              <button onClick={() => handleDelete(t.id)} className="text-red-500">
+                <FiTrash2 />
+              </button>
+            )}
           </div>
         ))}
         {taxonomy.length === 0 && (
@@ -884,7 +901,7 @@ function TaxonomyTab({ skills, flash }) {
   );
 }
 
-function GoalsTab({ flash }) {
+function GoalsTab({ flash, isAdmin }) {
   const [goals, setGoals] = useState([]);
   const [form, setForm] = useState({ goalName: "", description: "", targetYear: "", priority: "MEDIUM" });
 
@@ -945,45 +962,47 @@ function GoalsTab({ flash }) {
         Organizational objectives that competency frameworks can be mapped to.
       </p>
 
-      <div className="border border-line rounded-xl p-4 grid md:grid-cols-2 gap-3">
-        <input
-          placeholder="Goal name (e.g. Cloud Migration 2027)"
-          value={form.goalName}
-          onChange={(e) => setForm({ ...form, goalName: e.target.value })}
-          className="border rounded-xl px-4 py-2 outline-none"
-        />
-        <input
-          type="number"
-          placeholder="Target year"
-          value={form.targetYear}
-          onChange={(e) => setForm({ ...form, targetYear: e.target.value })}
-          className="border rounded-xl px-4 py-2 outline-none"
-        />
-        <select
-          value={form.priority}
-          onChange={(e) => setForm({ ...form, priority: e.target.value })}
-          className="border rounded-xl px-4 py-2 outline-none"
-        >
-          {PRIORITIES.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
-        </select>
-        <textarea
-          placeholder="Description"
-          value={form.description}
-          onChange={(e) => setForm({ ...form, description: e.target.value })}
-          className="md:col-span-2 border rounded-xl px-4 py-2 outline-none"
-          rows={2}
-        />
-        <button
-          onClick={handleCreate}
-          className="bg-primary text-text px-4 py-2 rounded-xl w-fit flex items-center gap-2 hover:bg-primary-dark"
-        >
-          <FiPlus /> Add Strategic Goal
-        </button>
-      </div>
+      {isAdmin && (
+        <div className="border border-line rounded-xl p-4 grid md:grid-cols-2 gap-3">
+          <input
+            placeholder="Goal name (e.g. Cloud Migration 2027)"
+            value={form.goalName}
+            onChange={(e) => setForm({ ...form, goalName: e.target.value })}
+            className="border rounded-xl px-4 py-2 outline-none"
+          />
+          <input
+            type="number"
+            placeholder="Target year"
+            value={form.targetYear}
+            onChange={(e) => setForm({ ...form, targetYear: e.target.value })}
+            className="border rounded-xl px-4 py-2 outline-none"
+          />
+          <select
+            value={form.priority}
+            onChange={(e) => setForm({ ...form, priority: e.target.value })}
+            className="border rounded-xl px-4 py-2 outline-none"
+          >
+            {PRIORITIES.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+          <textarea
+            placeholder="Description"
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            className="md:col-span-2 border rounded-xl px-4 py-2 outline-none"
+            rows={2}
+          />
+          <button
+            onClick={handleCreate}
+            className="bg-primary text-text px-4 py-2 rounded-xl w-fit flex items-center gap-2 hover:bg-primary-dark"
+          >
+            <FiPlus /> Add Strategic Goal
+          </button>
+        </div>
+      )}
 
       <div className="grid md:grid-cols-2 gap-3">
         {goals.map((g) => (
@@ -997,9 +1016,11 @@ function GoalsTab({ flash }) {
               </p>
               <p className="text-xs text-mute">{g.targetYear ? `Target: ${g.targetYear}` : "No target year"}</p>
             </div>
-            <button onClick={() => handleDelete(g.id)} className="text-red-500">
-              <FiTrash2 />
-            </button>
+            {isAdmin && (
+              <button onClick={() => handleDelete(g.id)} className="text-red-500">
+                <FiTrash2 />
+              </button>
+            )}
           </div>
         ))}
         {goals.length === 0 && <p className="text-mute text-sm">No strategic goals yet.</p>}
@@ -1008,7 +1029,7 @@ function GoalsTab({ flash }) {
   );
 }
 
-function BenchmarksTab({ flash }) {
+function BenchmarksTab({ flash, isAdmin }) {
   const [benchmarks, setBenchmarks] = useState([]);
   const [taxonomy, setTaxonomy] = useState([]);
   const [form, setForm] = useState({
@@ -1081,61 +1102,63 @@ function BenchmarksTab({ flash }) {
         against industry expectations.
       </p>
 
-      <div className="border border-line rounded-xl p-4 grid md:grid-cols-2 gap-3">
-        <select
-          value={form.skillTaxonomyId}
-          onChange={(e) => setForm({ ...form, skillTaxonomyId: e.target.value })}
-          className="border rounded-xl px-4 py-2 outline-none"
-        >
-          <option value="">-- Select taxonomy skill --</option>
-          {taxonomy.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name}
-            </option>
-          ))}
-        </select>
-        <select
-          value={form.benchmarkLevel}
-          onChange={(e) => setForm({ ...form, benchmarkLevel: e.target.value })}
-          className="border rounded-xl px-4 py-2 outline-none"
-        >
-          {LEVELS.map((l) => (
-            <option key={l} value={l}>
-              {l}
-            </option>
-          ))}
-        </select>
-        <input
-          placeholder="Industry sector (e.g. Fintech)"
-          value={form.industrySector}
-          onChange={(e) => setForm({ ...form, industrySector: e.target.value })}
-          className="border rounded-xl px-4 py-2 outline-none"
-        />
-        <input
-          placeholder="Role category (e.g. Software Engineer)"
-          value={form.roleCategory}
-          onChange={(e) => setForm({ ...form, roleCategory: e.target.value })}
-          className="border rounded-xl px-4 py-2 outline-none"
-        />
-        <input
-          placeholder="Source (e.g. SHRM 2026 Report)"
-          value={form.source}
-          onChange={(e) => setForm({ ...form, source: e.target.value })}
-          className="border rounded-xl px-4 py-2 outline-none"
-        />
-        <input
-          type="date"
-          value={form.referenceDate}
-          onChange={(e) => setForm({ ...form, referenceDate: e.target.value })}
-          className="border rounded-xl px-4 py-2 outline-none"
-        />
-        <button
-          onClick={handleCreate}
-          className="bg-primary text-text px-4 py-2 rounded-xl w-fit flex items-center gap-2 hover:bg-primary-dark"
-        >
-          <FiPlus /> Add Benchmark
-        </button>
-      </div>
+      {isAdmin && (
+        <div className="border border-line rounded-xl p-4 grid md:grid-cols-2 gap-3">
+          <select
+            value={form.skillTaxonomyId}
+            onChange={(e) => setForm({ ...form, skillTaxonomyId: e.target.value })}
+            className="border rounded-xl px-4 py-2 outline-none"
+          >
+            <option value="">-- Select taxonomy skill --</option>
+            {taxonomy.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+          <select
+            value={form.benchmarkLevel}
+            onChange={(e) => setForm({ ...form, benchmarkLevel: e.target.value })}
+            className="border rounded-xl px-4 py-2 outline-none"
+          >
+            {LEVELS.map((l) => (
+              <option key={l} value={l}>
+                {l}
+              </option>
+            ))}
+          </select>
+          <input
+            placeholder="Industry sector (e.g. Fintech)"
+            value={form.industrySector}
+            onChange={(e) => setForm({ ...form, industrySector: e.target.value })}
+            className="border rounded-xl px-4 py-2 outline-none"
+          />
+          <input
+            placeholder="Role category (e.g. Software Engineer)"
+            value={form.roleCategory}
+            onChange={(e) => setForm({ ...form, roleCategory: e.target.value })}
+            className="border rounded-xl px-4 py-2 outline-none"
+          />
+          <input
+            placeholder="Source (e.g. SHRM 2026 Report)"
+            value={form.source}
+            onChange={(e) => setForm({ ...form, source: e.target.value })}
+            className="border rounded-xl px-4 py-2 outline-none"
+          />
+          <input
+            type="date"
+            value={form.referenceDate}
+            onChange={(e) => setForm({ ...form, referenceDate: e.target.value })}
+            className="border rounded-xl px-4 py-2 outline-none"
+          />
+          <button
+            onClick={handleCreate}
+            className="bg-primary text-text px-4 py-2 rounded-xl w-fit flex items-center gap-2 hover:bg-primary-dark"
+          >
+            <FiPlus /> Add Benchmark
+          </button>
+        </div>
+      )}
 
       <div className="grid md:grid-cols-2 gap-3">
         {benchmarks.map((b) => (
@@ -1147,9 +1170,11 @@ function BenchmarksTab({ flash }) {
               </p>
               {b.source && <p className="text-xs text-mute">Source: {b.source}</p>}
             </div>
-            <button onClick={() => handleDelete(b.id)} className="text-red-500">
-              <FiTrash2 />
-            </button>
+            {isAdmin && (
+              <button onClick={() => handleDelete(b.id)} className="text-red-500">
+                <FiTrash2 />
+              </button>
+            )}
           </div>
         ))}
         {benchmarks.length === 0 && (

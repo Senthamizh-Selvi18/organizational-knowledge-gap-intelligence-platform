@@ -13,7 +13,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/competency/strategic-goals")
-@PreAuthorize("hasRole('ADMIN')")
 public class StrategicGoalController {
 
     private final StrategicGoalService strategicGoalService;
@@ -22,6 +21,7 @@ public class StrategicGoalController {
         this.strategicGoalService = strategicGoalService;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<StrategicGoalDTO> create(@Valid @RequestBody StrategicGoalRequest request) {
         return new ResponseEntity<>(strategicGoalService.create(request), HttpStatus.CREATED);
@@ -37,18 +37,21 @@ public class StrategicGoalController {
         return ResponseEntity.ok(strategicGoalService.getAll());
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<StrategicGoalDTO> update(@PathVariable Long id,
                                                      @Valid @RequestBody StrategicGoalRequest request) {
         return ResponseEntity.ok(strategicGoalService.update(id, request));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}/deactivate")
     public ResponseEntity<Void> deactivate(@PathVariable Long id) {
         strategicGoalService.deactivate(id);
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         strategicGoalService.delete(id);
