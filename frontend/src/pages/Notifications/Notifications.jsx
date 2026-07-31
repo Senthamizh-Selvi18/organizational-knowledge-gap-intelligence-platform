@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
+import DashboardLayout from "../../components/layout/DashboardLayout";
+import { toast } from "../../components/ui/Toast.jsx";
 import {
   getAllNotifications,
   markAsRead,
@@ -53,12 +55,13 @@ const PRIORITY_OPTIONS = ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
 
 /**
  * Small in-app confirmation modal, styled to match the Notifications page's
- * own design tokens. Replaces window.confirm(), which renders as a generic
- * unstyled browser dialog that breaks the app's visual language.
+ * own design tokens (see Notifications.css). Replaces window.confirm(),
+ * which renders as a generic unstyled browser dialog that breaks the app's
+ * visual language.
  *
- * If your app already has a shared Modal/Dialog component, swap this out for
- * that instead — this one is intentionally self-contained so it works with
- * zero other dependencies.
+ * The app also has a shared confirmDialog() in components/ui/ConfirmDialog.jsx
+ * mounted globally — swap to that instead if you'd rather not keep this
+ * page-local copy around. Left as-is here to avoid unrelated churn.
  */
 function ConfirmDialog({ open, title, message, confirmLabel = "Confirm", onConfirm, onCancel }) {
   useEffect(() => {
@@ -96,7 +99,7 @@ function Notifications() {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null); // user-facing summary
+  const [error, setError] = useState(null); // page-level load failure (shows the retry banner)
   const [errorDetail, setErrorDetail] = useState(null); // raw backend message, shown in dev-friendly way
   const [markingAll, setMarkingAll] = useState(false);
   const [clearing, setClearing] = useState(false);
@@ -196,6 +199,8 @@ function Notifications() {
         prev.map((n) => (n.id === notification.id ? { ...n, read: false } : n))
       );
       setUnreadCount((prev) => prev + 1);
+      toast.error("Could not mark notification as read.");
+      return;
     }
 
     if (notification.actionUrl) window.location.href = notification.actionUrl;
@@ -211,11 +216,11 @@ function Notifications() {
 
     try {
       await markAllAsRead(userId);
+      toast.success("All notifications marked as read.");
     } catch (err) {
       console.error("[Notifications] markAllAsRead failed:", err);
       setNotifications(previous);
-      setError("Couldn't mark all as read.");
-      setErrorDetail(err?.message || String(err));
+      toast.error("Could not mark all notifications as read.");
     } finally {
       setMarkingAll(false);
     }
@@ -232,8 +237,7 @@ function Notifications() {
     } catch (err) {
       console.error("[Notifications] deleteNotification failed:", err);
       setNotifications(previous);
-      setError("Couldn't delete that notification.");
-      setErrorDetail(err?.message || String(err));
+      toast.error("Could not delete that notification.");
     }
   };
 
@@ -254,8 +258,7 @@ function Notifications() {
     } catch (err) {
       console.error("[Notifications] clearAllNotifications failed:", err);
       setNotifications(previous);
-      setError("Couldn't clear notifications.");
-      setErrorDetail(err?.message || String(err));
+      toast.error("Could not clear notifications.");
     } finally {
       setClearing(false);
     }
@@ -270,147 +273,149 @@ function Notifications() {
   };
 
   return (
-    <div className="notifications-page">
-      <header className="notifications-header">
-        <div className="notifications-heading">
-          <h1>Notifications</h1>
-          <p className="notifications-subtext">
-            {unreadCount > 0
-              ? `${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}`
-              : "You're all caught up"}
-          </p>
-        </div>
-        <div className="notifications-header-actions">
-          <button
-            className="mark-all-btn"
-            onClick={handleMarkAllAsRead}
-            disabled={unreadCount === 0 || markingAll}
-          >
-            {markingAll ? "Marking..." : "Mark all as read"}
-          </button>
-          <button
-            className="clear-all-btn"
-            onClick={handleClearAll}
-            disabled={notifications.length === 0 || clearing}
-          >
-            {clearing ? "Clearing..." : "Clear all"}
-          </button>
-        </div>
-      </header>
+    <DashboardLayout>
+      <div className="notifications-page">
+        <header className="notifications-header">
+          <div className="notifications-heading">
+            <h1>Notifications</h1>
+            <p className="notifications-subtext">
+              {unreadCount > 0
+                ? `${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}`
+                : "You're all caught up"}
+            </p>
+          </div>
+          <div className="notifications-header-actions">
+            <button
+              className="mark-all-btn"
+              onClick={handleMarkAllAsRead}
+              disabled={unreadCount === 0 || markingAll}
+            >
+              {markingAll ? "Marking..." : "Mark all as read"}
+            </button>
+            <button
+              className="clear-all-btn"
+              onClick={handleClearAll}
+              disabled={notifications.length === 0 || clearing}
+            >
+              {clearing ? "Clearing..." : "Clear all"}
+            </button>
+          </div>
+        </header>
 
-      <div className="notifications-filters">
-        <input
-          type="text"
-          placeholder="Search notifications..."
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          className="filter-input"
-        />
-        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="filter-select">
-          <option value="">All types</option>
-          {TYPE_OPTIONS.map((t) => (
-            <option key={t} value={t}>{t.replaceAll("_", " ")}</option>
-          ))}
-        </select>
-        <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} className="filter-select">
-          <option value="">All priorities</option>
-          {PRIORITY_OPTIONS.map((p) => (
-            <option key={p} value={p}>{p}</option>
-          ))}
-        </select>
-        <select value={readFilter} onChange={(e) => setReadFilter(e.target.value)} className="filter-select">
-          <option value="">All</option>
-          <option value="false">Unread</option>
-          <option value="true">Read</option>
-        </select>
-        {hasActiveFilters && (
-          <button type="button" className="reset-filters-btn" onClick={resetFilters}>
-            Reset filters
-          </button>
-        )}
-      </div>
-
-      {loading && <div className="notifications-state">Loading notifications...</div>}
-
-      {!loading && error && (
-        <div className="notifications-state notifications-error">
-          <p className="error-summary">{error}</p>
-          {errorDetail && <p className="error-detail">{errorDetail}</p>}
-          <button onClick={() => loadNotifications(page)} className="retry-btn">
-            Retry
-          </button>
-        </div>
-      )}
-
-      {!loading && !error && notifications.length === 0 && (
-        <div className="notifications-state">
-          {hasActiveFilters
-            ? "No notifications match your filters."
-            : "No notifications yet. We'll let you know when something needs your attention."}
-        </div>
-      )}
-
-      {!loading && !error && notifications.length > 0 && (
-        <>
-          <ul className="notifications-list">
-            {notifications.map((n) => (
-              <li
-                key={n.id}
-                className={`notification-item ${n.read ? "read" : "unread"}`}
-                onClick={() => handleMarkAsRead(n)}
-              >
-                <span className="notification-icon">
-                  {TYPE_ICON[n.type] || "🔔"}
-                </span>
-                <div className="notification-body">
-                  <div className="notification-title-row">
-                    <p className="notification-title">{n.title}</p>
-                    {n.priority && (
-                      <span className={`priority-badge priority-${n.priority.toLowerCase()}`}>
-                        {n.priority}
-                      </span>
-                    )}
-                  </div>
-                  <p className="notification-message">{n.message}</p>
-                  <p className="notification-time">{n.timeAgo}</p>
-                </div>
-                <div className="notification-actions">
-                  {!n.read && <span className="unread-dot" aria-label="Unread" />}
-                  <button
-                    className="delete-btn"
-                    onClick={(e) => handleDelete(n, e)}
-                    aria-label="Delete notification"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </li>
+        <div className="notifications-filters">
+          <input
+            type="text"
+            placeholder="Search notifications..."
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            className="filter-input"
+          />
+          <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="filter-select">
+            <option value="">All types</option>
+            {TYPE_OPTIONS.map((t) => (
+              <option key={t} value={t}>{t.replaceAll("_", " ")}</option>
             ))}
-          </ul>
-
-          {totalPages > 1 && (
-            <div className="notifications-pagination">
-              <button disabled={page === 0} onClick={() => loadNotifications(page - 1)}>
-                Previous
-              </button>
-              <span>Page {page + 1} of {totalPages}</span>
-              <button disabled={page + 1 >= totalPages} onClick={() => loadNotifications(page + 1)}>
-                Next
-              </button>
-            </div>
+          </select>
+          <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} className="filter-select">
+            <option value="">All priorities</option>
+            {PRIORITY_OPTIONS.map((p) => (
+              <option key={p} value={p}>{p}</option>
+            ))}
+          </select>
+          <select value={readFilter} onChange={(e) => setReadFilter(e.target.value)} className="filter-select">
+            <option value="">All</option>
+            <option value="false">Unread</option>
+            <option value="true">Read</option>
+          </select>
+          {hasActiveFilters && (
+            <button type="button" className="reset-filters-btn" onClick={resetFilters}>
+              Reset filters
+            </button>
           )}
-        </>
-      )}
+        </div>
 
-      <ConfirmDialog
-        open={confirmClearOpen}
-        title="Clear all notifications?"
-        message="This can't be undone. All notifications in your list will be permanently removed."
-        confirmLabel="Clear all"
-        onConfirm={confirmClearAll}
-        onCancel={() => setConfirmClearOpen(false)}
-      />
-    </div>
+        {loading && <div className="notifications-state">Loading notifications...</div>}
+
+        {!loading && error && (
+          <div className="notifications-state notifications-error">
+            <p className="error-summary">{error}</p>
+            {errorDetail && <p className="error-detail">{errorDetail}</p>}
+            <button onClick={() => loadNotifications(page)} className="retry-btn">
+              Retry
+            </button>
+          </div>
+        )}
+
+        {!loading && !error && notifications.length === 0 && (
+          <div className="notifications-state">
+            {hasActiveFilters
+              ? "No notifications match your filters."
+              : "No notifications yet. We'll let you know when something needs your attention."}
+          </div>
+        )}
+
+        {!loading && !error && notifications.length > 0 && (
+          <>
+            <ul className="notifications-list">
+              {notifications.map((n) => (
+                <li
+                  key={n.id}
+                  className={`notification-item ${n.read ? "read" : "unread"}`}
+                  onClick={() => handleMarkAsRead(n)}
+                >
+                  <span className="notification-icon">
+                    {TYPE_ICON[n.type] || "🔔"}
+                  </span>
+                  <div className="notification-body">
+                    <div className="notification-title-row">
+                      <p className="notification-title">{n.title}</p>
+                      {n.priority && (
+                        <span className={`priority-badge priority-${n.priority.toLowerCase()}`}>
+                          {n.priority}
+                        </span>
+                      )}
+                    </div>
+                    <p className="notification-message">{n.message}</p>
+                    <p className="notification-time">{n.timeAgo}</p>
+                  </div>
+                  <div className="notification-actions">
+                    {!n.read && <span className="unread-dot" aria-label="Unread" />}
+                    <button
+                      className="delete-btn"
+                      onClick={(e) => handleDelete(n, e)}
+                      aria-label="Delete notification"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            {totalPages > 1 && (
+              <div className="notifications-pagination">
+                <button disabled={page === 0} onClick={() => loadNotifications(page - 1)}>
+                  Previous
+                </button>
+                <span>Page {page + 1} of {totalPages}</span>
+                <button disabled={page + 1 >= totalPages} onClick={() => loadNotifications(page + 1)}>
+                  Next
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
+        <ConfirmDialog
+          open={confirmClearOpen}
+          title="Clear all notifications?"
+          message="This can't be undone. All notifications in your list will be permanently removed."
+          confirmLabel="Clear all"
+          onConfirm={confirmClearAll}
+          onCancel={() => setConfirmClearOpen(false)}
+        />
+      </div>
+    </DashboardLayout>
   );
 }
 
