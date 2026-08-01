@@ -33,6 +33,7 @@ import MentorDirectory from "../pages/MentorDirectory/MentorDirectory";
 import MentorshipRequests from "../pages/MentorshipRequests/MentorshipRequests";
 import SessionBooking from "../pages/SessionBooking/SessionBooking";
 import KnowledgeBase from "../pages/KnowledgeBase/KnowledgeBase";
+import Reports from "../pages/Reports/Reports";
 
 function AppRoutes() {
   return (
@@ -228,6 +229,16 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <InternalTrainingCatalog />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Reports & Export Module */}
+      <Route
+        path="/dashboard/reports"
+        element={
+          <ProtectedRoute>
+            <Reports />
           </ProtectedRoute>
         }
       />
