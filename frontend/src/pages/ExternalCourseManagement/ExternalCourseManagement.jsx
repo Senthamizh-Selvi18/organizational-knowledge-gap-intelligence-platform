@@ -1,5 +1,6 @@
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { FiX } from "react-icons/fi";
 import {
   getAllExternalCourses,
@@ -22,7 +23,12 @@ const EMPTY_FORM = {
   active: true,
 };
 
+const EDIT_ROLES = ["admin", "l&d admin", "manager"];
+
 export default function ExternalCourseManagement() {
+
+  const role = localStorage.getItem("role")?.toLowerCase();
+  const canEdit = EDIT_ROLES.includes(role);
 
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -244,12 +250,14 @@ export default function ExternalCourseManagement() {
             </p>
           </div>
 
-          <button
-            onClick={openAddModal}
-            className="bg-primary text-white px-5 py-3 rounded-xl font-semibold hover:opacity-90 transition"
-          >
-            + Add Course
-          </button>
+          {canEdit && (
+            <button
+              onClick={openAddModal}
+              className="bg-primary text-white px-5 py-3 rounded-xl font-semibold hover:opacity-90 transition"
+            >
+              + Add Course
+            </button>
+          )}
 
         </div>
 
@@ -320,11 +328,11 @@ export default function ExternalCourseManagement() {
                 <tr className="border-b border-gray-200 text-sub text-sm">
                   <th className="py-3 pr-4">Skill</th>
                   <th className="py-3 pr-4">Course Title</th>
-                  <th className="py-3 pr-4">Provider</th>
+                  <th className="py-3 pr-4">Links</th>
                   <th className="py-3 pr-4">Difficulty</th>
                   <th className="py-3 pr-4">Duration</th>
                   <th className="py-3 pr-4">Status</th>
-                  <th className="py-3 pr-4">Actions</th>
+                  {canEdit && <th className="py-3 pr-4">Actions</th>}
                 </tr>
               </thead>
               <tbody>
@@ -333,7 +341,20 @@ export default function ExternalCourseManagement() {
 
                     <td className="py-4 pr-4 font-semibold text-text">{course.skillName}</td>
                     <td className="py-4 pr-4">{course.courseTitle}</td>
-                    <td className="py-4 pr-4">{course.provider}</td>
+                    <td className="py-4 pr-4">
+                      {course.courseUrl ? (
+                        <a
+                          href={course.courseUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline font-semibold"
+                        >
+                          View Course
+                        </a>
+                      ) : (
+                        <span className="text-mute">—</span>
+                      )}
+                    </td>
 
                     <td className="py-4 pr-4">
                       <span
@@ -365,27 +386,29 @@ export default function ExternalCourseManagement() {
                       </span>
                     </td>
 
-                    <td className="py-4 pr-4">
-                      <div className="flex items-center gap-3">
+                    {canEdit && (
+                      <td className="py-4 pr-4">
+                        <div className="flex items-center gap-3">
 
-                        <button
-                          onClick={() => openEditModal(course)}
-                          className="text-green-600 hover:text-green-700 font-semibold"
-                          title="Edit"
-                        >
-                          Edit
-                        </button>
+                          <button
+                            onClick={() => openEditModal(course)}
+                            className="text-green-600 hover:text-green-700 font-semibold"
+                            title="Edit"
+                          >
+                            Edit
+                          </button>
 
-                        <button
-                          onClick={() => confirmDelete(course)}
-                          className="text-red-600 hover:text-red-700 font-semibold"
-                          title="Delete"
-                        >
-                          Delete
-                        </button>
+                          <button
+                            onClick={() => confirmDelete(course)}
+                            className="text-red-600 hover:text-red-700 font-semibold"
+                            title="Delete"
+                          >
+                            Delete
+                          </button>
 
-                      </div>
-                    </td>
+                        </div>
+                      </td>
+                    )}
 
                   </tr>
                 ))}
@@ -399,19 +422,20 @@ export default function ExternalCourseManagement() {
       </div>
 
       {/* Add/Edit Modal */}
-      {showModal && (
+      {showModal && createPortal(
 
         <div
-          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
           onClick={closeModal}
         >
 
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto relative"
+            className="bg-white rounded-3xl shadow-2xl border border-gray-100 w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden"
           >
 
-            <div className="flex items-center justify-between mb-5">
+            {/* Header (fixed, never scrolls) */}
+            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 shrink-0">
 
               <h2 className="text-xl font-bold text-text">
                 {isEditing ? "Edit External Course" : "Add External Course"}
@@ -429,150 +453,158 @@ export default function ExternalCourseManagement() {
 
             </div>
 
-            {formError && (
-              <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl mb-4">
-                {formError}
-              </div>
-            )}
+            {/* Scrollable body */}
+            <form
+              id="external-course-form"
+              onSubmit={handleSubmit}
+              className="space-y-4 px-6 py-5 overflow-y-auto"
+            >
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+              {formError && (
+                <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl">
+                  {formError}
+                </div>
+              )}
 
               <div>
-                <label className="block text-sub text-sm mb-1">Skill Name</label>
+                <label className="block text-sub text-sm font-medium mb-1.5">Skill Name</label>
                 <input
                   type="text"
                   value={formData.skillName}
                   onChange={(e) => handleFormChange("skillName", e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
                   placeholder="e.g. React"
                 />
               </div>
 
               <div>
-                <label className="block text-sub text-sm mb-1">Course Title</label>
+                <label className="block text-sub text-sm font-medium mb-1.5">Course Title</label>
                 <input
                   type="text"
                   value={formData.courseTitle}
                   onChange={(e) => handleFormChange("courseTitle", e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
                   placeholder="e.g. React Complete Guide"
                 />
               </div>
 
-              <div>
-                <label className="block text-sub text-sm mb-1">Provider</label>
-                <input
-                  type="text"
-                  value={formData.provider}
-                  onChange={(e) => handleFormChange("provider", e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="e.g. Udemy"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sub text-sm font-medium mb-1.5">Provider</label>
+                  <input
+                    type="text"
+                    value={formData.provider}
+                    onChange={(e) => handleFormChange("provider", e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                    placeholder="e.g. Udemy"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sub text-sm font-medium mb-1.5">Duration</label>
+                  <input
+                    type="text"
+                    value={formData.duration}
+                    onChange={(e) => handleFormChange("duration", e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                    placeholder="e.g. 32 Hours"
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="block text-sub text-sm mb-1">Course URL</label>
+                <label className="block text-sub text-sm font-medium mb-1.5">Course URL</label>
                 <input
                   type="text"
                   value={formData.courseUrl}
                   onChange={(e) => handleFormChange("courseUrl", e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
                   placeholder="https://..."
                 />
               </div>
 
               <div>
-                <label className="block text-sub text-sm mb-1">Description</label>
+                <label className="block text-sub text-sm font-medium mb-1.5">Description</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => handleFormChange("description", e.target.value)}
                   rows={3}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition resize-none"
                   placeholder="Short description of the course"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-
-                <div>
-                  <label className="block text-sub text-sm mb-1">Difficulty</label>
-                  <select
-                    value={formData.difficulty}
-                    onChange={(e) => handleFormChange("difficulty", e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                  >
-                    {DIFFICULTY_OPTIONS.map((d) => (
-                      <option key={d} value={d}>{d}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sub text-sm mb-1">Duration</label>
-                  <input
-                    type="text"
-                    value={formData.duration}
-                    onChange={(e) => handleFormChange("duration", e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                    placeholder="e.g. 32 Hours"
-                  />
-                </div>
-
+              <div>
+                <label className="block text-sub text-sm font-medium mb-1.5">Difficulty</label>
+                <select
+                  value={formData.difficulty}
+                  onChange={(e) => handleFormChange("difficulty", e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                >
+                  {DIFFICULTY_OPTIONS.map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
               </div>
 
-              <div className="flex items-center gap-2">
+              <label
+                htmlFor="active"
+                className="flex items-center gap-2.5 rounded-xl border border-gray-200 px-4 py-3 cursor-pointer hover:bg-gray-50 transition"
+              >
                 <input
                   type="checkbox"
                   id="active"
                   checked={formData.active}
                   onChange={(e) => handleFormChange("active", e.target.checked)}
-                  className="w-4 h-4"
+                  className="w-4 h-4 accent-primary"
                 />
-                <label htmlFor="active" className="text-sub text-sm">
+                <span className="text-sub text-sm">
                   Active (visible in recommendations)
-                </label>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-2">
-
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  disabled={saving}
-                  className="px-5 py-2 rounded-xl font-semibold text-sub border border-gray-200 hover:bg-gray-50 transition"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="bg-primary text-white px-5 py-2 rounded-xl font-semibold hover:opacity-90 transition disabled:opacity-60"
-                >
-                  {saving ? "Saving..." : isEditing ? "Update Course" : "Create Course"}
-                </button>
-
-              </div>
+                </span>
+              </label>
 
             </form>
 
+            {/* Footer (fixed, always visible) */}
+            <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 shrink-0 bg-white">
+
+              <button
+                type="button"
+                onClick={closeModal}
+                disabled={saving}
+                className="px-5 py-2 rounded-xl font-semibold text-sub border border-gray-200 hover:bg-gray-50 transition"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="submit"
+                form="external-course-form"
+                disabled={saving}
+                className="bg-primary text-white px-5 py-2 rounded-xl font-semibold hover:opacity-90 transition disabled:opacity-60"
+              >
+                {saving ? "Saving..." : isEditing ? "Update Course" : "Create Course"}
+              </button>
+
+            </div>
+
           </div>
 
-        </div>
-
+        </div>,
+        document.body
       )}
 
       {/* Delete confirmation modal */}
-      {deleteTarget && (
+      {deleteTarget && createPortal(
 
         <div
-          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
           onClick={cancelDelete}
         >
 
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-6 w-full max-w-md relative"
+            className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-6 w-full max-w-md"
           >
 
             <div className="flex items-center justify-between mb-3">
@@ -593,7 +625,7 @@ export default function ExternalCourseManagement() {
 
             </div>
 
-            <p className="text-sub mb-6">
+            <p className="text-sub mb-6 leading-relaxed">
               Are you sure you want to delete <span className="font-semibold text-text">{deleteTarget.courseTitle}</span>? This action cannot be undone.
             </p>
 
@@ -619,8 +651,8 @@ export default function ExternalCourseManagement() {
 
           </div>
 
-        </div>
-
+        </div>,
+        document.body
       )}
 
     </DashboardLayout>
