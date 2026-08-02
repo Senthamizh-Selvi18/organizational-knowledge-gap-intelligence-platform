@@ -5,14 +5,18 @@ import com.organizational.knowledge_gap_platform.dto.GapSnapshotDTO;
 import com.organizational.knowledge_gap_platform.entity.Employee;
 import com.organizational.knowledge_gap_platform.entity.GapSnapshot;
 import com.organizational.knowledge_gap_platform.entity.Role;
+import com.organizational.knowledge_gap_platform.entity.User;
 import com.organizational.knowledge_gap_platform.exception.EmployeeNotFoundException;
 import com.organizational.knowledge_gap_platform.exception.RoleNotFoundException;
 import com.organizational.knowledge_gap_platform.repository.EmployeeRepository;
 import com.organizational.knowledge_gap_platform.repository.GapSnapshotRepository;
 import com.organizational.knowledge_gap_platform.repository.RoleRepository;
+import com.organizational.knowledge_gap_platform.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,15 +34,33 @@ public class GapSnapshotServiceImpl implements GapSnapshotService {
     private final RoleRepository roleRepository;
     private final GapSnapshotRepository gapSnapshotRepository;
     private final GapAnalysisService gapAnalysisService;
+    private final UserRepository userRepository;
 
     public GapSnapshotServiceImpl(EmployeeRepository employeeRepository,
                                    RoleRepository roleRepository,
                                    GapSnapshotRepository gapSnapshotRepository,
-                                   GapAnalysisService gapAnalysisService) {
+                                   GapAnalysisService gapAnalysisService,
+                                   UserRepository userRepository) {
         this.employeeRepository = employeeRepository;
         this.roleRepository = roleRepository;
         this.gapSnapshotRepository = gapSnapshotRepository;
         this.gapAnalysisService = gapAnalysisService;
+        this.userRepository = userRepository;
+    }
+
+    /** Resolves the Employee record for whoever is currently logged in. */
+    private Employee resolveCurrentEmployee() {
+        Authentication authentication = SecurityContextHolder
+                .getContext()
+                .getAuthentication();
+
+        String email = authentication.getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return employeeRepository.findByUser(user)
+                .orElseThrow(() -> new EmployeeNotFoundException("Employee not found"));
     }
 
     @Override
@@ -124,6 +146,19 @@ public class GapSnapshotServiceImpl implements GapSnapshotService {
                 .stream()
                 .map(GapSnapshotDTO::fromEntity)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<GapSnapshotDTO> getMyHistory() {
+        Employee employee = resolveCurrentEmployee();
+        return getHistoryForEmployee(employee.getId());
+    }
+
+    @Override
+    @Transactional
+    public List<GapSnapshotDTO> captureMySnapshots() {
+        Employee employee = resolveCurrentEmployee();
+        return captureSnapshotsForEmployee(employee.getId());
     }
 
     /**

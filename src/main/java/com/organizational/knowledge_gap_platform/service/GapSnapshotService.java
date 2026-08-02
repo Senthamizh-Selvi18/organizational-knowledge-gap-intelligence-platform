@@ -20,4 +20,10 @@ public interface GapSnapshotService {
 
     /** Full history for an employee across all roles, oldest first. */
     List<GapSnapshotDTO> getHistoryForEmployee(Long employeeId);
+
+    /** Full history for the currently logged-in employee across all roles, oldest first. */
+    List<GapSnapshotDTO> getMyHistory();
+
+    /** Captures today's snapshot for the currently logged-in employee, across every assigned role. */
+    List<GapSnapshotDTO> captureMySnapshots();
 }

@@ -18,6 +18,7 @@ import {
   FiCalendar,
   FiBook,
   FiFileText,
+  FiTrendingUp,
 } from "react-icons/fi";
 
 export default function Sidebar({ open, onClose }) {
@@ -81,6 +82,11 @@ const overviewItems = [
       role === "employee" || role === "intern"
         ? "/employee-dashboard/gap-analysis"
         : "/dashboard/gap-analysis",
+  },
+  {
+    label: "Historical Gap Snapshots",
+    icon: FiTrendingUp,
+    to: "/dashboard/gap-history",
   },
   {
     label: "AI Recommendation",
