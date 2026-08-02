@@ -17,6 +17,7 @@ import {
   FiUserCheck,
   FiCalendar,
   FiBook,
+  FiFileText,
 } from "react-icons/fi";
 
 export default function Sidebar({ open, onClose }) {
@@ -139,6 +140,11 @@ const overviewItems = [
             label: "Skills",
             icon: FiCpu,
             to: "/dashboard/skills",
+          },
+          {
+            label: "Reports",
+            icon: FiFileText,
+            to: "/dashboard/reports",
           },
         ]
       : []),

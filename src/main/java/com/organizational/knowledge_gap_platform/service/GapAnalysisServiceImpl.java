@@ -283,4 +283,27 @@ public GapAnalysisServiceImpl(
 
         return result;
     }
+
+    @Override
+    public List<GapAnalysisResponseDTO> analyzeGapForAllEmployees() {
+
+        List<Employee> employees = employeeRepository.findAll();
+
+        List<GapAnalysisResponseDTO> results = new ArrayList<>();
+
+        for (Employee employee : employees) {
+
+            Set<Role> assignedRoles = employee.getUser().getRoles();
+
+            if (assignedRoles == null || assignedRoles.isEmpty()) {
+                continue;
+            }
+
+            Role role = assignedRoles.iterator().next();
+
+            results.add(buildGapAnalysis(employee, role));
+        }
+
+        return results;
+    }
 }

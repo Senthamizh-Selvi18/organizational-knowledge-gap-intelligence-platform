@@ -15,4 +15,6 @@ public interface GapAnalysisService {
     GapAnalysisResponseDTO analyzeMyGap();
     List<GapHeatmapResponseDTO> getGapHeatmap();
     List<DepartmentGapHeatmapDTO> getDepartmentHeatmap();
+
+    List<GapAnalysisResponseDTO> analyzeGapForAllEmployees();
 }
