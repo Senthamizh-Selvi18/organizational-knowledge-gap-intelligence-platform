@@ -44,6 +44,7 @@ import {
   FiX,
 } from "react-icons/fi";
 import { confirmDialog } from "../../components/ui/ConfirmDialog.jsx";
+import { toast } from "../../components/ui/Toast.jsx";
 
 const LEVELS = ["BEGINNER", "INTERMEDIATE", "ADVANCED", "EXPERT"];
 const PRIORITIES = ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
@@ -100,6 +101,11 @@ export default function CompetencyFramework() {
   const flash = (type, message) => {
     setStatus({ type, message });
     setTimeout(() => setStatus(null), 4000);
+    if (type === "success") {
+      toast.success(message);
+    } else {
+      toast.error(message);
+    }
   };
 
   return (
@@ -559,25 +565,51 @@ function FrameworkDetail({ frameworkId, skills, flash, isAdmin, onChanged, onDel
       </div>
 
       {history && (
-        <div className="border border-line rounded-xl p-4 space-y-2">
+        <div className="border border-line rounded-xl p-4 space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="font-medium text-sm">Version History</h4>
             <button onClick={() => setHistory(null)} className="text-mute">
               <FiX />
             </button>
           </div>
+          <p className="text-xs text-mute">
+            Read-only snapshot of the skills/taxonomies completed in each past
+            version. To edit skills, close history and use the version above.
+          </p>
           {history.map((v) => (
-            <div key={v.id} className="text-xs text-sub flex items-center justify-between border-b border-line/50 py-1">
-              <span>
-                v{v.versionNumber} · {v.status} {v.isCurrentVersion ? "(current)" : ""}
-              </span>
-              <span className="text-mute">{v.createdBy}</span>
+            <div key={v.id} className="border-b border-line/50 pb-2 last:border-b-0">
+              <div className="text-xs text-sub flex items-center justify-between py-1">
+                <span>
+                  v{v.versionNumber} · {v.status} {v.isCurrentVersion ? "(current)" : ""}
+                </span>
+                <span className="text-mute">{v.createdBy}</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {(v.completedSkills || []).map((s, idx) => (
+                  <span
+                    key={`${v.id}-${idx}`}
+                    className="text-[11px] px-2 py-1 rounded-lg bg-bg border border-line text-sub"
+                  >
+                    {s.skillTaxonomyName}
+                    {s.requiredLevel ? ` · ${s.requiredLevel}` : ""}
+                  </span>
+                ))}
+                {(!v.completedSkills || v.completedSkills.length === 0) && (
+                  <span className="text-[11px] text-mute">
+                    No skills/taxonomies were completed in this version.
+                  </span>
+                )}
+              </div>
             </div>
           ))}
+          {history.length === 0 && (
+            <p className="text-mute text-xs">No previous versions yet.</p>
+          )}
         </div>
       )}
 
-      {/* Required skills (feature ii) */}
+      {/* Required skills */}
+      {!history && (
       <div>
         <div className="flex items-center justify-between mb-2">
           <h4 className="font-medium">Required Skills &amp; Levels</h4>
@@ -673,6 +705,7 @@ function FrameworkDetail({ frameworkId, skills, flash, isAdmin, onChanged, onDel
           </div>
         )}
       </div>
+      )}
 
       {/* Strategic goal mapping (feature iii) */}
       <div>
