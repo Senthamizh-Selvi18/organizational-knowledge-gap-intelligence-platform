@@ -141,8 +141,10 @@ h1, h2, h3,
    (key={pathname}) on every navigation, so each page fades/slides
    in freshly instead of just snapping into place. */
 .page-transition {
-  animation: fadeInUp .45s cubic-bezier(.22,.8,.36,1) both;
+  /*animation: fadeInUp .45s cubic-bezier(.22,.8,.36,1) both;*/
+  animation: none;
 }
+  
 
 /* Card hover-lift: targets *divs* that already carry the app's
    existing rounded + shadow utility combo, so every card across
