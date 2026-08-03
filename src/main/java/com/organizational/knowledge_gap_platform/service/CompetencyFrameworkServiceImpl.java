@@ -295,6 +295,7 @@ public class CompetencyFrameworkServiceImpl implements CompetencyFrameworkServic
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<FrameworkVersionSummaryDTO> getVersionHistory(String versionGroupId) {
         return frameworkRepository.findByVersionGroupIdOrderByVersionNumberDesc(versionGroupId).stream()
                 .map(FrameworkVersionSummaryDTO::fromEntity)
