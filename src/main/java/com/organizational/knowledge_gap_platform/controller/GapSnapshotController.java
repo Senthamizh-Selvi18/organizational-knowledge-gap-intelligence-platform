@@ -46,4 +46,16 @@ public class GapSnapshotController {
     public ResponseEntity<List<GapSnapshotDTO>> getHistoryForEmployee(@PathVariable Long employeeId) {
         return ResponseEntity.ok(gapSnapshotService.getHistoryForEmployee(employeeId));
     }
+
+    /** Historical snapshots for the currently logged-in employee across all roles, oldest first. */
+    @GetMapping("/me/history")
+    public ResponseEntity<List<GapSnapshotDTO>> getMyHistory() {
+        return ResponseEntity.ok(gapSnapshotService.getMyHistory());
+    }
+
+    /** Lets the currently logged-in employee manually capture today's snapshot for their roles. */
+    @PostMapping("/me/capture")
+    public ResponseEntity<List<GapSnapshotDTO>> captureMySnapshots() {
+        return ResponseEntity.ok(gapSnapshotService.captureMySnapshots());
+    }
 }
