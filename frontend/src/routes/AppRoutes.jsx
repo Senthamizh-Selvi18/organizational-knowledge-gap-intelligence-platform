@@ -34,6 +34,8 @@ import MentorshipRequests from "../pages/MentorshipRequests/MentorshipRequests";
 import SessionBooking from "../pages/SessionBooking/SessionBooking";
 import KnowledgeBase from "../pages/KnowledgeBase/KnowledgeBase";
 import Reports from "../pages/Reports/Reports";
+import GapAnalysis from "../pages/GapAnalysis/GapAnalysis";
+import GapSnapshotHistory from "../pages/GapSnapshotHistory/GapSnapshotHistory";
 
 function AppRoutes() {
   return (
@@ -173,12 +175,22 @@ function AppRoutes() {
         }
       />
 
-      {/* Admin Gap Analysis */}
+    {/* Admin Gap Analysis */}
       <Route
         path="/dashboard/gap-analysis"
         element={
           <ProtectedRoute allowedRoles={["admin", "hr specialist", "manager", "department head"]}>
             <GapAnalysis />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Historical Gap Snapshots - available to everyone, shows their own history */}
+      <Route
+        path="/dashboard/gap-history"
+        element={
+          <ProtectedRoute>
+            <GapSnapshotHistory />
           </ProtectedRoute>
         }
       />
