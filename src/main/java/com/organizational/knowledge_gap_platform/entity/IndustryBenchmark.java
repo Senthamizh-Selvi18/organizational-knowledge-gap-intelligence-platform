@@ -28,9 +28,8 @@ public class IndustryBenchmark {
     @Column(name = "role_category")
     private String roleCategory;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "benchmark_level", nullable = false)
-    private ProficiencyLevel benchmarkLevel;
+    @Column(name = "recommended_action", length = 1000, nullable = false)
+    private String recommendedAction;
 
     @Column(name = "source")
     private String source;

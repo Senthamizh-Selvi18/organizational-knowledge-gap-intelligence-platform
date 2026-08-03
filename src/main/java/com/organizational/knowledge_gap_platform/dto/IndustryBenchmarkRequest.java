@@ -1,6 +1,6 @@
 package com.organizational.knowledge_gap_platform.dto;
 
-import com.organizational.knowledge_gap_platform.entity.ProficiencyLevel;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,8 +18,8 @@ public class IndustryBenchmarkRequest {
 
     private String roleCategory;
 
-    @NotNull(message = "benchmarkLevel is required")
-    private ProficiencyLevel benchmarkLevel;
+    @NotBlank(message = "recommendedAction is required")
+    private String recommendedAction;
 
     private String source;
 

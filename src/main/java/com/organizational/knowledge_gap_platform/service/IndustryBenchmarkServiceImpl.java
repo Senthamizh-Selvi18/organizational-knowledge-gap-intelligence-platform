@@ -18,18 +18,24 @@ public class IndustryBenchmarkServiceImpl implements IndustryBenchmarkService {
 
     private final IndustryBenchmarkRepository industryBenchmarkRepository;
     private final SkillTaxonomyRepository skillTaxonomyRepository;
+    private final CompetencyActivityLogService activityLogService;
 
     public IndustryBenchmarkServiceImpl(IndustryBenchmarkRepository industryBenchmarkRepository,
-                                         SkillTaxonomyRepository skillTaxonomyRepository) {
+                                         SkillTaxonomyRepository skillTaxonomyRepository,
+                                         CompetencyActivityLogService activityLogService) {
         this.industryBenchmarkRepository = industryBenchmarkRepository;
         this.skillTaxonomyRepository = skillTaxonomyRepository;
+        this.activityLogService = activityLogService;
     }
 
     @Override
     public IndustryBenchmarkDTO create(IndustryBenchmarkRequest request) {
         IndustryBenchmark benchmark = new IndustryBenchmark();
         applyRequest(benchmark, request);
-        return IndustryBenchmarkDTO.fromEntity(industryBenchmarkRepository.save(benchmark));
+        IndustryBenchmark saved = industryBenchmarkRepository.save(benchmark);
+        activityLogService.log("INDUSTRY_BENCHMARK", saved.getSkillTaxonomy().getName(), "CREATED",
+                "Industry benchmark added for \"" + saved.getSkillTaxonomy().getName() + "\"");
+        return IndustryBenchmarkDTO.fromEntity(saved);
     }
 
     @Override
@@ -55,12 +61,19 @@ public class IndustryBenchmarkServiceImpl implements IndustryBenchmarkService {
     public IndustryBenchmarkDTO update(Long id, IndustryBenchmarkRequest request) {
         IndustryBenchmark benchmark = findEntity(id);
         applyRequest(benchmark, request);
-        return IndustryBenchmarkDTO.fromEntity(industryBenchmarkRepository.save(benchmark));
+        IndustryBenchmark saved = industryBenchmarkRepository.save(benchmark);
+        activityLogService.log("INDUSTRY_BENCHMARK", saved.getSkillTaxonomy().getName(), "UPDATED",
+                "Industry benchmark for \"" + saved.getSkillTaxonomy().getName() + "\" updated");
+        return IndustryBenchmarkDTO.fromEntity(saved);
     }
 
     @Override
     public void delete(Long id) {
-        industryBenchmarkRepository.delete(findEntity(id));
+        IndustryBenchmark benchmark = findEntity(id);
+        String name = benchmark.getSkillTaxonomy().getName();
+        industryBenchmarkRepository.delete(benchmark);
+        activityLogService.log("INDUSTRY_BENCHMARK", name, "DELETED",
+                "Industry benchmark for \"" + name + "\" deleted");
     }
 
     private void applyRequest(IndustryBenchmark benchmark, IndustryBenchmarkRequest request) {
@@ -71,7 +84,7 @@ public class IndustryBenchmarkServiceImpl implements IndustryBenchmarkService {
         benchmark.setSkillTaxonomy(taxonomy);
         benchmark.setIndustrySector(request.getIndustrySector());
         benchmark.setRoleCategory(request.getRoleCategory());
-        benchmark.setBenchmarkLevel(request.getBenchmarkLevel());
+        benchmark.setRecommendedAction(request.getRecommendedAction());
         benchmark.setSource(request.getSource());
         benchmark.setReferenceDate(request.getReferenceDate());
         benchmark.setNotes(request.getNotes());

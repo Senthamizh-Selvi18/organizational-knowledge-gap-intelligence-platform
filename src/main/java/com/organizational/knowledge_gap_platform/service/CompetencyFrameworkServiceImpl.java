@@ -23,6 +23,7 @@ public class CompetencyFrameworkServiceImpl implements CompetencyFrameworkServic
     private final StrategicGoalRepository strategicGoalRepository;
     private final IndustryBenchmarkRepository industryBenchmarkRepository;
     private final RoleRepository roleRepository;
+    private final CompetencyActivityLogService activityLogService;
 
     public CompetencyFrameworkServiceImpl(CompetencyFrameworkRepository frameworkRepository,
                                            CompetencyFrameworkSkillRepository frameworkSkillRepository,
@@ -30,7 +31,8 @@ public class CompetencyFrameworkServiceImpl implements CompetencyFrameworkServic
                                            SkillTaxonomyRepository skillTaxonomyRepository,
                                            StrategicGoalRepository strategicGoalRepository,
                                            IndustryBenchmarkRepository industryBenchmarkRepository,
-                                           RoleRepository roleRepository) {
+                                           RoleRepository roleRepository,
+                                           CompetencyActivityLogService activityLogService) {
         this.frameworkRepository = frameworkRepository;
         this.frameworkSkillRepository = frameworkSkillRepository;
         this.goalMappingRepository = goalMappingRepository;
@@ -38,6 +40,7 @@ public class CompetencyFrameworkServiceImpl implements CompetencyFrameworkServic
         this.strategicGoalRepository = strategicGoalRepository;
         this.industryBenchmarkRepository = industryBenchmarkRepository;
         this.roleRepository = roleRepository;
+        this.activityLogService = activityLogService;
     }
 
     @Override
@@ -55,7 +58,10 @@ public class CompetencyFrameworkServiceImpl implements CompetencyFrameworkServic
         framework.setIsCurrentVersion(true);
         framework.setCreatedBy(createdBy);
 
-        return CompetencyFrameworkResponse.fromEntity(frameworkRepository.save(framework));
+        CompetencyFramework saved = frameworkRepository.save(framework);
+        activityLogService.log("FRAMEWORK", saved.getFrameworkName(), "CREATED",
+                "Framework \"" + saved.getFrameworkName() + "\" created as draft");
+        return CompetencyFrameworkResponse.fromEntity(saved);
     }
 
     @Override
@@ -104,7 +110,10 @@ public class CompetencyFrameworkServiceImpl implements CompetencyFrameworkServic
         framework.setIndustryBenchmarkSource(request.getIndustryBenchmarkSource());
         framework.setRole(resolveRole(request.getRoleId()));
 
-        return CompetencyFrameworkResponse.fromEntity(frameworkRepository.save(framework));
+        CompetencyFramework saved = frameworkRepository.save(framework);
+        activityLogService.log("FRAMEWORK", saved.getFrameworkName(), "UPDATED",
+                "Framework \"" + saved.getFrameworkName() + "\" details updated");
+        return CompetencyFrameworkResponse.fromEntity(saved);
     }
 
     @Override
@@ -117,7 +126,10 @@ public class CompetencyFrameworkServiceImpl implements CompetencyFrameworkServic
         }
 
         framework.setStatus(FrameworkStatus.PUBLISHED);
-        return CompetencyFrameworkResponse.fromEntity(frameworkRepository.save(framework));
+        CompetencyFramework saved = frameworkRepository.save(framework);
+        activityLogService.log("FRAMEWORK", saved.getFrameworkName(), "PUBLISHED",
+                "Framework \"" + saved.getFrameworkName() + "\" published and is now the active version");
+        return CompetencyFrameworkResponse.fromEntity(saved);
     }
 
     @Override
@@ -126,7 +138,10 @@ public class CompetencyFrameworkServiceImpl implements CompetencyFrameworkServic
         CompetencyFramework framework = findEntity(id);
         framework.setStatus(FrameworkStatus.ARCHIVED);
         framework.setIsCurrentVersion(false);
-        return CompetencyFrameworkResponse.fromEntity(frameworkRepository.save(framework));
+        CompetencyFramework saved = frameworkRepository.save(framework);
+        activityLogService.log("FRAMEWORK", saved.getFrameworkName(), "ARCHIVED",
+                "Framework \"" + saved.getFrameworkName() + "\" archived");
+        return CompetencyFrameworkResponse.fromEntity(saved);
     }
 
     @Override
@@ -138,7 +153,9 @@ public class CompetencyFrameworkServiceImpl implements CompetencyFrameworkServic
             throw new IllegalStateException("Only DRAFT frameworks can be deleted. Archive published frameworks instead.");
         }
 
+        String name = framework.getFrameworkName();
         frameworkRepository.delete(framework);
+        activityLogService.log("FRAMEWORK", name, "DELETED", "Draft framework \"" + name + "\" deleted");
     }
 
     @Override
@@ -154,7 +171,10 @@ public class CompetencyFrameworkServiceImpl implements CompetencyFrameworkServic
             framework.getSkills().add(buildFrameworkSkill(framework, req));
         }
 
-        return CompetencyFrameworkResponse.fromEntity(frameworkRepository.save(framework));
+        CompetencyFramework saved = frameworkRepository.save(framework);
+        activityLogService.log("FRAMEWORK", saved.getFrameworkName(), "SKILLS_UPDATED",
+                "Required skills for \"" + saved.getFrameworkName() + "\" were updated");
+        return CompetencyFrameworkResponse.fromEntity(saved);
     }
 
     @Override
@@ -163,9 +183,14 @@ public class CompetencyFrameworkServiceImpl implements CompetencyFrameworkServic
         CompetencyFramework framework = findEntity(frameworkId);
         requireEditable(framework);
 
-        framework.getSkills().add(buildFrameworkSkill(framework, request));
+        CompetencyFrameworkSkill skill = buildFrameworkSkill(framework, request);
+        framework.getSkills().add(skill);
 
-        return CompetencyFrameworkResponse.fromEntity(frameworkRepository.save(framework));
+        CompetencyFramework saved = frameworkRepository.save(framework);
+        activityLogService.log("FRAMEWORK", saved.getFrameworkName(), "SKILL_ADDED",
+                "Required skill \"" + skill.getSkillTaxonomy().getName() + "\" (" + skill.getRequiredLevel()
+                        + ") added to \"" + saved.getFrameworkName() + "\"");
+        return CompetencyFrameworkResponse.fromEntity(saved);
     }
 
     @Override
@@ -174,13 +199,22 @@ public class CompetencyFrameworkServiceImpl implements CompetencyFrameworkServic
         CompetencyFramework framework = findEntity(frameworkId);
         requireEditable(framework);
 
+        String removedSkillName = framework.getSkills().stream()
+                .filter(s -> s.getId().equals(frameworkSkillId))
+                .findFirst()
+                .map(s -> s.getSkillTaxonomy().getName())
+                .orElse(null);
+
         boolean removed = framework.getSkills().removeIf(s -> s.getId().equals(frameworkSkillId));
         if (!removed) {
             throw new CompetencyFrameworkNotFoundException(
                     "Framework skill not found with id: " + frameworkSkillId + " on framework " + frameworkId);
         }
 
-        return CompetencyFrameworkResponse.fromEntity(frameworkRepository.save(framework));
+        CompetencyFramework saved = frameworkRepository.save(framework);
+        activityLogService.log("FRAMEWORK", saved.getFrameworkName(), "SKILL_REMOVED",
+                "Required skill \"" + removedSkillName + "\" removed from \"" + saved.getFrameworkName() + "\"");
+        return CompetencyFrameworkResponse.fromEntity(saved);
     }
 
     @Override
@@ -203,14 +237,19 @@ public class CompetencyFrameworkServiceImpl implements CompetencyFrameworkServic
 
         goalMappingRepository.save(mapping);
 
+        activityLogService.log("FRAMEWORK", framework.getFrameworkName(), "GOAL_MAPPED",
+                "\"" + framework.getFrameworkName() + "\" mapped to strategic goal \"" + goal.getGoalName() + "\"");
+
         return CompetencyFrameworkResponse.fromEntity(findEntity(frameworkId));
     }
 
     @Override
     @Transactional
     public CompetencyFrameworkResponse removeGoalMapping(Long frameworkId, Long strategicGoalId) {
-        findEntity(frameworkId);
+        CompetencyFramework framework = findEntity(frameworkId);
         goalMappingRepository.deleteByFrameworkIdAndStrategicGoalId(frameworkId, strategicGoalId);
+        activityLogService.log("FRAMEWORK", framework.getFrameworkName(), "GOAL_UNMAPPED",
+                "Strategic goal mapping removed from \"" + framework.getFrameworkName() + "\"");
         return CompetencyFrameworkResponse.fromEntity(findEntity(frameworkId));
     }
 
@@ -233,73 +272,12 @@ public class CompetencyFrameworkServiceImpl implements CompetencyFrameworkServic
                 }
 
                 if (!benchmarks.isEmpty()) {
-                    ProficiencyLevel benchmarkLevel = benchmarks.get(0).getBenchmarkLevel();
-                    skillDTO.setBenchmarkLevel(benchmarkLevel);
-                    skillDTO.setGapVsBenchmark(skillDTO.getRequiredLevel().getRank() - benchmarkLevel.getRank());
+                    skillDTO.setBenchmarkRecommendedAction(benchmarks.get(0).getRecommendedAction());
                 }
             }
         }
 
         return response;
-    }
-
-    @Override
-    @Transactional
-    public CompetencyFrameworkResponse createNewVersion(Long frameworkId, String createdBy) {
-        CompetencyFramework source = findEntity(frameworkId);
-
-        int nextVersionNumber = frameworkRepository
-                .findByVersionGroupIdOrderByVersionNumberDesc(source.getVersionGroupId())
-                .stream()
-                .findFirst()
-                .map(f -> f.getVersionNumber() + 1)
-                .orElse(source.getVersionNumber() + 1);
-
-        source.setIsCurrentVersion(false);
-        frameworkRepository.save(source);
-
-        CompetencyFramework newVersion = new CompetencyFramework();
-        newVersion.setFrameworkName(source.getFrameworkName());
-        newVersion.setRole(source.getRole());
-        newVersion.setDepartment(source.getDepartment());
-        newVersion.setDescription(source.getDescription());
-        newVersion.setIndustryBenchmarkSource(source.getIndustryBenchmarkSource());
-        newVersion.setStatus(FrameworkStatus.DRAFT);
-        newVersion.setVersionGroupId(source.getVersionGroupId());
-        newVersion.setVersionNumber(nextVersionNumber);
-        newVersion.setIsCurrentVersion(true);
-        newVersion.setCreatedBy(createdBy);
-
-        CompetencyFramework savedNewVersion = frameworkRepository.save(newVersion);
-
-        for (CompetencyFrameworkSkill sourceSkill : source.getSkills()) {
-            CompetencyFrameworkSkill clone = new CompetencyFrameworkSkill();
-            clone.setFramework(savedNewVersion);
-            clone.setSkillTaxonomy(sourceSkill.getSkillTaxonomy());
-            clone.setRequiredLevel(sourceSkill.getRequiredLevel());
-            clone.setWeight(sourceSkill.getWeight());
-            clone.setNotes(sourceSkill.getNotes());
-            savedNewVersion.getSkills().add(clone);
-        }
-
-        for (CompetencyGoalMapping sourceMapping : source.getGoalMappings()) {
-            CompetencyGoalMapping clone = new CompetencyGoalMapping();
-            clone.setFramework(savedNewVersion);
-            clone.setStrategicGoal(sourceMapping.getStrategicGoal());
-            clone.setAlignmentWeight(sourceMapping.getAlignmentWeight());
-            clone.setNotes(sourceMapping.getNotes());
-            savedNewVersion.getGoalMappings().add(clone);
-        }
-
-        return CompetencyFrameworkResponse.fromEntity(frameworkRepository.save(savedNewVersion));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<FrameworkVersionSummaryDTO> getVersionHistory(String versionGroupId) {
-        return frameworkRepository.findByVersionGroupIdOrderByVersionNumberDesc(versionGroupId).stream()
-                .map(FrameworkVersionSummaryDTO::fromEntity)
-                .collect(Collectors.toList());
     }
 
     private CompetencyFrameworkSkill buildFrameworkSkill(CompetencyFramework framework, CompetencyFrameworkSkillRequest request) {
@@ -327,7 +305,7 @@ public class CompetencyFrameworkServiceImpl implements CompetencyFrameworkServic
     private void requireEditable(CompetencyFramework framework) {
         if (framework.getStatus() == FrameworkStatus.PUBLISHED) {
             throw new IllegalStateException(
-                    "Published frameworks cannot be edited directly. Create a new version instead.");
+                    "Published frameworks cannot be edited directly. Archive it first if changes are needed.");
         }
     }
 
