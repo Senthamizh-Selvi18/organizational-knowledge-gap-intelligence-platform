@@ -17,8 +17,7 @@ public class CompetencyFrameworkSkillDTO {
     private Double weight;
     private String notes;
 
-    private ProficiencyLevel benchmarkLevel;
-    private Integer gapVsBenchmark; 
+    private String benchmarkRecommendedAction;
 
     public static CompetencyFrameworkSkillDTO fromEntity(CompetencyFrameworkSkill entity) {
         CompetencyFrameworkSkillDTO dto = new CompetencyFrameworkSkillDTO();

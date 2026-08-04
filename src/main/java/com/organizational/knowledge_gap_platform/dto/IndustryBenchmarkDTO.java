@@ -1,7 +1,6 @@
 package com.organizational.knowledge_gap_platform.dto;
 
 import com.organizational.knowledge_gap_platform.entity.IndustryBenchmark;
-import com.organizational.knowledge_gap_platform.entity.ProficiencyLevel;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,7 +16,7 @@ public class IndustryBenchmarkDTO {
     private String skillTaxonomyName;
     private String industrySector;
     private String roleCategory;
-    private ProficiencyLevel benchmarkLevel;
+    private String recommendedAction;
     private String source;
     private LocalDate referenceDate;
     private String notes;
@@ -28,7 +27,7 @@ public class IndustryBenchmarkDTO {
         dto.setId(entity.getId());
         dto.setIndustrySector(entity.getIndustrySector());
         dto.setRoleCategory(entity.getRoleCategory());
-        dto.setBenchmarkLevel(entity.getBenchmarkLevel());
+        dto.setRecommendedAction(entity.getRecommendedAction());
         dto.setSource(entity.getSource());
         dto.setReferenceDate(entity.getReferenceDate());
         dto.setNotes(entity.getNotes());

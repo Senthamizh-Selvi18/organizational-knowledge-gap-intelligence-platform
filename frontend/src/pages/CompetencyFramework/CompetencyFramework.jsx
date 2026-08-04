@@ -15,8 +15,6 @@ import {
   mapFrameworkToGoal,
   removeFrameworkGoalMapping,
   compareFrameworkToBenchmark,
-  createNewFrameworkVersion,
-  getFrameworkVersionHistory,
   getSkillTaxonomyList,
   createSkillTaxonomy,
   updateSkillTaxonomy,
@@ -27,6 +25,7 @@ import {
   getIndustryBenchmarks,
   createIndustryBenchmark,
   deleteIndustryBenchmark,
+  getCompetencyActivityHistory,
 } from "../../services/competencyFrameworkService";
 import {
   FiAward,
@@ -34,14 +33,12 @@ import {
   FiTrash2,
   FiCheckCircle,
   FiAlertCircle,
-  FiGitBranch,
   FiTarget,
   FiTrendingUp,
   FiLayers,
   FiSend,
   FiArchive,
   FiClock,
-  FiX,
 } from "react-icons/fi";
 import { confirmDialog } from "../../components/ui/ConfirmDialog.jsx";
 import { toast } from "../../components/ui/Toast.jsx";
@@ -53,6 +50,7 @@ const TABS = [
   { key: "taxonomy", label: "Skill Taxonomy", icon: FiLayers },
   { key: "goals", label: "Strategic Goals", icon: FiTarget },
   { key: "benchmarks", label: "Industry Benchmarks", icon: FiTrendingUp },
+  { key: "history", label: "History", icon: FiClock },
 ];
 
 const statusColor = (status) => {
@@ -101,11 +99,6 @@ export default function CompetencyFramework() {
   const flash = (type, message) => {
     setStatus({ type, message });
     setTimeout(() => setStatus(null), 4000);
-    if (type === "success") {
-      toast.success(message);
-    } else {
-      toast.error(message);
-    }
   };
 
   return (
@@ -157,6 +150,7 @@ export default function CompetencyFramework() {
         )}
         {activeTab === "goals" && <GoalsTab flash={flash} isAdmin={isAdmin} />}
         {activeTab === "benchmarks" && <BenchmarksTab flash={flash} isAdmin={isAdmin} />}
+        {activeTab === "history" && <HistoryTab flash={flash} />}
       </div>
     </DashboardLayout>
   );
@@ -203,6 +197,7 @@ function FrameworksTab({ roles, skills, flash, isAdmin }) {
       };
       const created = await createFramework(payload);
       flash("success", "Framework created as draft.");
+      toast.success("Framework created as draft.");
       setShowNewForm(false);
       setNewFramework({
         frameworkName: "",
@@ -337,20 +332,18 @@ function FrameworksTab({ roles, skills, flash, isAdmin }) {
             setSelectedId(null);
             loadFrameworks();
           }}
-          onVersioned={(newId) => setSelectedId(newId)}
         />
       )}
     </div>
   );
 }
 
-function FrameworkDetail({ frameworkId, skills, flash, isAdmin, onChanged, onDeleted, onVersioned }) {
+function FrameworkDetail({ frameworkId, skills, flash, isAdmin, onChanged, onDeleted }) {
   const [framework, setFramework] = useState(null);
   const [taxonomy, setTaxonomy] = useState([]);
   const [goals, setGoals] = useState([]);
   const [newSkill, setNewSkill] = useState({ skillTaxonomyId: "", requiredLevel: "BEGINNER", weight: 1 });
   const [newGoalMapping, setNewGoalMapping] = useState({ strategicGoalId: "", alignmentWeight: 100 });
-  const [history, setHistory] = useState(null);
 
   const load = async () => {
     try {
@@ -371,7 +364,6 @@ function FrameworkDetail({ frameworkId, skills, flash, isAdmin, onChanged, onDel
         // handled elsewhere
       }
     })();
-    setHistory(null);
   }, [frameworkId]);
 
   if (!framework) return <p className="text-mute text-sm">Loading...</p>;
@@ -400,6 +392,7 @@ function FrameworkDetail({ frameworkId, skills, flash, isAdmin, onChanged, onDel
       setFramework(updated);
       setNewSkill({ skillTaxonomyId: "", requiredLevel: "BEGINNER", weight: 1 });
       flash("success", "Skill requirement added.");
+      toast.success("Skill requirement added.");
       onChanged();
     } catch (err) {
       flash("error", err.response?.data?.message || "Failed to add skill.");
@@ -477,17 +470,6 @@ function FrameworkDetail({ frameworkId, skills, flash, isAdmin, onChanged, onDel
     }
   };
 
-  const handleNewVersion = async () => {
-    try {
-      const created = await createNewFrameworkVersion(frameworkId);
-      flash("success", `Created version ${created.versionNumber}.`);
-      onChanged();
-      onVersioned(created.id);
-    } catch (err) {
-      flash("error", "Failed to create new version.");
-    }
-  };
-
   const handleCompareBenchmark = async () => {
     try {
       const compared = await compareFrameworkToBenchmark(frameworkId);
@@ -495,15 +477,6 @@ function FrameworkDetail({ frameworkId, skills, flash, isAdmin, onChanged, onDel
       flash("success", "Compared against industry benchmark data.");
     } catch (err) {
       flash("error", "Failed to compare against benchmarks.");
-    }
-  };
-
-  const handleShowHistory = async () => {
-    try {
-      const list = await getFrameworkVersionHistory(framework.versionGroupId);
-      setHistory(list);
-    } catch (err) {
-      flash("error", "Failed to load version history.");
     }
   };
 
@@ -539,20 +512,6 @@ function FrameworkDetail({ frameworkId, skills, flash, isAdmin, onChanged, onDel
               <FiArchive /> Archive
             </button>
           )}
-          {isAdmin && (
-            <button
-              onClick={handleNewVersion}
-              className="flex items-center gap-1 text-sm border border-line rounded-xl px-3 py-2 hover:bg-bg"
-            >
-              <FiGitBranch /> New Version
-            </button>
-          )}
-          <button
-            onClick={handleShowHistory}
-            className="flex items-center gap-1 text-sm border border-line rounded-xl px-3 py-2 hover:bg-bg"
-          >
-            <FiClock /> History
-          </button>
           {isAdmin && isDraft && (
             <button
               onClick={handleDelete}
@@ -564,52 +523,7 @@ function FrameworkDetail({ frameworkId, skills, flash, isAdmin, onChanged, onDel
         </div>
       </div>
 
-      {history && (
-        <div className="border border-line rounded-xl p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <h4 className="font-medium text-sm">Version History</h4>
-            <button onClick={() => setHistory(null)} className="text-mute">
-              <FiX />
-            </button>
-          </div>
-          <p className="text-xs text-mute">
-            Read-only snapshot of the skills/taxonomies completed in each past
-            version. To edit skills, close history and use the version above.
-          </p>
-          {history.map((v) => (
-            <div key={v.id} className="border-b border-line/50 pb-2 last:border-b-0">
-              <div className="text-xs text-sub flex items-center justify-between py-1">
-                <span>
-                  v{v.versionNumber} · {v.status} {v.isCurrentVersion ? "(current)" : ""}
-                </span>
-                <span className="text-mute">{v.createdBy}</span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {(v.completedSkills || []).map((s, idx) => (
-                  <span
-                    key={`${v.id}-${idx}`}
-                    className="text-[11px] px-2 py-1 rounded-lg bg-bg border border-line text-sub"
-                  >
-                    {s.skillTaxonomyName}
-                    {s.requiredLevel ? ` · ${s.requiredLevel}` : ""}
-                  </span>
-                ))}
-                {(!v.completedSkills || v.completedSkills.length === 0) && (
-                  <span className="text-[11px] text-mute">
-                    No skills/taxonomies were completed in this version.
-                  </span>
-                )}
-              </div>
-            </div>
-          ))}
-          {history.length === 0 && (
-            <p className="text-mute text-xs">No previous versions yet.</p>
-          )}
-        </div>
-      )}
-
-      {/* Required skills */}
-      {!history && (
+      {/* Required skills (feature ii) */}
       <div>
         <div className="flex items-center justify-between mb-2">
           <h4 className="font-medium">Required Skills &amp; Levels</h4>
@@ -630,25 +544,18 @@ function FrameworkDetail({ frameworkId, skills, flash, isAdmin, onChanged, onDel
               <div>
                 <span className="font-medium text-sm">{s.skillTaxonomyName}</span>
                 {s.category && <span className="text-xs text-mute ml-2">({s.category})</span>}
+                {s.benchmarkRecommendedAction && (
+                  <p className="text-xs text-mute mt-1 max-w-md">
+                    <span className="font-medium">To reach the industry benchmark:</span>{" "}
+                    {s.benchmarkRecommendedAction}
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-3 text-xs">
                 <span className="px-2 py-1 rounded-lg bg-primary-tint text-primary">
                   Required: {s.requiredLevel}
                 </span>
                 <span className="text-mute">Weight: {s.weight}</span>
-                {s.benchmarkLevel && (
-                  <span
-                    className={`px-2 py-1 rounded-lg ${
-                      s.gapVsBenchmark > 0
-                        ? "bg-green-100 text-green-700"
-                        : s.gapVsBenchmark < 0
-                        ? "bg-red-100 text-red-700"
-                        : "bg-gray-100 text-gray-600"
-                    }`}
-                  >
-                    Benchmark: {s.benchmarkLevel} (gap {s.gapVsBenchmark})
-                  </span>
-                )}
                 {isAdmin && isDraft && (
                   <button onClick={() => handleRemoveSkill(s.id)} className="text-red-500">
                     <FiTrash2 />
@@ -705,7 +612,6 @@ function FrameworkDetail({ frameworkId, skills, flash, isAdmin, onChanged, onDel
           </div>
         )}
       </div>
-      )}
 
       {/* Strategic goal mapping (feature iii) */}
       <div>
@@ -818,6 +724,7 @@ function TaxonomyTab({ skills, flash, isAdmin }) {
       });
       setForm({ name: "", category: "", parentId: "", linkedSkillIds: [], description: "" });
       flash("success", "Taxonomy node created.");
+      toast.success("Taxonomy node created.");
       load();
     } catch (err) {
       flash("error", err.response?.data?.message || "Failed to create taxonomy node.");
@@ -962,6 +869,7 @@ function GoalsTab({ flash, isAdmin }) {
       });
       setForm({ goalName: "", description: "", targetYear: "", priority: "MEDIUM" });
       flash("success", "Strategic goal created.");
+      toast.success("Strategic goal created.");
       load();
     } catch (err) {
       flash("error", err.response?.data?.message || "Failed to create strategic goal.");
@@ -1069,7 +977,7 @@ function BenchmarksTab({ flash, isAdmin }) {
     skillTaxonomyId: "",
     industrySector: "",
     roleCategory: "",
-    benchmarkLevel: "INTERMEDIATE",
+    recommendedAction: "",
     source: "",
     referenceDate: "",
     notes: "",
@@ -1094,6 +1002,10 @@ function BenchmarksTab({ flash, isAdmin }) {
       flash("error", "Choose a taxonomy skill first.");
       return;
     }
+    if (!form.recommendedAction.trim()) {
+      flash("error", "Describe what the employee should do to reach this benchmark.");
+      return;
+    }
     try {
       await createIndustryBenchmark({
         ...form,
@@ -1104,12 +1016,13 @@ function BenchmarksTab({ flash, isAdmin }) {
         skillTaxonomyId: "",
         industrySector: "",
         roleCategory: "",
-        benchmarkLevel: "INTERMEDIATE",
+        recommendedAction: "",
         source: "",
         referenceDate: "",
         notes: "",
       });
       flash("success", "Industry benchmark added.");
+      toast.success("Industry benchmark added.");
       load();
     } catch (err) {
       flash("error", err.response?.data?.message || "Failed to add benchmark.");
@@ -1149,17 +1062,6 @@ function BenchmarksTab({ flash, isAdmin }) {
               </option>
             ))}
           </select>
-          <select
-            value={form.benchmarkLevel}
-            onChange={(e) => setForm({ ...form, benchmarkLevel: e.target.value })}
-            className="border rounded-xl px-4 py-2 outline-none"
-          >
-            {LEVELS.map((l) => (
-              <option key={l} value={l}>
-                {l}
-              </option>
-            ))}
-          </select>
           <input
             placeholder="Industry sector (e.g. Fintech)"
             value={form.industrySector}
@@ -1184,6 +1086,13 @@ function BenchmarksTab({ flash, isAdmin }) {
             onChange={(e) => setForm({ ...form, referenceDate: e.target.value })}
             className="border rounded-xl px-4 py-2 outline-none"
           />
+          <textarea
+            placeholder="What should the employee do to reach this benchmark? (e.g. complete an advanced certification, lead 2 cross-functional projects, pair with a senior mentor for 3 months)"
+            value={form.recommendedAction}
+            onChange={(e) => setForm({ ...form, recommendedAction: e.target.value })}
+            rows={3}
+            className="border rounded-xl px-4 py-2 outline-none md:col-span-2"
+          />
           <button
             onClick={handleCreate}
             className="bg-primary text-text px-4 py-2 rounded-xl w-fit flex items-center gap-2 hover:bg-primary-dark"
@@ -1199,9 +1108,13 @@ function BenchmarksTab({ flash, isAdmin }) {
             <div>
               <p className="font-medium text-sm">{b.skillTaxonomyName}</p>
               <p className="text-xs text-mute">
-                {b.industrySector || "Any sector"} · {b.roleCategory || "Any role"} · {b.benchmarkLevel}
+                {b.industrySector || "Any sector"} · {b.roleCategory || "Any role"}
               </p>
-              {b.source && <p className="text-xs text-mute">Source: {b.source}</p>}
+              <p className="text-sm mt-2">
+                <span className="font-medium text-xs text-mute block mb-0.5">To reach this benchmark:</span>
+                {b.recommendedAction}
+              </p>
+              {b.source && <p className="text-xs text-mute mt-2">Source: {b.source}</p>}
             </div>
             {isAdmin && (
               <button onClick={() => handleDelete(b.id)} className="text-red-500">
@@ -1214,6 +1127,104 @@ function BenchmarksTab({ flash, isAdmin }) {
           <p className="text-mute text-sm">No industry benchmarks yet.</p>
         )}
       </div>
+    </div>
+  );
+}
+
+const ACTIVITY_ENTITY_LABEL = {
+  FRAMEWORK: "Framework",
+  TAXONOMY: "Skill Taxonomy",
+  STRATEGIC_GOAL: "Strategic Goal",
+  INDUSTRY_BENCHMARK: "Industry Benchmark",
+};
+
+const ACTIVITY_ACTION_COLOR = {
+  CREATED: "bg-green-100 text-green-700",
+  UPDATED: "bg-blue-100 text-blue-700",
+  DELETED: "bg-red-100 text-red-700",
+  PUBLISHED: "bg-purple-100 text-purple-700",
+  ARCHIVED: "bg-gray-100 text-gray-600",
+  SKILL_ADDED: "bg-green-100 text-green-700",
+  SKILL_REMOVED: "bg-red-100 text-red-700",
+  SKILLS_UPDATED: "bg-blue-100 text-blue-700",
+  GOAL_MAPPED: "bg-green-100 text-green-700",
+  GOAL_UNMAPPED: "bg-red-100 text-red-700",
+};
+
+function HistoryTab({ flash }) {
+  const [activity, setActivity] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const list = await getCompetencyActivityHistory();
+      setActivity(list);
+    } catch (err) {
+      flash("error", "Failed to load activity history.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  return (
+    <div className="bg-panel rounded-3xl shadow-xl p-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold">History</h2>
+          <p className="text-sub text-sm">
+            Every change made across Frameworks, Skill Taxonomy, Strategic Goals, and
+            Industry Benchmarks, oldest first.
+          </p>
+        </div>
+        <button
+          onClick={load}
+          className="text-xs border border-line rounded-xl px-3 py-2 hover:bg-bg"
+        >
+          Refresh
+        </button>
+      </div>
+
+      {loading && <p className="text-mute text-sm">Loading activity...</p>}
+
+      {!loading && activity.length === 0 && (
+        <p className="text-mute text-sm">No activity recorded yet.</p>
+      )}
+
+      {!loading && activity.length > 0 && (
+        <div className="space-y-2">
+          {activity.map((entry) => (
+            <div
+              key={entry.id}
+              className="border border-line rounded-xl px-4 py-3 flex flex-wrap items-start justify-between gap-2"
+            >
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span
+                    className={`text-xs px-2 py-1 rounded-lg ${
+                      ACTIVITY_ACTION_COLOR[entry.action] || "bg-gray-100 text-gray-600"
+                    }`}
+                  >
+                    {entry.action?.replace(/_/g, " ")}
+                  </span>
+                  <span className="text-xs text-mute">
+                    {ACTIVITY_ENTITY_LABEL[entry.entityType] || entry.entityType}
+                  </span>
+                </div>
+                <p className="text-sm mt-1">{entry.description || entry.entityName}</p>
+              </div>
+              <div className="text-xs text-mute text-right">
+                <p>{entry.performedBy || "system"}</p>
+                <p>{entry.createdAt ? new Date(entry.createdAt).toLocaleString() : ""}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
