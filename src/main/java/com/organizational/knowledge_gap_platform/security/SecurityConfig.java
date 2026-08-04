@@ -66,15 +66,9 @@ public class SecurityConfig {
                 )
 
                 .exceptionHandling(exceptions -> exceptions
-                        .defaultAuthenticationEntryPointFor(
-                                apiAuthenticationEntryPoint(),
-                                jsonEntryPointMatcher
-                        )
-                        .defaultAccessDeniedHandlerFor(
-                                apiAccessDeniedHandler(),
-                                jsonEntryPointMatcher
-                        )
-                )
+        .authenticationEntryPoint(apiAuthenticationEntryPoint())
+        .accessDeniedHandler(apiAccessDeniedHandler())
+)
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(

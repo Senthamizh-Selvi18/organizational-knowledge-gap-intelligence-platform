@@ -280,6 +280,42 @@ public class CompetencyFrameworkServiceImpl implements CompetencyFrameworkServic
         return response;
     }
 
+    @Override
+    @Transactional
+    public CompetencyFrameworkResponse createNewVersion(Long frameworkId, String createdBy) {
+        CompetencyFramework current = findEntity(frameworkId);
+
+        current.setIsCurrentVersion(false);
+        frameworkRepository.save(current);
+
+        CompetencyFramework newVersion = new CompetencyFramework();
+        newVersion.setFrameworkName(current.getFrameworkName());
+        newVersion.setDepartment(current.getDepartment());
+        newVersion.setDescription(current.getDescription());
+        newVersion.setIndustryBenchmarkSource(current.getIndustryBenchmarkSource());
+        newVersion.setRole(current.getRole());
+        newVersion.setStatus(FrameworkStatus.DRAFT);
+        newVersion.setVersionGroupId(current.getVersionGroupId());
+        newVersion.setVersionNumber(current.getVersionNumber() + 1);
+        newVersion.setIsCurrentVersion(true);
+        newVersion.setCreatedBy(createdBy);
+
+        CompetencyFramework saved = frameworkRepository.save(newVersion);
+        activityLogService.log("FRAMEWORK", saved.getFrameworkName(), "NEW_VERSION",
+                "Version " + saved.getVersionNumber() + " of \"" + saved.getFrameworkName()
+                        + "\" created from version " + current.getVersionNumber());
+
+        return CompetencyFrameworkResponse.fromEntity(saved);
+    }
+
+    @Override
+    public List<FrameworkVersionSummaryDTO> getVersionHistory(String versionGroupId) {
+        return frameworkRepository.findByVersionGroupIdOrderByVersionNumberDesc(versionGroupId)
+                .stream()
+                .map(FrameworkVersionSummaryDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
     private CompetencyFrameworkSkill buildFrameworkSkill(CompetencyFramework framework, CompetencyFrameworkSkillRequest request) {
         SkillTaxonomy taxonomy = skillTaxonomyRepository.findById(request.getSkillTaxonomyId())
                 .orElseThrow(() -> new SkillTaxonomyNotFoundException(
