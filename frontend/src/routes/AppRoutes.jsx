@@ -34,7 +34,6 @@ import MentorshipRequests from "../pages/MentorshipRequests/MentorshipRequests";
 import SessionBooking from "../pages/SessionBooking/SessionBooking";
 import KnowledgeBase from "../pages/KnowledgeBase/KnowledgeBase";
 import Reports from "../pages/Reports/Reports";
-import GapAnalysis from "../pages/GapAnalysis/GapAnalysis";
 import GapSnapshotHistory from "../pages/GapSnapshotHistory/GapSnapshotHistory";
 
 function AppRoutes() {
