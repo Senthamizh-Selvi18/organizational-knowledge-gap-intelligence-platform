@@ -9,11 +9,13 @@ import com.organizational.knowledge_gap_platform.exception.SkillTaxonomyNotFound
 import com.organizational.knowledge_gap_platform.repository.IndustryBenchmarkRepository;
 import com.organizational.knowledge_gap_platform.repository.SkillTaxonomyRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class IndustryBenchmarkServiceImpl implements IndustryBenchmarkService {
 
     private final IndustryBenchmarkRepository industryBenchmarkRepository;
@@ -39,20 +41,23 @@ public class IndustryBenchmarkServiceImpl implements IndustryBenchmarkService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public IndustryBenchmarkDTO getById(Long id) {
         return IndustryBenchmarkDTO.fromEntity(findEntity(id));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<IndustryBenchmarkDTO> getAll() {
-        return industryBenchmarkRepository.findAll().stream()
+        return industryBenchmarkRepository.findAllWithTaxonomy().stream()
                 .map(IndustryBenchmarkDTO::fromEntity)
                 .collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<IndustryBenchmarkDTO> getBySkillTaxonomy(Long skillTaxonomyId) {
-        return industryBenchmarkRepository.findBySkillTaxonomyId(skillTaxonomyId).stream()
+        return industryBenchmarkRepository.findBySkillTaxonomyIdWithTaxonomy(skillTaxonomyId).stream()
                 .map(IndustryBenchmarkDTO::fromEntity)
                 .collect(Collectors.toList());
     }

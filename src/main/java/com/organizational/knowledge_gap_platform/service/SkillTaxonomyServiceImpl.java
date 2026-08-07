@@ -8,12 +8,14 @@ import com.organizational.knowledge_gap_platform.exception.SkillTaxonomyNotFound
 import com.organizational.knowledge_gap_platform.repository.SkillRepository;
 import com.organizational.knowledge_gap_platform.repository.SkillTaxonomyRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class SkillTaxonomyServiceImpl implements SkillTaxonomyService {
 
     private final SkillTaxonomyRepository skillTaxonomyRepository;
@@ -34,11 +36,13 @@ public class SkillTaxonomyServiceImpl implements SkillTaxonomyService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public SkillTaxonomyDTO getById(Long id) {
         return SkillTaxonomyDTO.fromEntity(findEntity(id), true);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<SkillTaxonomyDTO> getAllFlat() {
         return skillTaxonomyRepository.findAll().stream()
                 .map(SkillTaxonomyDTO::fromEntity)
@@ -46,6 +50,7 @@ public class SkillTaxonomyServiceImpl implements SkillTaxonomyService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<SkillTaxonomyDTO> getTree() {
         return skillTaxonomyRepository.findByParentIsNull().stream()
                 .filter(t -> Boolean.TRUE.equals(t.getActive()))
