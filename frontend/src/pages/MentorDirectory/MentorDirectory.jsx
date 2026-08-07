@@ -17,7 +17,12 @@ const EMPTY_PROFILE_FORM = {
   active: true,
 };
 
+const NON_MENTOR_ROLES = ["employee", "intern"];
+
 export default function MentorDirectory() {
+  const role = localStorage.getItem("role")?.toLowerCase() || "";
+  const canBeMentor = !NON_MENTOR_ROLES.includes(role);
+
   const [mentors, setMentors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -187,12 +192,14 @@ export default function MentorDirectory() {
             </p>
           </div>
 
-          <button
-            onClick={openProfileModal}
-            className="bg-primary text-white px-5 py-3 rounded-xl font-semibold hover:opacity-90 transition"
-          >
-            {myProfile ? "Edit My Mentor Profile" : "+ Become a Mentor"}
-          </button>
+          {canBeMentor && (
+            <button
+              onClick={openProfileModal}
+              className="bg-primary text-white px-5 py-3 rounded-xl font-semibold hover:opacity-90 transition"
+            >
+              {myProfile ? "Edit My Mentor Profile" : "+ Become a Mentor"}
+            </button>
+          )}
         </div>
 
         {error && (
