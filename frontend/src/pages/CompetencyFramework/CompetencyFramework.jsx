@@ -984,12 +984,21 @@ function BenchmarksTab({ flash, isAdmin }) {
   });
 
   const load = async () => {
-    try {
-      const [b, t] = await Promise.all([getIndustryBenchmarks(), getSkillTaxonomyList()]);
-      setBenchmarks(b);
-      setTaxonomy(t);
-    } catch (err) {
+    const [benchmarksResult, taxonomyResult] = await Promise.allSettled([
+      getIndustryBenchmarks(),
+      getSkillTaxonomyList(),
+    ]);
+
+    if (benchmarksResult.status === "fulfilled") {
+      setBenchmarks(benchmarksResult.value);
+    } else {
       flash("error", "Failed to load industry benchmarks.");
+    }
+
+    if (taxonomyResult.status === "fulfilled") {
+      setTaxonomy(taxonomyResult.value);
+    } else {
+      flash("error", "Failed to load skill taxonomy.");
     }
   };
 
