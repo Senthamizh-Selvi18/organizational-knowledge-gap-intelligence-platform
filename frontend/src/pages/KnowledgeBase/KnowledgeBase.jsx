@@ -12,7 +12,12 @@ import {
 
 const EMPTY_FORM = { title: "", content: "", category: "", tags: "" };
 
+const OFFICIAL_ROLES = ["admin", "hr specialist", "manager", "department head"];
+
 export default function KnowledgeBase() {
+  const role = localStorage.getItem("role")?.toLowerCase() || "";
+  const isOfficial = OFFICIAL_ROLES.includes(role);
+
   const [tab, setTab] = useState("all");
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -164,12 +169,14 @@ export default function KnowledgeBase() {
             </p>
           </div>
 
-          <button
-            onClick={openAddModal}
-            className="bg-primary text-white px-5 py-3 rounded-xl font-semibold hover:opacity-90 transition"
-          >
-            + New Article
-          </button>
+          {isOfficial && (
+            <button
+              onClick={openAddModal}
+              className="bg-primary text-white px-5 py-3 rounded-xl font-semibold hover:opacity-90 transition"
+            >
+              + New Article
+            </button>
+          )}
         </div>
 
         {error && <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl">{error}</div>}
@@ -183,14 +190,16 @@ export default function KnowledgeBase() {
           >
             All Articles
           </button>
-          <button
-            onClick={() => setTab("mine")}
-            className={`px-5 py-2 rounded-xl font-semibold transition ${
-              tab === "mine" ? "bg-primary text-white" : "bg-panel text-sub hover:text-text"
-            }`}
-          >
-            My Articles
-          </button>
+          {isOfficial && (
+            <button
+              onClick={() => setTab("mine")}
+              className={`px-5 py-2 rounded-xl font-semibold transition ${
+                tab === "mine" ? "bg-primary text-white" : "bg-panel text-sub hover:text-text"
+              }`}
+            >
+              My Articles
+            </button>
+          )}
         </div>
 
         {tab === "all" && (

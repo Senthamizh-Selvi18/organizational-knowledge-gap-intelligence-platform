@@ -24,7 +24,13 @@ const EMPTY_FORM = {
   notes: "",
 };
 
+const OFFICIAL_ROLES = ["admin", "hr specialist", "manager", "department head"];
+
 export default function SessionBooking() {
+  const role = localStorage.getItem("role")?.toLowerCase() || "";
+  const isOfficial = OFFICIAL_ROLES.includes(role);
+  const currentUserName = localStorage.getItem("name") || "";
+
   const [sessions, setSessions] = useState([]);
   const [acceptedMatches, setAcceptedMatches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -189,18 +195,20 @@ export default function SessionBooking() {
             </p>
           </div>
 
-          <button
-            onClick={openModal}
-            disabled={acceptedMatches.length === 0}
-            className="bg-primary text-white px-5 py-3 rounded-xl font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
-            title={
-              acceptedMatches.length === 0
-                ? "You need an accepted mentorship match first"
-                : ""
-            }
-          >
-            + Book Session
-          </button>
+          {isOfficial && (
+            <button
+              onClick={openModal}
+              disabled={acceptedMatches.length === 0}
+              className="bg-primary text-white px-5 py-3 rounded-xl font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              title={
+                acceptedMatches.length === 0
+                  ? "You need an accepted mentorship match first"
+                  : ""
+              }
+            >
+              + Book Session
+            </button>
+          )}
         </div>
 
         {error && <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl">{error}</div>}
@@ -208,7 +216,7 @@ export default function SessionBooking() {
           <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl">{actionError}</div>
         )}
 
-        {acceptedMatches.length === 0 && !loading && (
+        {isOfficial && acceptedMatches.length === 0 && !loading && (
           <div className="bg-primary-tint text-primary px-4 py-3 rounded-xl text-sm">
             You don't have any accepted mentorship matches yet. Visit the Expert Directory or Mentor Matching page first.
           </div>
@@ -245,16 +253,15 @@ export default function SessionBooking() {
                       {new Date(s.scheduledAt).toLocaleString()} · {s.durationMinutes} min
                     </p>
                     {s.meetingLink && (
-                      
-                        <a
-                        href={s.meetingLink}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-primary text-sm font-semibold underline mt-1 inline-block"
-                      >
-                        Join meeting link
-                      </a>
-                    )}
+                      <a
+                      href={s.meetingLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-primary text-sm font-semibold underline mt-1 inline-block"
+                       >
+                      Join meeting link
+                          </a>
+          )}
                     {s.notes && <p className="text-sub text-sm mt-2">{s.notes}</p>}
 
                     {feedbackByLabel[s.id] && (
@@ -284,7 +291,7 @@ export default function SessionBooking() {
                       </>
                     )}
 
-                    {s.status === "COMPLETED" && !s.feedbackSubmitted && (
+                    {role !== "admin" && s.status === "COMPLETED" && !s.feedbackSubmitted && (
                       <button
                         onClick={() => openFeedbackModal(s)}
                         className="border border-gray-200 text-sub px-4 py-2 rounded-xl font-semibold hover:bg-gray-50 transition"
