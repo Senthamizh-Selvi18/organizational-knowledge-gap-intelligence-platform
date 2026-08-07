@@ -190,14 +190,16 @@ export default function KnowledgeBase() {
           >
             All Articles
           </button>
-          <button
-            onClick={() => setTab("mine")}
-            className={`px-5 py-2 rounded-xl font-semibold transition ${
-              tab === "mine" ? "bg-primary text-white" : "bg-panel text-sub hover:text-text"
-            }`}
-          >
-            My Articles
-          </button>
+          {isOfficial && (
+            <button
+              onClick={() => setTab("mine")}
+              className={`px-5 py-2 rounded-xl font-semibold transition ${
+                tab === "mine" ? "bg-primary text-white" : "bg-panel text-sub hover:text-text"
+              }`}
+            >
+              My Articles
+            </button>
+          )}
         </div>
 
         {tab === "all" && (
