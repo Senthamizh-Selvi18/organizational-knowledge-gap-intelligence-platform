@@ -1034,7 +1034,12 @@ function BenchmarksTab({ flash, isAdmin }) {
       toast.success("Industry benchmark added.");
       load();
     } catch (err) {
-      flash("error", err.response?.data?.message || "Failed to add benchmark.");
+      const fieldErrors = err.response?.data?.errors;
+      const firstFieldError = fieldErrors && Object.values(fieldErrors)[0];
+      flash(
+        "error",
+        firstFieldError || err.response?.data?.message || "Failed to add benchmark."
+      );
     }
   };
 
@@ -1075,18 +1080,21 @@ function BenchmarksTab({ flash, isAdmin }) {
             placeholder="Industry sector (e.g. Fintech)"
             value={form.industrySector}
             onChange={(e) => setForm({ ...form, industrySector: e.target.value })}
+            maxLength={255}
             className="border rounded-xl px-4 py-2 outline-none"
           />
           <input
             placeholder="Role category (e.g. Software Engineer)"
             value={form.roleCategory}
             onChange={(e) => setForm({ ...form, roleCategory: e.target.value })}
+            maxLength={255}
             className="border rounded-xl px-4 py-2 outline-none"
           />
           <input
             placeholder="Source (e.g. SHRM 2026 Report)"
             value={form.source}
             onChange={(e) => setForm({ ...form, source: e.target.value })}
+            maxLength={255}
             className="border rounded-xl px-4 py-2 outline-none"
           />
           <input
@@ -1100,6 +1108,7 @@ function BenchmarksTab({ flash, isAdmin }) {
             value={form.recommendedAction}
             onChange={(e) => setForm({ ...form, recommendedAction: e.target.value })}
             rows={3}
+            maxLength={1000}
             className="border rounded-xl px-4 py-2 outline-none md:col-span-2"
           />
           <button
