@@ -8,10 +8,10 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface IndustryBenchmarkRepository extends JpaRepository<IndustryBenchmark, Long> {
-    @Query("SELECT b FROM IndustryBenchmark b JOIN FETCH b.skillTaxonomy")
+    @Query("SELECT b FROM IndustryBenchmark b LEFT JOIN FETCH b.skillTaxonomy")
     List<IndustryBenchmark> findAllWithTaxonomy();
 
-    @Query("SELECT b FROM IndustryBenchmark b JOIN FETCH b.skillTaxonomy WHERE b.skillTaxonomy.id = :skillTaxonomyId")
+    @Query("SELECT b FROM IndustryBenchmark b LEFT JOIN FETCH b.skillTaxonomy WHERE b.skillTaxonomy.id = :skillTaxonomyId")
     List<IndustryBenchmark> findBySkillTaxonomyIdWithTaxonomy(@Param("skillTaxonomyId") Long skillTaxonomyId);
 
     List<IndustryBenchmark> findBySkillTaxonomyId(Long skillTaxonomyId);
