@@ -138,6 +138,11 @@ const overviewItems = [
   icon: FiBook,
   to: "/dashboard/knowledge-base",
 },
+{
+  label: "Community Groups",
+  icon: FiUsers,
+  to: "/dashboard/community-groups",
+},
 ];
   const manageItems = [
     ...(role === "admin"

@@ -33,6 +33,8 @@ import MentorDirectory from "../pages/MentorDirectory/MentorDirectory";
 import MentorshipRequests from "../pages/MentorshipRequests/MentorshipRequests";
 import SessionBooking from "../pages/SessionBooking/SessionBooking";
 import KnowledgeBase from "../pages/KnowledgeBase/KnowledgeBase";
+import CommunityGroups from "../pages/CommunityGroups/CommunityGroups";
+import GroupDetail from "../pages/CommunityGroups/GroupDetail";
 import Reports from "../pages/Reports/Reports";
 import GapSnapshotHistory from "../pages/GapSnapshotHistory/GapSnapshotHistory";
 
@@ -327,6 +329,23 @@ function AppRoutes() {
   element={
     <ProtectedRoute>
       <KnowledgeBase />
+    </ProtectedRoute>
+  }
+/>
+{/* Mentorship & Knowledge Sharing: Community of Practice Groups */}
+<Route
+  path="/dashboard/community-groups"
+  element={
+    <ProtectedRoute>
+      <CommunityGroups />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/dashboard/community-groups/:groupId"
+  element={
+    <ProtectedRoute>
+      <GroupDetail />
     </ProtectedRoute>
   }
 />
