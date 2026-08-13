@@ -114,14 +114,19 @@ public class CommunityGroupServiceImpl implements CommunityGroupService {
 
         User ownerUser = group.getCreatedBy().getUser();
         if (ownerUser != null && !ownerUser.getId().equals(employee.getUser().getId())) {
-            notificationService.createNotification(
-                    ownerUser.getId(),
-                    "COMMUNITY_GROUP",
-                    "New member joined " + group.getName(),
-                    employeeName(employee) + " joined your community group.",
-                    "LOW",
-                    "/dashboard/community-groups/" + group.getId(),
-                    group.getId());
+            try {
+                notificationService.createNotification(
+                        ownerUser.getId(),
+                        "COMMUNITY_GROUP",
+                        "New member joined " + group.getName(),
+                        employeeName(employee) + " joined your community group.",
+                        "LOW",
+                        "/dashboard/community-groups/" + group.getId(),
+                        group.getId());
+            } catch (Exception ex) {
+                // A notification failure should never block the actual join.
+                System.out.println("### joinGroup() notification failed: " + ex.getMessage());
+            }
         }
     }
 
@@ -250,14 +255,20 @@ public class CommunityGroupServiceImpl implements CommunityGroupService {
             User memberUser = memberEmployee.getUser();
             if (memberUser == null) continue;
 
-            notificationService.createNotification(
-                    memberUser.getId(),
-                    "COMMUNITY_GROUP",
-                    title,
-                    message,
-                    "LOW",
-                    "/dashboard/community-groups/" + group.getId(),
-                    group.getId());
+            try {
+                notificationService.createNotification(
+                        memberUser.getId(),
+                        "COMMUNITY_GROUP",
+                        title,
+                        message,
+                        "LOW",
+                        "/dashboard/community-groups/" + group.getId(),
+                        group.getId());
+            } catch (Exception ex) {
+                // A notification failure for one member shouldn't block the post/event itself.
+                System.out.println("### notifyOtherMembers() failed for user "
+                        + memberUser.getId() + ": " + ex.getMessage());
+            }
         }
     }
 

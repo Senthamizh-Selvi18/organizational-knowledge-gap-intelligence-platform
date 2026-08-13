@@ -11,9 +11,12 @@ import {
 } from "../../services/communityGroupService";
 
 const EMPTY_FORM = { name: "", description: "", category: "" };
+const NON_CREATOR_ROLES = ["employee", "intern", "trainee"];
 
 export default function CommunityGroups() {
   const navigate = useNavigate();
+  const role = localStorage.getItem("role")?.toLowerCase() || "";
+  const canCreateGroup = !NON_CREATOR_ROLES.includes(role);
 
   const [tab, setTab] = useState("all");
   const [groups, setGroups] = useState([]);
@@ -122,12 +125,14 @@ export default function CommunityGroups() {
             </p>
           </div>
 
-          <button
-            onClick={openModal}
-            className="bg-primary text-white px-5 py-3 rounded-xl font-semibold hover:opacity-90 transition"
-          >
-            + Create Group
-          </button>
+          {canCreateGroup && (
+            <button
+              onClick={openModal}
+              className="bg-primary text-white px-5 py-3 rounded-xl font-semibold hover:opacity-90 transition"
+            >
+              + Create Group
+            </button>
+          )}
         </div>
 
         {error && <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl">{error}</div>}
