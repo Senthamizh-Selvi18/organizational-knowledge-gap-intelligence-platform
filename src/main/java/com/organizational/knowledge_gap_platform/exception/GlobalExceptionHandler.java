@@ -77,6 +77,20 @@ public ResponseEntity<Map<String, Object>> handleMentorshipSessionNotFound(Mento
 public ResponseEntity<Map<String, Object>> handleKnowledgeArticleNotFound(KnowledgeArticleNotFoundException ex) {
     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorBody(ex.getMessage()));
 }
+@ExceptionHandler(CommunityGroupNotFoundException.class)
+public ResponseEntity<Map<String, Object>> handleCommunityGroupNotFound(CommunityGroupNotFoundException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorBody(ex.getMessage()));
+}
+
+@ExceptionHandler(GroupPostNotFoundException.class)
+public ResponseEntity<Map<String, Object>> handleGroupPostNotFound(GroupPostNotFoundException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorBody(ex.getMessage()));
+}
+
+@ExceptionHandler(GroupEventNotFoundException.class)
+public ResponseEntity<Map<String, Object>> handleGroupEventNotFound(GroupEventNotFoundException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorBody(ex.getMessage()));
+}
 
 @ExceptionHandler(InvalidMentorshipActionException.class)
 public ResponseEntity<Map<String, Object>> handleInvalidMentorshipAction(InvalidMentorshipActionException ex) {

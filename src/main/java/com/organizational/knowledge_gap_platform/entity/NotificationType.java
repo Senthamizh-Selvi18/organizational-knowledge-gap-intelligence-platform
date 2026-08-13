@@ -29,5 +29,6 @@ public enum NotificationType {
     // ---- Added for Employee/Role/Password triggers ----
     EMPLOYEE_CREATED,
     ROLE_CHANGED,
-    PASSWORD_CHANGED
+    PASSWORD_CHANGED,
+    COMMUNITY_GROUP
 }
