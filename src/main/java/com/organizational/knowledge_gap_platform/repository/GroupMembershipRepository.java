@@ -21,4 +21,6 @@ public interface GroupMembershipRepository extends JpaRepository<GroupMembership
     boolean existsByGroupAndMember(CommunityGroup group, Employee member);
 
     long countByGroup(CommunityGroup group);
+
+    void deleteByGroup(CommunityGroup group);
 }
