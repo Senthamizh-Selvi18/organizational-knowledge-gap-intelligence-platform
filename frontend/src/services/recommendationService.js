@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8080/api/recommendation";
+const API_URL = import.meta.env.VITE_API_BASE_URL + "/api/recommendation";
 
 const getToken = () => {
   return localStorage.getItem("token");

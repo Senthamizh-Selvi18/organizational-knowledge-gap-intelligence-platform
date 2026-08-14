@@ -6,7 +6,7 @@
 // below — just swap the fetchJson() internals to `axiosInstance.get(...)` etc.
 // This version assumes a JWT is stored in localStorage under "token".
 
-const API_BASE = "http://localhost:8080/api/notifications";
+const API_BASE = import.meta.env.VITE_API_BASE_URL + "/api/notifications";
 
 function authHeaders() {
   const token = localStorage.getItem("token");

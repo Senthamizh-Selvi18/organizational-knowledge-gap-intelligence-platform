@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8080/api/roles";
+const API_URL = import.meta.env.VITE_API_BASE_URL + "/api/roles";
 
 const getToken = () => {
   return localStorage.getItem("token");

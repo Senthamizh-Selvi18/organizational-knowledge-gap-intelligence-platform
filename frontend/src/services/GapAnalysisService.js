@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API = "http://localhost:8080/api/gap-analysis";
+const API = import.meta.env.VITE_API_BASE_URL + "/api/gap-analysis";
 
 export const getGapAnalysis = async (employeeId) => {
   

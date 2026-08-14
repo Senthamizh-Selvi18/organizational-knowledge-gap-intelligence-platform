@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8080/api/session-feedback";
+const API_URL = import.meta.env.VITE_API_BASE_URL + "/api/session-feedback";
 
 const getToken = () => localStorage.getItem("token");
 

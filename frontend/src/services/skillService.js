@@ -1,7 +1,7 @@
 import axios from "axios";
 
-const DROPDOWN_URL = "http://localhost:8080/api/roles/skills/all";
-const API_URL = "http://localhost:8080/api/skills";
+const DROPDOWN_URL = import.meta.env.VITE_API_BASE_URL + "/api/roles/skills/all";
+const API_URL = import.meta.env.VITE_API_BASE_URL + "/api/skills";
 
 const getToken = () => {
   return localStorage.getItem("token");
