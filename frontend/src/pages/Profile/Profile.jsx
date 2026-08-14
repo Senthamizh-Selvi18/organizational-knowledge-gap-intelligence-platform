@@ -98,7 +98,7 @@ export default function Profile() {
                 const token = localStorage.getItem("token");
 
                 const response = await axios.get(
-                    `http://localhost:8080/api/profile/${userId}`,
+                    `${import.meta.env.VITE_API_BASE_URL}/api/profile/${userId}`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`
@@ -138,7 +138,7 @@ export default function Profile() {
             };
 
             await axios.put(
-              `http://localhost:8080/api/profile/${userId}`,
+              `${import.meta.env.VITE_API_BASE_URL}/api/profile/${userId}`,
               payload,
               {
                 headers: {
