@@ -1,14 +1,21 @@
-# Organizational Knowledge Gap Intelligence Platform
+# KnowGap — Organizational Knowledge Gap Intelligence Platform
 
-A full-stack web application that helps organizations track employee skills, map skills required for each role, and identify skill gaps across the workforce — so managers can spot training needs and plan upskilling more effectively.
+A full-stack enterprise platform that helps organizations track employee skills, map the skills required for each role, and surface skill gaps across the workforce — so managers can spot training needs and plan upskilling with data instead of guesswork.
 
-**Stack:** Spring Boot (Java) backend · React (Vite) frontend · PostgreSQL database · JWT + Google OAuth2 authentication
+![Java](https://img.shields.io/badge/Java-17%2B-orange)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-brightgreen)
+![React](https://img.shields.io/badge/React-19-61DAFB)
+![Vite](https://img.shields.io/badge/Vite-Frontend-646CFF)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-336791)
+![License](https://img.shields.io/badge/License-MIT-blue)
 
 ---
 
 ## Table of Contents
 
+- [Overview](#overview)
 - [Features](#features)
+- [Screenshots](#screenshots)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Prerequisites](#prerequisites)
@@ -18,21 +25,80 @@ A full-stack web application that helps organizations track employee skills, map
 - [Environment Variables](#environment-variables)
 - [API Overview](#api-overview)
 - [Security Notes](#security-notes)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
+## Overview
+
+KnowGap gives HR and engineering leaders a single source of truth for **who knows what** across the organization. Admins define the skills required for each role, employees maintain their own skill profiles, and the platform automatically calculates a **gap percentage** per employee and per team — surfaced through dashboards, heatmaps, and exportable reports.
+
 ## Features
 
-- **Authentication & Authorization** — Register/login with JWT, Google OAuth2 login, OTP verification, and role-based access control (Admin / Employee).
-- **Forgot / Reset Password** — Secure, token-based password reset flow delivered via email, with token expiry and single-use enforcement.
-- **Employee Management** — View and manage employee profiles.
-- **Skill Management** — Create, update, and manage the master list of skills.
-- **Employee-Skill Mapping** — Assign skills (with proficiency) to individual employees.
-- **Role-Skill Mapping** — Admins define which skills are required for each role.
-- **Gap Analysis** — Compares an employee's actual skills against their role's required skills, calculating a gap percentage and listing missing skills.
-- **Dashboard & Heatmap** — Aggregated stats and a skill-gap heatmap across the organization.
-- **Recommendations** — Personalized skill/learning recommendations per user.
-- **User Profile Management** — View/update profile details and change password.
+| Area | What it does |
+|---|---|
+| **Authentication & Authorization** | Register/login with JWT, Google OAuth2 login, OTP verification, and role-based access control (Admin / Employee) |
+| **Forgot / Reset Password** | Secure, token-based reset flow delivered via email, with token expiry and single-use enforcement |
+| **Employee Management** | View and manage employee profiles |
+| **Skill Management** | Create, update, and manage the master list of skills |
+| **Employee–Skill Mapping** | Assign skills (with proficiency level) to individual employees |
+| **Role–Skill Mapping** | Admins define which skills are required for each role |
+| **Gap Analysis** | Compares an employee's actual skills against their role's required skills — calculates a gap % and lists missing skills |
+| **Dashboard & Heatmap** | Aggregated org-wide stats and a skill-gap heatmap |
+| **AI Recommendations** | Personalized skill/learning recommendations per user |
+| **AI Team Builder** | Matches employees to project/team requirements based on skill coverage |
+| **Assessments** | Self, peer, and manager performance assessments with history tracking |
+| **Internal Trainings** | Track enrollment, progress, and certification for internal training programs |
+| **Reports & Export** | Skill gap, training effectiveness, ROI, and workforce planning reports — exportable as PDF or Excel |
+| **User Profile Management** | View/update profile details and change password |
+
+## Screenshots
+
+<table>
+<tr>
+<td width="50%">
+
+**Login**
+![Login screen](docs/screenshots/login.png)
+
+</td>
+<td width="50%">
+
+**Dashboard — Organizational Overview**
+![Dashboard](docs/screenshots/dashboard.png)
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+**AI Team Builder**
+![AI Team Builder](docs/screenshots/ai-team-builder.png)
+
+</td>
+<td width="50%">
+
+**Reports & Export**
+![Reports and Export](docs/screenshots/reports-export.png)
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+**Performance Assessments**
+![Assessments](docs/screenshots/assessments.png)
+
+</td>
+<td width="50%">
+
+**Internal Trainings**
+![Internal Trainings](docs/screenshots/internal-trainings.png)
+
+</td>
+</tr>
+</table>
 
 ## Tech Stack
 
@@ -50,7 +116,7 @@ A full-stack web application that helps organizations track employee skills, map
 - React Router
 - Axios
 - Tailwind CSS
-- Recharts (dashboard/heatmap visualizations)
+- Recharts (dashboard & heatmap visualizations)
 - React Icons
 
 ## Project Structure
@@ -59,7 +125,7 @@ A full-stack web application that helps organizations track employee skills, map
 organizational-knowledge-gap-intelligence-platform/
 ├── src/main/java/com/organizational/knowledge_gap_platform/
 │   ├── config/          # CORS config, initial role data seeding
-│   ├── controller/       # REST controllers (Auth, Employee, Skill, Role, GapAnalysis, etc.)
+│   ├── controller/      # REST controllers (Auth, Employee, Skill, Role, GapAnalysis, ...)
 │   ├── dto/              # Request/response data transfer objects
 │   ├── entity/           # JPA entities (User, Employee, Skill, Role, ...)
 │   ├── exception/        # Custom exceptions + global exception handler
@@ -69,6 +135,8 @@ organizational-knowledge-gap-intelligence-platform/
 ├── src/main/resources/
 │   ├── application.properties
 │   └── application-local.properties   # local-only secrets (gitignored)
+├── docs/
+│   └── screenshots/       # README screenshots
 └── frontend/
     ├── src/
     │   ├── api/           # fetch-based API calls (e.g. auth)
@@ -80,63 +148,82 @@ organizational-knowledge-gap-intelligence-platform/
 
 ## Prerequisites
 
-- **Java 17+** and **Maven**
-- **Node.js 18+** and **npm**
-- **PostgreSQL** (running locally or accessible remotely)
-- A **Gmail account with an App Password** (for sending password reset emails)
-- A **Google Cloud OAuth2 Client ID/Secret** (for Google login)
+- Java 17+ and Maven
+- Node.js 18+ and npm
+- PostgreSQL (running locally or accessible remotely)
+- A Gmail account with an App Password (for sending password reset emails)
+- A Google Cloud OAuth2 Client ID/Secret (for Google login)
 
 ## Setup & Installation
 
 ### 1. Backend Setup
 
-1. Create a PostgreSQL database:
-   ```sql
-   CREATE DATABASE knowledge_gap_platform;
-   ```
+**Create a PostgreSQL database:**
 
-2. Configure `src/main/resources/application-local.properties` (gitignored, so it's safe to put secrets here) with at least:
-   ```properties
-   jwt.secret=your-local-jwt-secret
-   ```
+```sql
+CREATE DATABASE knowledge_gap_platform;
+```
 
-3. Set the required environment variables before running the app (see [Environment Variables](#environment-variables) below). On Linux/macOS:
-   ```bash
-   export MAIL_USERNAME=your-email@gmail.com
-   export MAIL_PASSWORD=your-gmail-app-password
-   export JWT_SECRET=your-jwt-secret
-   export GOOGLE_CLIENT_ID=your-google-client-id
-   export GOOGLE_CLIENT_SECRET=your-google-client-secret
-   ```
+**Configure local secrets** in `src/main/resources/application-local.properties` (already gitignored, so it's safe to put secrets here):
 
-4. Also update the datasource credentials in `application.properties` to match your local PostgreSQL setup (`spring.datasource.username` / `spring.datasource.password`).
+```properties
+jwt.secret=your-local-jwt-secret
+```
 
-5. Run the backend:
-   ```bash
-   ./mvnw spring-boot:run
-   ```
-   The API will start on `http://localhost:8080`. Tables are auto-created/updated via `spring.jpa.hibernate.ddl-auto=update`.
+**Set the required environment variables** before running the app (see [Environment Variables](#environment-variables) below).
+
+On Linux/macOS:
+
+```bash
+export MAIL_USERNAME=your-email@gmail.com
+export MAIL_PASSWORD=your-gmail-app-password
+export JWT_SECRET=your-jwt-secret
+export GOOGLE_CLIENT_ID=your-google-client-id
+export GOOGLE_CLIENT_SECRET=your-google-client-secret
+```
+
+On Windows (PowerShell):
+
+```powershell
+$env:MAIL_USERNAME="your-email@gmail.com"
+$env:MAIL_PASSWORD="your-gmail-app-password"
+$env:JWT_SECRET="your-jwt-secret"
+$env:GOOGLE_CLIENT_ID="your-google-client-id"
+$env:GOOGLE_CLIENT_SECRET="your-google-client-secret"
+```
+
+Also update the datasource credentials in `application.properties` to match your local PostgreSQL setup (`spring.datasource.username` / `spring.datasource.password`).
+
+**Run the backend:**
+
+```bash
+./mvnw spring-boot:run
+```
+
+The API will start on `http://localhost:8080`. Tables are auto-created/updated via `spring.jpa.hibernate.ddl-auto=update`.
 
 ### 2. Frontend Setup
 
-1. Navigate to the frontend folder:
-   ```bash
-   cd frontend
-   npm install
-   ```
+```bash
+cd frontend
+npm install
+```
 
-2. Confirm/update `frontend/.env`:
-   ```
-   VITE_API_ORIGIN=http://localhost:8080
-   VITE_API_URL=http://localhost:8080/auth
-   VITE_API_BASE_URL=http://localhost:8080
-   ```
+Confirm/update `frontend/.env`:
 
-3. Start the dev server:
-   ```bash
-   npm run dev
-   ```
-   The app will be available at `http://localhost:5173`.
+```env
+VITE_API_ORIGIN=http://localhost:8080
+VITE_API_URL=http://localhost:8080/auth
+VITE_API_BASE_URL=http://localhost:8080
+```
+
+Start the dev server:
+
+```bash
+npm run dev
+```
+
+The app will be available at `http://localhost:5173`.
 
 ## Environment Variables
 
@@ -165,7 +252,7 @@ All endpoints are prefixed as shown below and generally require a JWT bearer tok
 | Employee Skills | `/api/employees/{employeeId}/skills` | Assign/update/view an employee's skills |
 | Skills | `/api/skills` | Manage the master skill list |
 | Roles | `/api/roles` | Manage roles, assign roles to users, role details |
-| Role-Skill Mapping | `/api/roles/{roleId}/skills`, `/api/roles/skills/all` | Admin-only — define required skills per role |
+| Role–Skill Mapping | `/api/roles/{roleId}/skills`, `/api/roles/skills/all` | Admin-only — define required skills per role |
 | Gap Analysis | `/api/gap-analysis/employee/{employeeId}`, `/api/gap-analysis/employee/{employeeId}/role/{roleId}` | Compare employee skills vs. role requirements |
 | Dashboard | `/api/dashboard/stats`, `/api/dashboard/skill-gap-heatmap` | Aggregated analytics |
 | Recommendations | `/api/recommendation/{userId}` | Personalized suggestions |
@@ -173,6 +260,12 @@ All endpoints are prefixed as shown below and generally require a JWT bearer tok
 
 ## Security Notes
 
-- `application.properties` currently has a plaintext PostgreSQL password committed (`spring.datasource.password`). Before pushing this repo anywhere shared (or making it public), move that value out to an environment variable or into the gitignored `application-local.properties`, the same way `jwt.secret` and mail credentials are already handled.
 - Password reset tokens are hashed (SHA-256) before being stored, and are single-use with a configurable expiry (`app.password-reset.token-expiry-minutes`).
 - `src/.env` and `src/main/resources/application-local.properties` are already gitignored — keep real secrets there, not in `application.properties`.
+
+## Contributing
+
+1. Fork the repo and create your branch from `main`: `git checkout -b feature/your-feature-name`
+2. Commit your changes with clear, descriptive messages
+3. Push to your branch and open a pull request
+
