@@ -10,7 +10,7 @@ const ACTIVITY_HISTORY_URL = `${API_BASE_URL}/api/competency/activity-history`;
 export const getCompetencyActivityHistory = async () => {
   const response = await axios.get(ACTIVITY_HISTORY_URL);
   return response.data;
-};
+}
 
 export const getFrameworks = async (roleId, department) => {
   const params = {};
