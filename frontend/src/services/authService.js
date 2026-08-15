@@ -30,7 +30,7 @@ axios.interceptors.response.use(
 
 
 export const getRegisterableRoles = async () => {
-  const response = await axios.get(`${API_BASE_URL}/roles`);
+ const response = await axios.get(`${API_BASE_URL}/auth/roles`);
   return response.data;
 };
 
