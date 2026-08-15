@@ -2,10 +2,12 @@ package com.organizational.knowledge_gap_platform.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Map;
@@ -18,12 +20,11 @@ public class OtpService {
 
     private static final long OTP_VALID_DURATION_MILLIS = 5 * 60 * 1000; // 5 minutes
 
-    private final JavaMailSender mailSender;
     private final SecureRandom secureRandom = new SecureRandom();
 
-    public OtpService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
-    }
+    private final Map<Long, OtpEntry> otpStore = new ConcurrentHashMap<>();
+
+    private final HttpClient httpClient = HttpClient.newHttpClient();
 
     private static class OtpEntry {
         final String otp;
@@ -35,18 +36,30 @@ public class OtpService {
         }
     }
 
-    private final Map<Long, OtpEntry> otpStore = new ConcurrentHashMap<>();
-
     public void generateAndSendOtp(Long userId, String email) {
-        String otp = String.format("%06d", secureRandom.nextInt(1_000_000));
-        long expiryTime = Instant.now().toEpochMilli() + OTP_VALID_DURATION_MILLIS;
 
-        otpStore.put(userId, new OtpEntry(otp, expiryTime));
+        String otp = String.format(
+                "%06d",
+                secureRandom.nextInt(1_000_000)
+        );
 
-        sendEmail(email, "Your KnowGap verification OTP is " + otp + ". Valid for 5 minutes.");
+        long expiryTime =
+                Instant.now().toEpochMilli() + OTP_VALID_DURATION_MILLIS;
+
+        otpStore.put(
+                userId,
+                new OtpEntry(otp, expiryTime)
+        );
+
+        sendEmail(
+                email,
+                "Your KnowGap verification OTP is " + otp
+                        + ". Valid for 5 minutes."
+        );
     }
 
     public boolean verifyOtp(Long userId, String otp) {
+
         OtpEntry entry = otpStore.get(userId);
 
         if (entry == null) {
@@ -68,18 +81,102 @@ public class OtpService {
     }
 
     private void sendEmail(String toEmail, String message) {
+
         try {
-            SimpleMailMessage mailMessage = new SimpleMailMessage();
-            mailMessage.setTo(toEmail);
-            mailMessage.setSubject("KnowGap - Your Login Verification OTP");
-            mailMessage.setText(message);
+            String apiKey = System.getenv("RESEND_API_KEY");
+            String fromEmail = System.getenv("RESEND_FROM_EMAIL");
 
-            mailSender.send(mailMessage);
+            if (apiKey == null || apiKey.isBlank()) {
+                throw new RuntimeException(
+                        "RESEND_API_KEY is not configured"
+                );
+            }
 
-            log.info("OTP email sent to {}", toEmail);
+            if (fromEmail == null || fromEmail.isBlank()) {
+                throw new RuntimeException(
+                        "RESEND_FROM_EMAIL is not configured"
+                );
+            }
+
+            String escapedMessage = message
+                    .replace("\\", "\\\\")
+                    .replace("\"", "\\\"")
+                    .replace("\n", "\\n")
+                    .replace("\r", "\\r");
+
+            String escapedToEmail = toEmail
+                    .replace("\\", "\\\\")
+                    .replace("\"", "\\\"");
+
+            String escapedFromEmail = fromEmail
+                    .replace("\\", "\\\\")
+                    .replace("\"", "\\\"");
+
+            String jsonBody = """
+                    {
+                      "from": "%s",
+                      "to": ["%s"],
+                      "subject": "KnowGap - Your Login Verification OTP",
+                      "text": "%s"
+                    }
+                    """.formatted(
+                    escapedFromEmail,
+                    escapedToEmail,
+                    escapedMessage
+            );
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.resend.com/emails"))
+                    .header(
+                            "Authorization",
+                            "Bearer " + apiKey
+                    )
+                    .header(
+                            "Content-Type",
+                            "application/json"
+                    )
+                    .POST(
+                            HttpRequest.BodyPublishers.ofString(jsonBody)
+                    )
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(
+                    request,
+                    HttpResponse.BodyHandlers.ofString()
+            );
+
+            if (response.statusCode() < 200
+                    || response.statusCode() >= 300) {
+
+                log.error(
+                        "Resend API error. Status: {}, Response: {}",
+                        response.statusCode(),
+                        response.body()
+                );
+
+                throw new RuntimeException(
+                        "Failed to send OTP email. Resend API returned status "
+                                + response.statusCode()
+                );
+            }
+
+            log.info(
+                    "OTP email sent successfully to {}",
+                    toEmail
+            );
+
         } catch (Exception e) {
-            log.error("Failed to send OTP email to {}: {}", toEmail, e.getMessage());
-            throw new RuntimeException("Failed to send OTP email: " + e.getMessage());
+
+            log.error(
+                    "Failed to send OTP email to {}: {}",
+                    toEmail,
+                    e.getMessage()
+            );
+
+            throw new RuntimeException(
+                    "Failed to send OTP email: " + e.getMessage(),
+                    e
+            );
         }
     }
 }
