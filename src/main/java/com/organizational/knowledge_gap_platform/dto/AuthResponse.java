@@ -1,9 +1,11 @@
 package com.organizational.knowledge_gap_platform.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
+@Data
+@NoArgsConstructor
 @AllArgsConstructor
 public class AuthResponse {
 
@@ -12,5 +14,5 @@ public class AuthResponse {
     private Long userId;
     private Long employeeId;
     private String name;
-    private boolean firstLogin;
 }
+

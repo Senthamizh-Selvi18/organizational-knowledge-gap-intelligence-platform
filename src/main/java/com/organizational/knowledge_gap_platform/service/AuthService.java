@@ -1,13 +1,14 @@
+
 package com.organizational.knowledge_gap_platform.service;
 
 import com.organizational.knowledge_gap_platform.dto.AuthResponse;
 import com.organizational.knowledge_gap_platform.dto.LoginRequest;
 import com.organizational.knowledge_gap_platform.dto.RegisterRequest;
 import com.organizational.knowledge_gap_platform.entity.Employee;
-import com.organizational.knowledge_gap_platform.exception.DuplicateEmailException;
 import com.organizational.knowledge_gap_platform.entity.NotificationType;
 import com.organizational.knowledge_gap_platform.entity.Role;
 import com.organizational.knowledge_gap_platform.entity.User;
+import com.organizational.knowledge_gap_platform.exception.DuplicateEmailException;
 import com.organizational.knowledge_gap_platform.repository.EmployeeRepository;
 import com.organizational.knowledge_gap_platform.repository.RoleRepository;
 import com.organizational.knowledge_gap_platform.repository.UserRepository;
@@ -22,7 +23,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
-
 @Service
 public class AuthService {
 
@@ -34,78 +34,84 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
-    private final OtpService otpService;
     private final NotificationService notificationService;
 
-    public AuthService(UserRepository userRepository,
-                       RoleRepository roleRepository,
-                       EmployeeRepository employeeRepository,
-                       PasswordEncoder passwordEncoder,
-                       JwtService jwtService,
-                       AuthenticationManager authenticationManager,
-                       OtpService otpService,
-                       NotificationService notificationService) {
+    public AuthService(
+            UserRepository userRepository,
+            RoleRepository roleRepository,
+            EmployeeRepository employeeRepository,
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService,
+            AuthenticationManager authenticationManager,
+            NotificationService notificationService) {
+
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.employeeRepository = employeeRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
-        this.otpService = otpService;
         this.notificationService = notificationService;
     }
 
-   public AuthResponse register(RegisterRequest request) {
+    public AuthResponse register(RegisterRequest request) {
 
-    if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-        throw new DuplicateEmailException(
-                "An account with this email already exists. Please login instead.");
-    }
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new DuplicateEmailException(
+                    "An account with this email already exists. Please login instead."
+            );
+        }
 
-    Role role = roleRepository.findById(request.getRoleId())
-            .orElseThrow(() -> new RuntimeException("Role not found"));
+        Role role = roleRepository.findById(request.getRoleId())
+                .orElseThrow(() -> new RuntimeException("Role not found"));
 
-    User user = new User();
-    user.setName(request.getName());
-    user.setEmail(request.getEmail());
-    user.setPassword(passwordEncoder.encode(request.getPassword()));
+        User user = new User();
 
-    user.getRoles().add(role);
+        user.setName(request.getName());
+        user.setEmail(request.getEmail());
+        user.setPassword(
+                passwordEncoder.encode(request.getPassword())
+        );
 
-    user.setCreatedAt(LocalDateTime.now());
+        user.getRoles().add(role);
+        user.setCreatedAt(LocalDateTime.now());
 
-    userRepository.save(user);
+        userRepository.save(user);
 
-    Employee employee = new Employee();
-    employee.setEmployeeCode("EMP-" + user.getId());
-    employee.setUser(user);
-    employee.setDepartment("Not Assigned");
-    employee.setDesignation("Not Assigned");
-    employee.setExperience(0);
-    employee.setCreatedAt(LocalDateTime.now());
+        Employee employee = new Employee();
 
-    employeeRepository.save(employee);
+        employee.setEmployeeCode("EMP-" + user.getId());
+        employee.setUser(user);
+        employee.setDepartment("Not Assigned");
+        employee.setDesignation("Not Assigned");
+        employee.setExperience(0);
+        employee.setCreatedAt(LocalDateTime.now());
 
-    notifyEmployeeCreated(user, employee);
+        employeeRepository.save(employee);
+
+        notifyEmployeeCreated(user, employee);
 
         String token = jwtService.generateToken(user.getEmail());
+
         String roleName = user.getRoles()
-        .stream()
-        .findFirst()
-        .map(Role::getRoleName)
-        .orElse("Employee");
+                .stream()
+                .findFirst()
+                .map(Role::getRoleName)
+                .orElse("Employee");
 
-       return new AuthResponse(
-               token,
-               roleName,
-               user.getId(),
-               employee.getId(),
-               user.getName(),
-               !user.isFirstLoginCompleted()
-       );
-}
+        return new AuthResponse(
+                token,
+                roleName,
+                user.getId(),
+                employee.getId(),
+                user.getName()
+        );
+    }
 
-    private void notifyEmployeeCreated(User user, Employee employee) {
+    private void notifyEmployeeCreated(
+            User user,
+            Employee employee) {
+
         try {
             notificationService.createNotification(
                     user.getId(),
@@ -117,22 +123,25 @@ public class AuthService {
                     employee.getId()
             );
         } catch (Exception ex) {
-            log.error("Failed to create EMPLOYEE_CREATED notification for user {}", user.getId(), ex);
+            log.error(
+                    "Failed to create EMPLOYEE_CREATED notification for user {}",
+                    user.getId(),
+                    ex
+            );
         }
     }
 
-
     public AuthResponse login(LoginRequest request) {
 
-        // IMPORTANT: authenticationManager.authenticate() throws a
-        // Spring Security AuthenticationException on bad credentials.
-        // If that exception is allowed to propagate as-is, Spring
-        // Security's ExceptionTranslationFilter intercepts it and,
-        // because oauth2Login() is also configured, can resolve to
-        // the OAuth2 entry point (redirecting to Google) instead of
-        // our JSON 401 handler. Catching it here and rethrowing a
-        // plain RuntimeException keeps it out of Security's exception
-        // handling entirely.
+        /*
+         * authenticationManager.authenticate() throws a
+         * Spring Security AuthenticationException for invalid
+         * credentials.
+         *
+         * We convert it to our application's InvalidCredentialsException
+         * so the API returns the expected authentication error instead
+         * of triggering the OAuth2 login flow.
+         */
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -141,11 +150,15 @@ public class AuthService {
                     )
             );
         } catch (AuthenticationException ex) {
-            throw new InvalidCredentialsException("Invalid email or password");
+            throw new InvalidCredentialsException(
+                    "Invalid email or password"
+            );
         }
 
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(
+                        () -> new RuntimeException("User not found")
+                );
 
         String token = jwtService.generateToken(user.getEmail());
 
@@ -155,41 +168,24 @@ public class AuthService {
                 .filter(r -> r.equalsIgnoreCase("Admin"))
                 .findFirst()
                 .orElse(
-                    user.getRoles()
-                    .stream()
-                    .findFirst()
-                    .map(Role::getRoleName)
-                    .orElse("Employee")
+                        user.getRoles()
+                                .stream()
+                                .findFirst()
+                                .map(Role::getRoleName)
+                                .orElse("Employee")
                 );
+
         Employee employee = employeeRepository.findByUser(user)
-                .orElseThrow(() -> new RuntimeException("Employee not found"));
+                .orElseThrow(
+                        () -> new RuntimeException("Employee not found")
+                );
+
         return new AuthResponse(
                 token,
                 role,
                 user.getId(),
                 employee.getId(),
-                user.getName(),
-                !user.isFirstLoginCompleted()
+                user.getName()
         );
-    }
-
-    public void sendFirstLoginOtp(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        otpService.generateAndSendOtp(userId, user.getEmail());
-    }
-
-    public boolean verifyFirstLoginOtp(Long userId, String otp) {
-        boolean verified = otpService.verifyOtp(userId, otp);
-
-        if (verified) {
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-            user.setFirstLoginCompleted(true);
-            userRepository.save(user);
-        }
-
-        return verified;
     }
 }
