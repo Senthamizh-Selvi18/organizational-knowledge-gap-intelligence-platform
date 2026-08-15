@@ -66,9 +66,9 @@ public class SecurityConfig {
                 )
 
                 .exceptionHandling(exceptions -> exceptions
-        .authenticationEntryPoint(apiAuthenticationEntryPoint())
-        .accessDeniedHandler(apiAccessDeniedHandler())
-)
+                        .authenticationEntryPoint(apiAuthenticationEntryPoint())
+                        .accessDeniedHandler(apiAccessDeniedHandler())
+                )
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
@@ -79,6 +79,12 @@ public class SecurityConfig {
                                 "/api/auth/**"
                         ).permitAll()
 
+                        // Allow registration/login page to fetch roles
+                        // without authentication.
+                        .requestMatchers(HttpMethod.GET, "/api/roles/**")
+                        .permitAll()
+
+                        // Creating/updating/deleting roles still requires ADMIN.
                         .requestMatchers("/api/roles/**")
                         .hasRole("ADMIN")
 
@@ -94,19 +100,28 @@ public class SecurityConfig {
                         .requestMatchers("/api/employees/**")
                         .hasRole("ADMIN")
 
-                        .requestMatchers(HttpMethod.GET, "/api/role-skill-requirements/**")
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/role-skill-requirements/**"
+                        )
                         .hasAnyRole("ADMIN", "HR")
 
                         .requestMatchers("/api/role-skill-requirements/**")
                         .hasRole("ADMIN")
 
-                        .requestMatchers(HttpMethod.GET, "/api/external-courses/**")
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/external-courses/**"
+                        )
                         .authenticated()
 
                         .requestMatchers("/api/external-courses/**")
                         .hasRole("ADMIN")
 
-                        .requestMatchers(HttpMethod.GET, "/api/internal-trainings/**")
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/internal-trainings/**"
+                        )
                         .authenticated()
 
                         .requestMatchers("/api/internal-trainings/**")
