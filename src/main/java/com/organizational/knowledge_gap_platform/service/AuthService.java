@@ -4,6 +4,7 @@ import com.organizational.knowledge_gap_platform.dto.AuthResponse;
 import com.organizational.knowledge_gap_platform.dto.LoginRequest;
 import com.organizational.knowledge_gap_platform.dto.RegisterRequest;
 import com.organizational.knowledge_gap_platform.entity.Employee;
+import com.organizational.knowledge_gap_platform.exception.DuplicateEmailException;
 import com.organizational.knowledge_gap_platform.entity.NotificationType;
 import com.organizational.knowledge_gap_platform.entity.Role;
 import com.organizational.knowledge_gap_platform.entity.User;
@@ -55,6 +56,11 @@ public class AuthService {
     }
 
    public AuthResponse register(RegisterRequest request) {
+
+    if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+        throw new DuplicateEmailException(
+                "An account with this email already exists. Please login instead.");
+    }
 
     Role role = roleRepository.findById(request.getRoleId())
             .orElseThrow(() -> new RuntimeException("Role not found"));
